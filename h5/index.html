@@ -3,119 +3,58 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#176f68">
+  <meta name="theme-color" content="#f5f6f2">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="description" content="住宿订单登记工具，数据保存在本机浏览器。">
-  <title>住宿订单登记</title>
+  <title>住宿登记</title>
   <link rel="stylesheet" href="./styles.css">
   <script src="./app.js" defer></script>
 </head>
 <body>
-  <header class="hero">
-    <div class="hero-top">
-      <div>
-        <p class="eyebrow">STAY · ORDER DESK</p>
-        <h1>住宿订单</h1>
-        <p class="today" id="today-label"></p>
-      </div>
-      <button class="backup-button" id="open-backup" type="button" aria-label="打开备份">备份</button>
-    </div>
-    <div class="stats" aria-label="订单汇总">
-      <div class="stat"><span>本月订单</span><strong id="month-count">0<small> 单</small></strong></div>
-      <div class="stat"><span>待收金额</span><strong id="outstanding">¥0.00</strong></div>
-      <div class="stat"><span>累计已收</span><strong id="received">¥0.00</strong></div>
-    </div>
+  <header class="topbar">
+    <div class="brand-mark">住</div>
+    <div class="brand-copy"><h1>住宿登记</h1><p><span id="today-label"></span><i></i>数据保存在本机</p></div>
+    <button class="backup-button" id="open-backup" type="button" aria-label="备份与导入">备份</button>
   </header>
 
   <main class="content">
-    <label class="search-box">
-      <span class="search-icon" aria-hidden="true"></span>
-      <input id="search" type="search" placeholder="搜索旅店、客人、电话或主播" autocomplete="off">
-      <button id="clear-search" class="clear-search" type="button" hidden>清除</button>
-    </label>
-
-    <nav class="filters" aria-label="入住状态筛选">
-      <button class="filter active" data-filter="全部" type="button">全部</button>
-      <button class="filter" data-filter="待入住" type="button">待入住</button>
-      <button class="filter" data-filter="入住中" type="button">入住中</button>
-      <button class="filter" data-filter="已离店" type="button">已离店</button>
-    </nav>
-
-    <div class="list-heading">
-      <h2>订单记录</h2>
-      <span id="order-count">0 条</span>
-    </div>
+    <label class="search-box"><span class="search-icon" aria-hidden="true"></span><input id="search" type="search" placeholder="搜索订单、姓名或电话" autocomplete="off"><button id="clear-search" class="clear-search" type="button" hidden>清除</button></label>
+    <div class="list-heading"><h2>订单记录</h2><span id="order-count">0 条</span></div>
     <section id="order-list" class="order-list" aria-live="polite"></section>
-    <p class="storage-note">登记保存在此设备的浏览器中，更换设备前请先复制备份。</p>
   </main>
 
-  <footer class="bottom-bar">
-    <button class="add-button" id="add-order" type="button"><span aria-hidden="true">＋</span> 新增订单</button>
-  </footer>
+  <footer class="bottom-bar"><button class="add-button" id="add-order" type="button"><span aria-hidden="true">＋</span>新增登记</button></footer>
 
   <section class="overlay" id="form-overlay" role="dialog" aria-modal="true" aria-labelledby="form-title" hidden>
-    <div class="sheet">
-      <div class="sheet-heading">
-        <div>
-          <h2 id="form-title">新增住宿订单</h2>
-          <p>填写入住信息与收款记录</p>
-        </div>
-        <button class="close-button" type="button" data-close="form-overlay" aria-label="关闭">×</button>
-      </div>
+    <div class="sheet form-sheet">
+      <div class="sheet-heading"><div><p class="form-kicker">STAY ORDER</p><h2 id="form-title">新增登记</h2></div><button class="close-button" type="button" data-close="form-overlay" aria-label="关闭">×</button></div>
       <form id="order-form">
-        <fieldset>
-          <legend><span>01</span> 订单信息</legend>
-          <label class="field"><span>旅店名称 <b>*</b></span><input name="hotelName" required maxlength="40" placeholder="如：某某旅店"></label>
-          <label class="field"><span>订单标题</span><input name="orderTitle" maxlength="40" placeholder="如：吉讯订单"></label>
-          <label class="field"><span>订单来源</span><input name="orderSource" maxlength="30" placeholder="如：吉讯、携程"></label>
-          <label class="field"><span>入住基地 <b>*</b></span><input name="base" required maxlength="40" placeholder="填写基地或门店"></label>
-          <label class="field"><span>旅民公司</span><input name="company" maxlength="40" placeholder="填写公司名称"></label>
-          <label class="field"><span>主播</span><input name="anchor" maxlength="30" placeholder="填写主播姓名"></label>
-          <label class="field"><span>登记日期</span><input name="recordDate" type="date" required></label>
+        <fieldset><legend><b>01</b> 订单信息</legend>
+          <label class="field"><span>旅店/订单 <b>*</b></span><input name="hotelOrder" required maxlength="80" placeholder="如：某某旅店：平台订单"></label>
+          <label class="field"><span>入住基地 <b>*</b></span><input name="base" required maxlength="40" placeholder="填写基地名称"></label>
         </fieldset>
-
-        <fieldset>
-          <legend><span class="blue">02</span> 入住信息</legend>
+        <fieldset><legend><b class="blue">02</b> 入住信息</legend>
           <label class="field"><span>客户姓名 <b>*</b></span><input name="customerName" required maxlength="30" placeholder="填写入住人姓名"></label>
           <label class="field"><span>客户电话 <b>*</b></span><input name="phone" type="tel" inputmode="tel" required pattern="[0-9+\-\s]{6,20}" maxlength="20" placeholder="填写联系电话"></label>
-          <label class="field"><span>入住日期 <b>*</b></span><input name="arrivalDate" type="date" required></label>
-          <label class="field"><span>入住晚数 <b>*</b></span><span class="input-with-unit"><input name="nights" type="number" inputmode="numeric" min="1" step="1" required value="1"><i>晚</i></span></label>
-          <div class="field guest-field"><span>入住人数</span><div class="guest-inputs"><label><input name="adults" type="number" inputmode="numeric" min="0" step="1" value="2"><i>成人</i></label><label><input name="children" type="number" inputmode="numeric" min="0" step="1" value="0"><i>儿童</i></label></div></div>
-          <label class="field"><span>入住房型</span><input name="roomType" maxlength="30" placeholder="如：亲子房"></label>
+          <label class="field"><span>入住时间 <b>*</b></span><input name="arrivalDate" type="date" required></label>
+          <label class="field"><span>入住天数 <b>*</b></span><span class="input-unit"><input name="nights" type="number" inputmode="numeric" min="1" step="1" required value="1"><i>晚</i></span></label>
+          <label class="field"><span>入住人数 <b>*</b></span><input name="guestCount" required maxlength="20" placeholder="如：2大2小"></label>
+          <label class="field"><span>入住房型 <b>*</b></span><input name="roomType" required maxlength="30" placeholder="如：亲子房"></label>
           <label class="field"><span>是否含餐</span><select name="mealIncluded"><option value="否">不含餐</option><option value="是">含餐</option></select></label>
         </fieldset>
-
-        <fieldset>
-          <legend><span class="orange">03</span> 费用与收款</legend>
-          <label class="field stacked"><span>费用明细</span><textarea name="feeDetails" rows="3" maxlength="200" placeholder="如：前台收入、房费说明"></textarea></label>
-          <label class="field"><span>订单总额 <b>*</b></span><span class="input-with-unit"><i>¥</i><input name="totalAmount" type="number" inputmode="decimal" min="0" step="0.01" required placeholder="0.00"></span></label>
-          <label class="field"><span>已收款</span><span class="input-with-unit"><i>¥</i><input name="receivedAmount" type="number" inputmode="decimal" min="0" step="0.01" value="0" placeholder="0.00"></span></label>
-          <label class="field"><span>收款方式</span><input name="paymentMethod" maxlength="30" placeholder="如：微信、现金、前台"></label>
-        </fieldset>
-        <div class="form-actions">
-          <button id="delete-order" class="delete-button" type="button" hidden>删除</button>
-          <button class="save-button" id="save-order" type="submit">保存登记</button>
-        </div>
+        <fieldset class="fee-section"><legend><b class="orange">03</b> 费用明细</legend><textarea name="feeDetails" rows="3" maxlength="200" placeholder="填写费用说明"></textarea></fieldset>
+        <div class="form-actions"><button id="delete-order" class="delete-button" type="button" hidden>删除</button><button class="save-button" id="save-order" type="submit">保存登记</button></div>
       </form>
     </div>
   </section>
 
   <section class="overlay" id="backup-overlay" role="dialog" aria-modal="true" aria-labelledby="backup-title" hidden>
-    <div class="sheet backup-sheet">
-      <div class="sheet-heading">
-        <div><h2 id="backup-title">备份与恢复</h2><p>备份文件只包含订单数据</p></div>
-        <button class="close-button" type="button" data-close="backup-overlay" aria-label="关闭">×</button>
-      </div>
-      <label class="backup-label" for="backup-data">复制备份，或粘贴备份进行合并</label>
-      <textarea id="backup-data" class="backup-data" rows="8" spellcheck="false" placeholder="订单备份 JSON"></textarea>
-      <div class="backup-actions">
-        <button class="secondary-button" id="copy-backup" type="button">复制备份</button>
-        <button class="save-button" id="import-backup" type="button">合并导入</button>
-      </div>
+    <div class="sheet backup-sheet"><div class="sheet-heading"><div><h2 id="backup-title">备份与恢复</h2><p>数据只保存在本机</p></div><button class="close-button" type="button" data-close="backup-overlay" aria-label="关闭">×</button></div>
+      <label class="backup-label" for="backup-data">复制备份，或粘贴备份进行合并</label><textarea id="backup-data" class="backup-data" rows="8" spellcheck="false" placeholder="订单备份 JSON"></textarea>
+      <div class="backup-actions"><button class="secondary-button" id="copy-backup" type="button">复制备份</button><button class="save-button" id="import-backup" type="button">合并导入</button></div>
     </div>
   </section>
-
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

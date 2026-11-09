@@ -35,8 +35,14 @@ for (const file of ['app.js', 'pages/index/index.js', 'pages/form/form.js', 'uti
 }
 
 const formMarkup = fs.readFileSync(path.join(root, 'pages/form/form.wxml'), 'utf8');
-for (const label of ['旅店名称', '订单标题', '订单来源', '入住基地', '旅民公司', '主播', '登记日期', '客户姓名', '客户电话', '入住日期', '入住晚数', '入住人数', '入住房型', '是否含餐', '费用明细', '订单总额', '已收款', '收款方式']) {
+const requiredLabels = ['旅店/订单', '入住基地', '客户姓名', '客户电话', '入住时间', '入住天数', '入住人数', '入住房型', '是否含餐', '费用明细'];
+for (const label of requiredLabels) {
   assert.ok(formMarkup.includes(label), `form contains ${label}`);
 }
+const fieldKeys = Array.from(formMarkup.matchAll(/data-key="([^"]+)"/g), (match) => match[1]);
+assert.deepEqual(new Set(fieldKeys), new Set(['hotelOrder', 'base', 'customerName', 'phone', 'nights', 'guestCount', 'roomType', 'feeDetails']));
+assert.match(formMarkup, /bindchange="onDateChange"/);
+assert.equal((formMarkup.match(/data-value="是"/g) || []).length, 1);
+assert.equal((formMarkup.match(/data-value="否"/g) || []).length, 1);
 
 console.log('PASS page files, event bindings, WXML tags, offline-only contract, and screenshot fields');

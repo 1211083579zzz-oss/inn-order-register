@@ -39,4 +39,29 @@ assert.equal(ordersApi.getOrders().find((order) => order.id === 'order-1').custo
 ordersApi.deleteOrder('order-2');
 assert.deepEqual(ordersApi.getOrders().map((order) => order.id), ['order-1']);
 
-console.log('PASS local CRUD, stay status, backup validation, and merge behavior');
+store.set(ordersApi.STORAGE_KEY, [{
+  id: 'legacy-order',
+  hotelName: '旧旅店',
+  orderTitle: '旧平台订单',
+  base: '旧基地',
+  customerName: '旧客人',
+  phone: '12345678',
+  arrivalDate: '2026-11-09',
+  nights: 2,
+  adults: 2,
+  children: 2,
+  roomType: '亲子房',
+  mealIncluded: '是',
+  feeDetails: '旧费用说明',
+  totalAmount: 1260,
+  receivedAmount: 600,
+  createdAt: '2026-11-01T08:00:00.000Z'
+}]);
+const migrated = ordersApi.getOrders()[0];
+assert.equal(migrated.hotelOrder, '旧旅店：旧平台订单');
+assert.equal(migrated.guestCount, '2大2小');
+assert.equal(migrated.feeDetails, '旧费用说明');
+assert.equal('totalAmount' in migrated, false);
+assert.equal('paymentMethod' in migrated, false);
+
+console.log('PASS local CRUD, stay status, backup merge, and legacy-data migration');

@@ -1,27 +1,11 @@
-const {
-  dateString,
-  getOrderStatus,
-  getOrders,
-  makeBackup,
-  mergeOrders,
-  parseBackup
-} = require('../../utils/orders');
-
-const FILTERS = ['全部', '待入住', '入住中', '已离店'];
-
-function money(value) {
-  return (Math.round((Number(value) || 0) * 100) / 100).toFixed(2);
-}
+const { dateString, getOrders, makeBackup, mergeOrders, parseBackup } = require('../../utils/orders');
 
 Page({
   data: {
-    filters: FILTERS,
-    activeFilter: '全部',
     query: '',
     orders: [],
     orderCount: 0,
     todayLabel: '',
-    stats: { monthCount: 0, outstanding: '0.00', received: '0.00' },
     hasData: false
   },
 
@@ -36,52 +20,26 @@ Page({
 
   refreshOrders() {
     const allOrders = getOrders();
-    const today = dateString(new Date());
-    const month = today.slice(0, 7);
     const query = this.data.query.trim().toLowerCase();
-    const activeFilter = this.data.activeFilter;
     const orders = allOrders
-      .map((order) => ({
-        ...order,
-        recordDate: order.recordDate || String(order.createdAt || '').slice(0, 10),
-        status: getOrderStatus(order, today)
-      }))
-      .filter((order) => activeFilter === '全部' || order.status === activeFilter)
-      .filter((order) => {
-        if (!query) return true;
-        const searchable = [
-          order.hotelName,
-          order.orderTitle,
-          order.orderSource,
-          order.base,
-          order.company,
-          order.anchor,
-          order.customerName,
-          order.phone,
-          order.roomType
-        ].join(' ').toLowerCase();
-        return searchable.includes(query);
-      })
-      .sort((a, b) => {
-        const rank = { 入住中: 0, 待入住: 1, 已离店: 2 };
-        return rank[a.status] - rank[b.status] || String(a.arrivalDate || '').localeCompare(String(b.arrivalDate || ''));
-      });
-
-    const outstanding = allOrders.reduce((sum, order) =>
-      sum + Math.max(0, Number(order.totalAmount || 0) - Number(order.receivedAmount || 0)), 0
-    );
-    const received = allOrders.reduce((sum, order) => sum + Number(order.receivedAmount || 0), 0);
+      .filter((order) => !query || [
+        order.hotelOrder,
+        order.base,
+        order.customerName,
+        order.phone,
+        order.arrivalDate,
+        order.guestCount,
+        order.roomType,
+        order.mealIncluded,
+        order.feeDetails
+      ].join(' ').toLowerCase().includes(query))
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
 
     this.setData({
       orders,
       orderCount: orders.length,
       hasData: allOrders.length > 0,
-      todayLabel: today.replace(/-/g, '/'),
-      stats: {
-        monthCount: allOrders.filter((order) => String(order.arrivalDate || '').startsWith(month)).length,
-        outstanding: money(outstanding),
-        received: money(received)
-      }
+      todayLabel: dateString(new Date()).replace(/-/g, '/')
     });
   },
 
@@ -91,10 +49,6 @@ Page({
 
   onClearSearch() {
     this.setData({ query: '' }, () => this.refreshOrders());
-  },
-
-  onChooseFilter(event) {
-    this.setData({ activeFilter: event.currentTarget.dataset.value }, () => this.refreshOrders());
   },
 
   onAddOrder() {

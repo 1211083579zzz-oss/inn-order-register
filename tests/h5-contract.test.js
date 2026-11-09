@@ -15,8 +15,13 @@ assert.doesNotMatch(script, /\bfetch\s*\(|XMLHttpRequest|\bwx\.request\s*\(/);
 assert.match(script, /localStorage\.getItem\(STORAGE_KEY\)/);
 assert.match(script, /localStorage\.setItem\(STORAGE_KEY/);
 
-for (const label of ['旅店名称', '订单标题', '订单来源', '入住基地', '旅民公司', '主播', '登记日期', '客户姓名', '客户电话', '入住日期', '入住晚数', '入住人数', '入住房型', '是否含餐', '费用明细', '订单总额', '已收款', '收款方式']) {
+for (const label of ['旅店/订单', '入住基地', '客户姓名', '客户电话', '入住时间', '入住天数', '入住人数', '入住房型', '是否含餐', '费用明细']) {
   assert.ok(html.includes(label), `H5 contains ${label}`);
 }
+const formMarkup = html.match(/<form id="order-form">([\s\S]*?)<\/form>/)[1];
+assert.deepEqual(new Set(Array.from(formMarkup.matchAll(/name="([^"]+)"/g), (match) => match[1])), new Set([
+  'hotelOrder', 'base', 'customerName', 'phone', 'arrivalDate', 'nights', 'guestCount', 'roomType', 'mealIncluded', 'feeDetails'
+]));
+assert.doesNotMatch(html, /累计已收|待收金额|旅民公司|主播|订单总额|收款方式/);
 
 console.log('PASS H5 mobile viewport, local assets, local-only storage, and required fields');
