@@ -1,9 +1,12 @@
 <view class="page">
   <view class="topbar">
-    <view class="brand-mark">住</view>
-    <view class="brand-copy">
-      <view class="top-title">住宿登记</view>
-      <view class="top-subtitle">{{todayLabel}} <text class="subtitle-dot">·</text> 数据保存在本机</view>
+    <view class="brand-main">
+      <view class="brand-mark">宿</view>
+      <view class="brand-copy">
+        <view class="brand-eyebrow">STAY DESK</view>
+        <view class="top-title">住宿登记</view>
+        <view class="top-subtitle"><text>{{todayLabel}}</text><text class="subtitle-dot">·</text><text class="local-state"><text class="local-dot"></text>本机保存</text></view>
+      </view>
     </view>
     <button class="backup-button" bindtap="onBackupMenu" aria-label="备份与导入">备份</button>
   </view>
@@ -16,19 +19,17 @@
     </view>
 
     <view class="list-heading">
-      <view class="list-title">订单记录</view>
+      <view><view class="section-kicker">RESERVATIONS</view><view class="list-title">订单记录</view></view>
       <view class="list-count">{{orderCount}} 条</view>
     </view>
 
     <view wx:if="{{orders.length}}" class="order-list">
       <view wx:for="{{orders}}" wx:key="id" class="order-card" data-id="{{item.id}}" bindtap="onOpenOrder">
-        <view class="card-topline">
-          <view class="hotel-order">{{item.hotelOrder || '未填写订单名称'}}</view>
-        </view>
-        <view class="base-line"><text class="base-mark"></text>入住基地：{{item.base || '未填写'}}</view>
+        <view class="hotel-order">{{item.hotelOrder || '未填写订单名称'}}</view>
+        <view class="base-line"><text class="base-mark"></text><text>入住基地：{{item.base || '未填写'}}</text></view>
         <view class="guest-row">
           <view class="guest-name">{{item.customerName || '未填写姓名'}}</view>
-          <button wx:if="{{item.phone}}" class="phone-link" catchtap="onCallCustomer" data-phone="{{item.phone}}">{{item.phone}}</button>
+          <button wx:if="{{item.phone}}" class="phone-link" catchtap="onCallCustomer" data-phone="{{item.phone}}">拨打 {{item.phone}}</button>
         </view>
         <view class="detail-grid">
           <view class="detail-item"><text class="detail-key">入住时间</text><text class="detail-value">{{item.arrivalDate}}</text></view>
@@ -38,7 +39,7 @@
           <view class="detail-item"><text class="detail-key">是否含餐</text><text class="detail-value meal-value">{{item.mealIncluded}}</text></view>
         </view>
         <view class="fee-line"><text class="fee-label">费用明细</text><text class="fee-value">{{item.feeDetails || '未填写'}}</text></view>
-        <view class="card-footer"><text>住宿订单</text><text class="edit-label">修改 <text class="chevron">›</text></text></view>
+        <view class="card-footer"><text>住宿订单</text><text class="edit-label">编辑 <text class="chevron">›</text></text></view>
       </view>
     </view>
 
@@ -50,6 +51,6 @@
   </view>
 
   <view class="bottom-bar">
-    <button class="add-button" bindtap="onAddOrder"><text class="add-mark">＋</text> 新增登记</button>
+    <button class="add-button" bindtap="onAddOrder"><text class="add-mark">＋</text>新增登记</button>
   </view>
 </view>

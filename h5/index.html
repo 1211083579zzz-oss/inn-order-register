@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f5f6f2">
+  <meta name="theme-color" content="#173b3d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="description" content="住宿订单登记工具，数据保存在本机浏览器。">
@@ -13,45 +13,73 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand-mark">住</div>
-    <div class="brand-copy"><h1>住宿登记</h1><p><span id="today-label"></span><i></i>数据保存在本机</p></div>
+    <div class="brand-main">
+      <div class="brand-symbol" aria-hidden="true">宿</div>
+      <div class="brand-copy">
+        <span class="brand-eyebrow">STAY DESK</span>
+        <h1>住宿登记</h1>
+        <p class="brand-meta"><span id="today-label"></span><span class="meta-divider">·</span><span class="local-state"><i></i>本机保存</span></p>
+      </div>
+    </div>
     <button class="backup-button" id="open-backup" type="button" aria-label="备份与导入">备份</button>
   </header>
 
   <main class="content">
-    <label class="search-box"><span class="search-icon" aria-hidden="true"></span><input id="search" type="search" placeholder="搜索订单、姓名或电话" autocomplete="off"><button id="clear-search" class="clear-search" type="button" hidden>清除</button></label>
-    <div class="list-heading"><h2>订单记录</h2><span id="order-count">0 条</span></div>
+    <label class="search-box">
+      <span class="search-icon" aria-hidden="true"></span>
+      <input id="search" type="search" placeholder="搜索订单、姓名或电话" autocomplete="off">
+      <button id="clear-search" class="clear-search" type="button" hidden>清除</button>
+    </label>
+
+    <div class="list-heading">
+      <div><span class="section-kicker">RESERVATIONS</span><h2>订单记录</h2></div>
+      <span id="order-count" class="order-count">0 条</span>
+    </div>
     <section id="order-list" class="order-list" aria-live="polite"></section>
   </main>
 
-  <footer class="bottom-bar"><button class="add-button" id="add-order" type="button"><span aria-hidden="true">＋</span>新增登记</button></footer>
+  <footer class="bottom-bar"><button class="add-button" id="add-order" type="button"><span class="add-mark" aria-hidden="true">＋</span>新增登记</button></footer>
 
   <section class="overlay" id="form-overlay" role="dialog" aria-modal="true" aria-labelledby="form-title" hidden>
     <div class="sheet form-sheet">
-      <div class="sheet-heading"><div><p class="form-kicker">STAY ORDER</p><h2 id="form-title">新增登记</h2></div><button class="close-button" type="button" data-close="form-overlay" aria-label="关闭">×</button></div>
+      <div class="sheet-heading">
+        <div><span class="form-kicker">NEW RESERVATION</span><h2 id="form-title">新增登记</h2></div>
+        <button class="close-button" type="button" data-close="form-overlay" aria-label="关闭">×</button>
+      </div>
       <form id="order-form">
-        <fieldset><legend><b>01</b> 订单信息</legend>
-          <label class="field"><span>旅店/订单 <b>*</b></span><input name="hotelOrder" required maxlength="80" placeholder="如：某某旅店：平台订单"></label>
-          <label class="field"><span>入住基地 <b>*</b></span><input name="base" required maxlength="40" placeholder="填写基地名称"></label>
+        <fieldset class="form-section">
+          <legend><span class="section-index index-coral">01</span>订单信息</legend>
+          <div class="field-grid">
+            <label class="field field-wide"><span>旅店/订单 <b>*</b></span><input name="hotelOrder" required maxlength="80" placeholder="如：某某旅店：平台订单"></label>
+            <label class="field field-wide"><span>入住基地 <b>*</b></span><input name="base" required maxlength="40" placeholder="填写基地名称"></label>
+          </div>
         </fieldset>
-        <fieldset><legend><b class="blue">02</b> 入住信息</legend>
-          <label class="field"><span>客户姓名 <b>*</b></span><input name="customerName" required maxlength="30" placeholder="填写入住人姓名"></label>
-          <label class="field"><span>客户电话 <b>*</b></span><input name="phone" type="tel" inputmode="tel" required pattern="[0-9+\-\s]{6,20}" maxlength="20" placeholder="填写联系电话"></label>
-          <label class="field"><span>入住时间 <b>*</b></span><input name="arrivalDate" type="date" required></label>
-          <label class="field"><span>入住天数 <b>*</b></span><span class="input-unit"><input name="nights" type="number" inputmode="numeric" min="1" step="1" required value="1"><i>晚</i></span></label>
-          <label class="field"><span>入住人数 <b>*</b></span><input name="guestCount" required maxlength="20" placeholder="如：2大2小"></label>
-          <label class="field"><span>入住房型 <b>*</b></span><input name="roomType" required maxlength="30" placeholder="如：亲子房"></label>
-          <label class="field"><span>是否含餐</span><select name="mealIncluded"><option value="否">不含餐</option><option value="是">含餐</option></select></label>
+        <fieldset class="form-section">
+          <legend><span class="section-index index-blue">02</span>入住信息</legend>
+          <div class="field-grid">
+            <label class="field"><span>客户姓名 <b>*</b></span><input name="customerName" required maxlength="30" placeholder="入住人姓名"></label>
+            <label class="field"><span>客户电话 <b>*</b></span><input name="phone" type="tel" inputmode="tel" required pattern="[0-9+\-\s]{6,20}" maxlength="20" placeholder="联系电话"></label>
+            <label class="field"><span>入住时间 <b>*</b></span><input name="arrivalDate" type="date" required></label>
+            <label class="field"><span>入住天数 <b>*</b></span><span class="input-unit"><input name="nights" type="number" inputmode="numeric" min="1" step="1" required value="1"><i>晚</i></span></label>
+            <label class="field"><span>入住人数 <b>*</b></span><input name="guestCount" required maxlength="20" placeholder="如：2大2小"></label>
+            <label class="field"><span>入住房型 <b>*</b></span><input name="roomType" required maxlength="30" placeholder="如：亲子房"></label>
+            <label class="field field-wide"><span>是否含餐</span><select name="mealIncluded"><option value="否">不含餐</option><option value="是">含餐</option></select></label>
+          </div>
         </fieldset>
-        <fieldset class="fee-section"><legend><b class="orange">03</b> 费用明细</legend><textarea name="feeDetails" rows="3" maxlength="200" placeholder="填写费用说明"></textarea></fieldset>
+        <fieldset class="form-section fee-section">
+          <legend><span class="section-index index-gold">03</span>费用明细</legend>
+          <label class="fee-field"><span>费用说明</span><textarea name="feeDetails" rows="3" maxlength="200" placeholder="填写费用说明"></textarea></label>
+        </fieldset>
         <div class="form-actions"><button id="delete-order" class="delete-button" type="button" hidden>删除</button><button class="save-button" id="save-order" type="submit">保存登记</button></div>
       </form>
     </div>
   </section>
 
   <section class="overlay" id="backup-overlay" role="dialog" aria-modal="true" aria-labelledby="backup-title" hidden>
-    <div class="sheet backup-sheet"><div class="sheet-heading"><div><h2 id="backup-title">备份与恢复</h2><p>数据只保存在本机</p></div><button class="close-button" type="button" data-close="backup-overlay" aria-label="关闭">×</button></div>
-      <label class="backup-label" for="backup-data">复制备份，或粘贴备份进行合并</label><textarea id="backup-data" class="backup-data" rows="8" spellcheck="false" placeholder="订单备份 JSON"></textarea>
+    <div class="sheet backup-sheet">
+      <div class="sheet-heading"><div><span class="form-kicker">LOCAL DATA</span><h2 id="backup-title">备份与恢复</h2><p>数据只保存在本机</p></div><button class="close-button" type="button" data-close="backup-overlay" aria-label="关闭">×</button></div>
+      <label class="backup-label" for="backup-data">复制备份，或粘贴备份进行合并</label>
+      <textarea id="backup-data" class="backup-data" rows="8" spellcheck="false" placeholder="订单备份 JSON"></textarea>
       <div class="backup-actions"><button class="secondary-button" id="copy-backup" type="button">复制备份</button><button class="save-button" id="import-backup" type="button">合并导入</button></div>
     </div>
   </section>
