@@ -9,8 +9,9 @@
   <meta name="description" content="简单好用的住宿登记，信息仅保存在当前设备。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=ios-blue-2">
-  <script src="./app.js?v=ios-blue-2" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=ios-motion-3">
+  <script src="./motion.js?v=ios-motion-3" defer></script>
+  <script src="./app.js?v=ios-motion-3" defer></script>
 </head>
 <body>
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -42,16 +43,17 @@
       <div class="page-heading"><p id="today-label" class="date-label"></p><div class="heading-row"><h1>入住记录</h1><span class="local-badge"><svg class="icon"><use href="#i-lock"/></svg>本机保存</span></div></div>
       <button id="add-order" class="add-button" type="button"><span class="add-symbol"><svg class="icon"><use href="#i-plus"/></svg></span><span>新增入住登记</span><svg class="icon button-arrow"><use href="#i-chevron"/></svg></button>
       <div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="search" type="search" aria-label="搜索登记" placeholder="搜索姓名、电话或订单" autocomplete="off"><button id="clear-search" class="clear-search" type="button" aria-label="清空搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
-      <div class="filters" role="group" aria-label="按入住状态筛选"><button class="filter active" data-filter="all" aria-pressed="true" type="button">全部</button><button class="filter" data-filter="upcoming" aria-pressed="false" type="button">待入住</button><button class="filter" data-filter="staying" aria-pressed="false" type="button">入住中</button><button class="filter" data-filter="finished" aria-pressed="false" type="button">已结束</button></div>
+      <div class="filters" role="group" aria-label="按入住状态筛选"><span class="filter-selection" aria-hidden="true"></span><button class="filter active" data-filter="all" aria-pressed="true" type="button">全部</button><button class="filter" data-filter="upcoming" aria-pressed="false" type="button">待入住</button><button class="filter" data-filter="staying" aria-pressed="false" type="button">入住中</button><button class="filter" data-filter="finished" aria-pressed="false" type="button">已结束</button></div>
       <div class="list-heading"><h2 id="list-title">全部登记</h2><span id="order-count">0 条记录</span></div>
       <section id="order-list" class="order-list" aria-live="polite" aria-labelledby="list-title"></section>
       <p class="device-note"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>登记信息仅保存在当前设备</p>
     </main>
   </div>
 
-  <section id="form-overlay" class="page-view" role="dialog" aria-modal="true" aria-labelledby="form-title" hidden>
+  <section id="form-overlay" class="page-view" data-presentation="push" data-state="closed" role="dialog" aria-modal="true" aria-labelledby="form-title" hidden>
+    <div class="view-dimmer" aria-hidden="true"></div>
     <div class="page-panel">
-      <header class="view-nav"><button class="text-button" type="button" data-close="form-overlay">取消</button><h2 id="form-title" tabindex="-1">新增登记</h2><span class="nav-spacer" aria-hidden="true"></span></header>
+      <header class="view-nav"><button class="text-button back-button" type="button" data-close="form-overlay"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg>返回</button><h2 id="form-title" tabindex="-1">新增登记</h2><span class="nav-spacer" aria-hidden="true"></span></header>
       <div class="view-scroll">
         <form id="order-form">
           <p class="form-intro">记下本次入住，后续查找更轻松。</p>
@@ -79,9 +81,11 @@
     </div>
   </section>
 
-  <section id="backup-overlay" class="page-view" role="dialog" aria-modal="true" aria-labelledby="backup-title" hidden>
+  <section id="backup-overlay" class="page-view" data-presentation="sheet" data-state="closed" role="dialog" aria-modal="true" aria-labelledby="backup-title" hidden>
+    <div class="view-dimmer" aria-hidden="true"></div>
     <div class="page-panel backup-panel">
-      <header class="view-nav"><button class="text-button back-button" type="button" data-close="backup-overlay"><svg class="icon"><use href="#i-back"/></svg>返回</button><h2 id="backup-title" tabindex="-1">备份与恢复</h2><span class="nav-spacer" aria-hidden="true"></span></header>
+      <div class="sheet-grabber" aria-hidden="true"><span></span></div>
+      <header class="view-nav"><span class="nav-spacer" aria-hidden="true"></span><h2 id="backup-title" tabindex="-1">备份与恢复</h2><button class="text-button sheet-done" type="button" data-close="backup-overlay">完成</button></header>
       <div class="view-scroll backup-content">
         <div class="backup-intro"><span class="backup-emblem"><svg class="icon"><use href="#i-backup"/></svg></span><h3>给记录留一份备份</h3><p>数据保存在当前设备。复制备份后，<br>可粘贴到备忘录妥善保管。</p></div>
         <button id="copy-backup" class="backup-export" type="button"><span class="action-icon"><svg class="icon"><use href="#i-copy"/></svg></span><span class="action-copy"><strong>复制本机备份</strong><span id="backup-count">备份全部登记信息</span></span><svg class="icon chevron"><use href="#i-chevron"/></svg></button>

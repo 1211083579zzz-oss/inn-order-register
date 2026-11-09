@@ -6,7 +6,6 @@
   const today = localDate(new Date());
   let toastTimer;
   let activeFilter = 'all';
-  let previousFocus;
   const filterLabels = { all: '全部登记', upcoming: '待入住', staying: '入住中', finished: '已结束' };
   const icon = (name, extra = '') => `<svg class="icon ${extra}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
@@ -16,6 +15,8 @@
   const orderList = document.querySelector('#order-list');
   const searchInput = document.querySelector('#search');
   const backupData = document.querySelector('#backup-data');
+  const navigation = window.createInnNavigation(document.querySelector('#home-view'), [formOverlay, backupOverlay]);
+  const filterSelection = document.querySelector('.filter-selection');
 
   function localDate(date) {
     const year = date.getFullYear();
@@ -104,6 +105,7 @@
       button.classList.toggle('active', selected);
       button.setAttribute('aria-pressed', String(selected));
     });
+    filterSelection.style.setProperty('--selected-index', Object.keys(filterLabels).indexOf(activeFilter));
 
     if (!visible.length) {
       const filtered = Boolean(query) || activeFilter !== 'all';
@@ -127,13 +129,7 @@
   }
 
   function openOverlay(id) {
-    previousFocus = document.activeElement;
-    const overlay = document.querySelector(`#${id}`);
-    overlay.hidden = false;
-    document.body.classList.add('modal-open');
-    document.querySelector('#home-view').inert = true;
-    overlay.querySelector('.view-scroll').scrollTop = 0;
-    overlay.querySelector('h2').focus({ preventScroll: true });
+    navigation.open(id);
   }
 
   function updateFeeCount() {
@@ -167,12 +163,7 @@
   }
 
   function closeOverlay(id) {
-    document.querySelector(`#${id}`).hidden = true;
-    if (formOverlay.hidden && backupOverlay.hidden) {
-      document.body.classList.remove('modal-open');
-      document.querySelector('#home-view').inert = false;
-      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
-    }
+    navigation.close(id);
   }
 
   function getFormOrder() {
