@@ -1,0 +1,115 @@
+<view class="page">
+  <scroll-view class="form-scroll" scroll-y="true">
+    <view class="form-intro">
+      <view class="form-title">{{isEditing ? '订单详情' : '新增住宿订单'}}</view>
+      <view class="form-subtitle">填写入住信息与收款记录</view>
+    </view>
+
+    <view class="section">
+      <view class="section-heading"><text class="section-number">01</text><text class="section-title">订单信息</text></view>
+      <view class="field-row">
+        <text class="field-label">旅店名称 <text class="required">*</text></text>
+        <input class="field-input" value="{{hotelName}}" data-key="hotelName" bindinput="onInput" placeholder="如：某某旅店" maxlength="40" />
+      </view>
+      <view class="field-row">
+        <text class="field-label">订单标题</text>
+        <input class="field-input" value="{{orderTitle}}" data-key="orderTitle" bindinput="onInput" placeholder="如：吉讯订单" maxlength="40" />
+      </view>
+      <view class="field-row">
+        <text class="field-label">订单来源</text>
+        <picker range="{{sourceOptions}}" value="{{sourceIndex}}" bindchange="onSourceChange"><view class="picker-value">{{sourceOptions[sourceIndex]}}</view></picker>
+      </view>
+      <view wx:if="{{sourceIndex === 6}}" class="field-row">
+        <text class="field-label">来源名称</text>
+        <input class="field-input" value="{{sourceOther}}" data-key="sourceOther" bindinput="onInput" placeholder="填写其他来源" maxlength="30" />
+      </view>
+      <view class="field-row">
+        <text class="field-label">入住基地 <text class="required">*</text></text>
+        <input class="field-input" value="{{base}}" data-key="base" bindinput="onInput" placeholder="填写基地或门店" maxlength="40" />
+      </view>
+      <view class="field-row">
+        <text class="field-label">旅民公司</text>
+        <input class="field-input" value="{{company}}" data-key="company" bindinput="onInput" placeholder="填写公司名称" maxlength="40" />
+      </view>
+      <view class="field-row">
+        <text class="field-label">登记日期</text>
+        <picker mode="date" value="{{recordDate}}" bindchange="onRecordDateChange"><view class="picker-value">{{recordDate}}</view></picker>
+      </view>
+      <view class="field-row field-last">
+        <text class="field-label">主播</text>
+        <input class="field-input" value="{{anchor}}" data-key="anchor" bindinput="onInput" placeholder="填写主播姓名" maxlength="30" />
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-heading"><text class="section-number section-blue">02</text><text class="section-title">入住信息</text></view>
+      <view class="field-row">
+        <text class="field-label">客户姓名 <text class="required">*</text></text>
+        <input class="field-input" value="{{customerName}}" data-key="customerName" bindinput="onInput" placeholder="填写入住人姓名" maxlength="30" />
+      </view>
+      <view class="field-row">
+        <text class="field-label">客户电话 <text class="required">*</text></text>
+        <input class="field-input" type="text" value="{{phone}}" data-key="phone" bindinput="onInput" placeholder="填写联系电话" maxlength="20" />
+      </view>
+      <view class="field-row">
+        <text class="field-label">入住日期 <text class="required">*</text></text>
+        <picker mode="date" value="{{arrivalDate}}" bindchange="onDateChange"><view class="picker-value">{{arrivalDate}}</view></picker>
+      </view>
+      <view class="field-row">
+        <text class="field-label">入住晚数 <text class="required">*</text></text>
+        <view class="number-entry"><input class="field-input numeric-input" type="number" value="{{nights}}" data-key="nights" bindinput="onInput" /><text class="unit">晚</text></view>
+      </view>
+      <view class="field-row guest-field-row">
+        <text class="field-label">入住人数</text>
+        <view class="guest-inputs">
+          <view class="guest-input-wrap"><input class="guest-input" type="number" value="{{adults}}" data-key="adults" bindinput="onInput" /><text>成人</text></view>
+          <view class="guest-input-wrap"><input class="guest-input" type="number" value="{{children}}" data-key="children" bindinput="onInput" /><text>儿童</text></view>
+        </view>
+      </view>
+      <view class="field-row">
+        <text class="field-label">入住房型</text>
+        <picker range="{{roomOptions}}" value="{{roomIndex}}" bindchange="onRoomChange"><view class="picker-value">{{roomOptions[roomIndex]}}</view></picker>
+      </view>
+      <view wx:if="{{roomIndex === 6}}" class="field-row">
+        <text class="field-label">房型名称</text>
+        <input class="field-input" value="{{roomOther}}" data-key="roomOther" bindinput="onInput" placeholder="填写其他房型" maxlength="30" />
+      </view>
+      <view class="field-row field-last">
+        <text class="field-label">是否含餐</text>
+        <view class="segmented">
+          <view wx:for="{{mealOptions}}" wx:key="*this" class="segment {{mealIncluded === item ? 'segment-active' : ''}}" data-value="{{item}}" bindtap="onMealChange">{{item === '是' ? '含餐' : '不含餐'}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-heading"><text class="section-number section-orange">03</text><text class="section-title">费用与收款</text></view>
+      <view class="field-row field-stack">
+        <text class="field-label">费用明细</text>
+        <textarea class="fee-input" value="{{feeDetails}}" data-key="feeDetails" bindinput="onInput" placeholder="例如：前台收入、房费说明" maxlength="200" auto-height="true" />
+      </view>
+      <view class="field-row">
+        <text class="field-label">订单总额 <text class="required">*</text></text>
+        <view class="number-entry"><text class="currency">¥</text><input class="field-input numeric-input" type="digit" value="{{totalAmount}}" data-key="totalAmount" bindinput="onInput" placeholder="0.00" /></view>
+      </view>
+      <view class="field-row">
+        <text class="field-label">已收款</text>
+        <view class="number-entry"><text class="currency">¥</text><input class="field-input numeric-input" type="digit" value="{{receivedAmount}}" data-key="receivedAmount" bindinput="onInput" placeholder="0.00" /></view>
+      </view>
+      <view class="field-row">
+        <text class="field-label">收款方式</text>
+        <picker range="{{paymentOptions}}" value="{{paymentIndex}}" bindchange="onPaymentChange"><view class="picker-value">{{paymentOptions[paymentIndex]}}</view></picker>
+      </view>
+      <view wx:if="{{paymentIndex === 5}}" class="field-row field-last">
+        <text class="field-label">方式名称</text>
+        <input class="field-input" value="{{paymentOther}}" data-key="paymentOther" bindinput="onInput" placeholder="填写其他收款方式" maxlength="30" />
+      </view>
+    </view>
+    <view class="form-bottom-space"></view>
+  </scroll-view>
+
+  <view class="form-actions">
+    <button wx:if="{{isEditing}}" class="delete-button" bindtap="onDelete">删除</button>
+    <button class="save-button {{isEditing ? 'save-editing' : ''}}" bindtap="onSave">{{isEditing ? '保存修改' : '保存登记'}}</button>
+  </view>
+</view>

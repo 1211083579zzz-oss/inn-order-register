@@ -1,0 +1,88 @@
+<view class="page">
+  <view class="hero">
+    <view class="hero-top">
+      <view>
+        <view class="eyebrow">STAY · ORDER DESK</view>
+        <view class="hero-title">住宿订单</view>
+        <view class="hero-date">{{todayLabel}}</view>
+      </view>
+      <button class="backup-button" bindtap="onBackupMenu" aria-label="备份与导入">
+        <text>备份</text>
+      </button>
+    </view>
+    <view class="stats">
+      <view class="stat-cell">
+        <text class="stat-label">本月订单</text>
+        <view class="stat-value">{{stats.monthCount}}<text class="stat-unit">单</text></view>
+      </view>
+      <view class="stat-cell stat-middle">
+        <text class="stat-label">待收金额</text>
+        <view class="stat-value">¥{{stats.outstanding}}</view>
+      </view>
+      <view class="stat-cell">
+        <text class="stat-label">累计已收</text>
+        <view class="stat-value">¥{{stats.received}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="content">
+    <view class="search-box">
+      <view class="search-icon"></view>
+      <input class="search-input" value="{{query}}" bindinput="onSearch" placeholder="搜索旅店、客人、电话或主播" confirm-type="search" />
+      <text wx:if="{{query}}" class="search-clear" bindtap="onClearSearch">清除</text>
+    </view>
+
+    <scroll-view class="filter-scroll" scroll-x="true" show-scrollbar="false">
+      <view class="filters">
+        <view wx:for="{{filters}}" wx:key="*this" class="filter-pill {{activeFilter === item ? 'filter-active' : ''}}" data-value="{{item}}" bindtap="onChooseFilter">{{item}}</view>
+      </view>
+    </scroll-view>
+
+    <view class="list-heading">
+      <view class="list-title">订单记录</view>
+      <view class="list-count">{{orderCount}} 条</view>
+    </view>
+
+    <view wx:if="{{orders.length}}" class="order-list">
+      <view wx:for="{{orders}}" wx:key="id" class="order-card" data-id="{{item.id}}" bindtap="onOpenOrder">
+        <view class="card-topline">
+          <view class="hotel-name">{{item.hotelName || '未填写旅店'}}</view>
+          <view class="status status-{{item.status === '入住中' ? 'live' : item.status === '已离店' ? 'done' : 'wait'}}">{{item.status}}</view>
+        </view>
+        <view class="order-subtitle">{{item.orderTitle || item.orderSource || '住宿订单'}}<text wx:if="{{item.base}}"> · {{item.base}}</text></view>
+        <view wx:if="{{item.company || item.anchor || item.recordDate}}" class="meta-line">
+          <text wx:if="{{item.company}}">{{item.company}}</text>
+          <text wx:if="{{item.anchor}}">主播 {{item.anchor}}</text>
+          <text wx:if="{{item.recordDate}}">登记 {{item.recordDate}}</text>
+        </view>
+        <view class="guest-row">
+          <view class="guest-name">{{item.customerName || '未填写姓名'}}</view>
+          <button wx:if="{{item.phone}}" class="phone-link" catchtap="onCallCustomer" data-phone="{{item.phone}}">拨打</button>
+        </view>
+        <view class="detail-grid">
+          <view class="detail-item"><text class="detail-key">入住</text><text>{{item.arrivalDate}} · {{item.nights}}晚</text></view>
+          <view class="detail-item"><text class="detail-key">房型</text><text>{{item.roomType || '未填写'}}</text></view>
+          <view class="detail-item"><text class="detail-key">人数</text><text>{{item.adults || 0}}大{{item.children || 0}}小</text></view>
+          <view class="detail-item"><text class="detail-key">含餐</text><text>{{item.mealIncluded || '否'}}</text></view>
+        </view>
+        <view class="card-footer">
+          <view class="payment-note">已收 <text class="received-value">¥{{item.receivedAmount || '0.00'}}</text><text class="total-value"> / ¥{{item.totalAmount || '0.00'}}</text></view>
+          <view class="edit-label">查看详情 <text class="chevron">›</text></view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="empty-state">
+      <view class="empty-symbol">＋</view>
+      <view class="empty-title">{{hasData ? '没有匹配的订单' : '还没有订单记录'}}</view>
+      <view class="empty-caption">{{hasData ? '换个关键词或筛选条件试试' : '新增一条住宿订单开始登记'}}</view>
+    </view>
+
+    <view class="storage-note">登记数据保存在此设备；更换设备前可复制备份</view>
+  </view>
+
+  <view class="bottom-bar">
+    <button class="add-button" bindtap="onAddOrder"><text class="add-mark">＋</text> 新增订单</button>
+  </view>
+</view>
