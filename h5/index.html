@@ -3,86 +3,93 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#173b3d">
+  <meta name="theme-color" content="#f4f6fa">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="description" content="住宿订单登记工具，数据保存在本机浏览器。">
+  <meta name="description" content="简单好用的住宿登记，信息仅保存在当前设备。">
   <title>住宿登记</title>
-  <link rel="stylesheet" href="./styles.css">
-  <script src="./app.js" defer></script>
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="stylesheet" href="./styles.css?v=ios-blue-2">
+  <script src="./app.js?v=ios-blue-2" defer></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand-main">
-      <div class="brand-symbol" aria-hidden="true">宿</div>
-      <div class="brand-copy">
-        <span class="brand-eyebrow">STAY DESK</span>
-        <h1>住宿登记</h1>
-        <p class="brand-meta"><span id="today-label"></span><span class="meta-divider">·</span><span class="local-state"><i></i>本机保存</span></p>
+  <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
+    <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 10-7 10S5 15 5 10a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="m7 3 3 5-3 2a14 14 0 0 0 7 7l2-3 5 3-1 3c-.5 1.5-3 1.2-4 1C9 19 5 15 3 8c-.3-1-.5-3.5 1-4l3-1Z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 4a3 3 0 0 1 0 6m3 11v-3a6 6 0 0 0-3-5"/></symbol>
+    <symbol id="i-meal" viewBox="0 0 24 24"><path d="M5 3v7m3-7v7m-6-7v7a3 3 0 0 0 6 0M5 13v8M18 3c-4 2-4 8 0 9h2V3h-2Zm2 9v9"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 3v18M3 7h4m-4 5h4m-4 5h4m6-9h4m-4 4h4"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="3"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+    <symbol id="i-import" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+  </defs></svg>
+
+  <div id="home-view" class="app-shell">
+    <header class="topbar">
+      <div class="app-brand"><span class="app-icon"><svg class="icon"><use href="#i-bed"/></svg></span><span>住宿登记</span></div>
+      <button id="open-backup" class="backup-button" type="button"><svg class="icon"><use href="#i-backup"/></svg><span>备份</span></button>
+    </header>
+    <main id="main-content" class="content">
+      <div class="page-heading"><p id="today-label" class="date-label"></p><div class="heading-row"><h1>入住记录</h1><span class="local-badge"><svg class="icon"><use href="#i-lock"/></svg>本机保存</span></div></div>
+      <button id="add-order" class="add-button" type="button"><span class="add-symbol"><svg class="icon"><use href="#i-plus"/></svg></span><span>新增入住登记</span><svg class="icon button-arrow"><use href="#i-chevron"/></svg></button>
+      <div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="search" type="search" aria-label="搜索登记" placeholder="搜索姓名、电话或订单" autocomplete="off"><button id="clear-search" class="clear-search" type="button" aria-label="清空搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
+      <div class="filters" role="group" aria-label="按入住状态筛选"><button class="filter active" data-filter="all" aria-pressed="true" type="button">全部</button><button class="filter" data-filter="upcoming" aria-pressed="false" type="button">待入住</button><button class="filter" data-filter="staying" aria-pressed="false" type="button">入住中</button><button class="filter" data-filter="finished" aria-pressed="false" type="button">已结束</button></div>
+      <div class="list-heading"><h2 id="list-title">全部登记</h2><span id="order-count">0 条记录</span></div>
+      <section id="order-list" class="order-list" aria-live="polite" aria-labelledby="list-title"></section>
+      <p class="device-note"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>登记信息仅保存在当前设备</p>
+    </main>
+  </div>
+
+  <section id="form-overlay" class="page-view" role="dialog" aria-modal="true" aria-labelledby="form-title" hidden>
+    <div class="page-panel">
+      <header class="view-nav"><button class="text-button" type="button" data-close="form-overlay">取消</button><h2 id="form-title" tabindex="-1">新增登记</h2><span class="nav-spacer" aria-hidden="true"></span></header>
+      <div class="view-scroll">
+        <form id="order-form">
+          <p class="form-intro">记下本次入住，后续查找更轻松。</p>
+          <fieldset><legend>订单信息</legend><div class="field-group">
+            <label class="field field-stacked"><span>旅店/订单 <b>*</b></span><input name="hotelOrder" required maxlength="80" placeholder="如：云栖山居 · 携程订单" autocomplete="off"></label>
+            <label class="field"><span>入住基地 <b>*</b></span><input name="base" required maxlength="40" placeholder="填写基地名称" autocomplete="off"></label>
+          </div></fieldset>
+          <fieldset><legend>客户信息</legend><div class="field-group">
+            <label class="field"><span>客户姓名 <b>*</b></span><input name="customerName" required maxlength="30" placeholder="填写姓名" autocomplete="off"></label>
+            <label class="field"><span>客户电话 <b>*</b></span><input name="phone" type="tel" inputmode="tel" required pattern="[0-9+\-\s]{6,20}" maxlength="20" placeholder="填写联系电话" autocomplete="off"></label>
+          </div></fieldset>
+          <fieldset><legend>入住安排</legend><div class="field-group">
+            <label class="field date-field"><span>入住时间 <b>*</b></span><input name="arrivalDate" type="date" required aria-label="入住时间"></label>
+            <div class="field"><label for="nights">入住天数 <b>*</b></label><div class="stepper"><button type="button" data-step="-1" aria-label="减少一晚">−</button><input id="nights" name="nights" type="number" inputmode="numeric" min="1" step="1" required value="1" aria-label="入住天数"><span class="unit">晚</span><button type="button" data-step="1" aria-label="增加一晚">＋</button></div></div>
+            <label class="field"><span>入住人数 <b>*</b></span><input name="guestCount" required maxlength="20" placeholder="如：2大1小" autocomplete="off"></label>
+            <label class="field"><span>入住房型 <b>*</b></span><input name="roomType" required maxlength="30" placeholder="如：山景亲子房" autocomplete="off"></label>
+            <label class="field"><span>是否含餐</span><span class="select-wrap"><select name="mealIncluded"><option value="否">不含餐</option><option value="是">含餐</option></select><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></span></label>
+          </div></fieldset>
+          <fieldset><legend>费用明细 <span class="optional">选填</span></legend><div class="field-group fee-group"><textarea name="feeDetails" rows="3" maxlength="200" aria-label="费用明细" placeholder="记录房费、餐费或其他费用说明"></textarea><div class="textarea-footer"><span>按实际情况填写即可</span><span id="fee-count">0 / 200</span></div></div></fieldset>
+          <p id="form-error" class="form-error" role="alert" hidden></p>
+          <button id="delete-order" class="delete-button" type="button" hidden>删除这条登记</button>
+          <div class="form-actions"><button id="save-order" class="primary-button" type="submit"><svg class="icon"><use href="#i-check"/></svg><span>保存登记</span></button></div>
+        </form>
       </div>
-    </div>
-    <button class="backup-button" id="open-backup" type="button" aria-label="备份与导入">备份</button>
-  </header>
-
-  <main class="content">
-    <label class="search-box">
-      <span class="search-icon" aria-hidden="true"></span>
-      <input id="search" type="search" placeholder="搜索订单、姓名或电话" autocomplete="off">
-      <button id="clear-search" class="clear-search" type="button" hidden>清除</button>
-    </label>
-
-    <div class="list-heading">
-      <div><span class="section-kicker">RESERVATIONS</span><h2>订单记录</h2></div>
-      <span id="order-count" class="order-count">0 条</span>
-    </div>
-    <section id="order-list" class="order-list" aria-live="polite"></section>
-  </main>
-
-  <footer class="bottom-bar"><button class="add-button" id="add-order" type="button"><span class="add-mark" aria-hidden="true">＋</span>新增登记</button></footer>
-
-  <section class="overlay" id="form-overlay" role="dialog" aria-modal="true" aria-labelledby="form-title" hidden>
-    <div class="sheet form-sheet">
-      <div class="sheet-heading">
-        <div><span class="form-kicker">NEW RESERVATION</span><h2 id="form-title">新增登记</h2></div>
-        <button class="close-button" type="button" data-close="form-overlay" aria-label="关闭">×</button>
-      </div>
-      <form id="order-form">
-        <fieldset class="form-section">
-          <legend><span class="section-index index-coral">01</span>订单信息</legend>
-          <div class="field-grid">
-            <label class="field field-wide"><span>旅店/订单 <b>*</b></span><input name="hotelOrder" required maxlength="80" placeholder="如：某某旅店：平台订单"></label>
-            <label class="field field-wide"><span>入住基地 <b>*</b></span><input name="base" required maxlength="40" placeholder="填写基地名称"></label>
-          </div>
-        </fieldset>
-        <fieldset class="form-section">
-          <legend><span class="section-index index-blue">02</span>入住信息</legend>
-          <div class="field-grid">
-            <label class="field"><span>客户姓名 <b>*</b></span><input name="customerName" required maxlength="30" placeholder="入住人姓名"></label>
-            <label class="field"><span>客户电话 <b>*</b></span><input name="phone" type="tel" inputmode="tel" required pattern="[0-9+\-\s]{6,20}" maxlength="20" placeholder="联系电话"></label>
-            <label class="field"><span>入住时间 <b>*</b></span><input name="arrivalDate" type="date" required></label>
-            <label class="field"><span>入住天数 <b>*</b></span><span class="input-unit"><input name="nights" type="number" inputmode="numeric" min="1" step="1" required value="1"><i>晚</i></span></label>
-            <label class="field"><span>入住人数 <b>*</b></span><input name="guestCount" required maxlength="20" placeholder="如：2大2小"></label>
-            <label class="field"><span>入住房型 <b>*</b></span><input name="roomType" required maxlength="30" placeholder="如：亲子房"></label>
-            <label class="field field-wide"><span>是否含餐</span><select name="mealIncluded"><option value="否">不含餐</option><option value="是">含餐</option></select></label>
-          </div>
-        </fieldset>
-        <fieldset class="form-section fee-section">
-          <legend><span class="section-index index-gold">03</span>费用明细</legend>
-          <label class="fee-field"><span>费用说明</span><textarea name="feeDetails" rows="3" maxlength="200" placeholder="填写费用说明"></textarea></label>
-        </fieldset>
-        <div class="form-actions"><button id="delete-order" class="delete-button" type="button" hidden>删除</button><button class="save-button" id="save-order" type="submit">保存登记</button></div>
-      </form>
     </div>
   </section>
 
-  <section class="overlay" id="backup-overlay" role="dialog" aria-modal="true" aria-labelledby="backup-title" hidden>
-    <div class="sheet backup-sheet">
-      <div class="sheet-heading"><div><span class="form-kicker">LOCAL DATA</span><h2 id="backup-title">备份与恢复</h2><p>数据只保存在本机</p></div><button class="close-button" type="button" data-close="backup-overlay" aria-label="关闭">×</button></div>
-      <label class="backup-label" for="backup-data">复制备份，或粘贴备份进行合并</label>
-      <textarea id="backup-data" class="backup-data" rows="8" spellcheck="false" placeholder="订单备份 JSON"></textarea>
-      <div class="backup-actions"><button class="secondary-button" id="copy-backup" type="button">复制备份</button><button class="save-button" id="import-backup" type="button">合并导入</button></div>
+  <section id="backup-overlay" class="page-view" role="dialog" aria-modal="true" aria-labelledby="backup-title" hidden>
+    <div class="page-panel backup-panel">
+      <header class="view-nav"><button class="text-button back-button" type="button" data-close="backup-overlay"><svg class="icon"><use href="#i-back"/></svg>返回</button><h2 id="backup-title" tabindex="-1">备份与恢复</h2><span class="nav-spacer" aria-hidden="true"></span></header>
+      <div class="view-scroll backup-content">
+        <div class="backup-intro"><span class="backup-emblem"><svg class="icon"><use href="#i-backup"/></svg></span><h3>给记录留一份备份</h3><p>数据保存在当前设备。复制备份后，<br>可粘贴到备忘录妥善保管。</p></div>
+        <button id="copy-backup" class="backup-export" type="button"><span class="action-icon"><svg class="icon"><use href="#i-copy"/></svg></span><span class="action-copy"><strong>复制本机备份</strong><span id="backup-count">备份全部登记信息</span></span><svg class="icon chevron"><use href="#i-chevron"/></svg></button>
+        <div class="import-section"><label for="backup-data">恢复已有备份</label><p>将备份内容粘贴在下方，合并到当前记录。</p><textarea id="backup-data" class="backup-data" rows="6" spellcheck="false" placeholder="在这里粘贴备份内容"></textarea><button id="import-backup" class="primary-button" type="button"><svg class="icon"><use href="#i-import"/></svg>合并导入</button><p class="import-note">相同编号的记录将以备份内容为准。</p></div>
+        <p class="device-note"><svg class="icon"><use href="#i-lock"/></svg>备份与导入均在本机完成</p>
+      </div>
     </div>
   </section>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"><svg class="icon"><use href="#i-check"/></svg><span id="toast-message"></span></div>
 </body>
 </html>

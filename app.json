@@ -4,10 +4,10 @@
     "pages/form/form"
   ],
   "window": {
-    "navigationBarTitleText": "住宿订单登记",
+    "navigationBarTitleText": "住宿登记",
     "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#f4f6f5"
+    "backgroundColor": "#f4f6fa"
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"

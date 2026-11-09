@@ -1,40 +1,25 @@
 <view class="page">
   <scroll-view class="form-scroll" scroll-y="true">
-    <view class="form-intro">
-      <view class="form-kicker">NEW RESERVATION</view>
-      <view class="form-title">{{isEditing ? '修改登记' : '新增登记'}}</view>
+    <view class="form-content">
+      <view class="form-intro">记下本次入住，后续查找更轻松。</view>
+      <view class="section"><view class="section-title">订单信息</view><view class="field-group">
+        <view class="field-row field-stacked"><text class="field-label">旅店/订单 <text class="required">*</text></text><input class="field-input" value="{{hotelOrder}}" data-key="hotelOrder" bindinput="onInput" placeholder="如：云栖山居 · 携程订单" maxlength="80" /></view>
+        <view class="field-row"><text class="field-label">入住基地 <text class="required">*</text></text><input class="field-input" value="{{base}}" data-key="base" bindinput="onInput" placeholder="填写基地名称" maxlength="40" /></view>
+      </view></view>
+      <view class="section"><view class="section-title">客户信息</view><view class="field-group">
+        <view class="field-row"><text class="field-label">客户姓名 <text class="required">*</text></text><input class="field-input" value="{{customerName}}" data-key="customerName" bindinput="onInput" placeholder="填写姓名" maxlength="30" /></view>
+        <view class="field-row"><text class="field-label">客户电话 <text class="required">*</text></text><input class="field-input" type="text" value="{{phone}}" data-key="phone" bindinput="onInput" placeholder="填写联系电话" maxlength="20" /></view>
+      </view></view>
+      <view class="section"><view class="section-title">入住安排</view><view class="field-group">
+        <view class="field-row"><text class="field-label">入住时间 <text class="required">*</text></text><picker class="date-picker" mode="date" value="{{arrivalDate}}" bindchange="onDateChange"><view class="picker-value">{{arrivalDate}}<image class="small-icon" src="/assets/icons/calendar-muted.svg" /></view></picker></view>
+        <view class="field-row"><text class="field-label">入住天数 <text class="required">*</text></text><view class="stepper"><button data-step="-1" bindtap="onNightsStep">−</button><input class="field-input numeric-input" type="number" value="{{nights}}" data-key="nights" bindinput="onInput" /><text class="unit">晚</text><button data-step="1" bindtap="onNightsStep">＋</button></view></view>
+        <view class="field-row"><text class="field-label">入住人数 <text class="required">*</text></text><input class="field-input" value="{{guestCount}}" data-key="guestCount" bindinput="onInput" placeholder="如：2大1小" maxlength="20" /></view>
+        <view class="field-row"><text class="field-label">入住房型 <text class="required">*</text></text><input class="field-input" value="{{roomType}}" data-key="roomType" bindinput="onInput" placeholder="如：山景亲子房" maxlength="30" /></view>
+        <view class="field-row"><text class="field-label">是否含餐</text><view class="segmented"><view class="segment {{mealIncluded === '是' ? 'segment-active' : ''}}" data-value="是" bindtap="onMealChange">含餐</view><view class="segment {{mealIncluded === '否' ? 'segment-active' : ''}}" data-value="否" bindtap="onMealChange">不含餐</view></view></view>
+      </view></view>
+      <view class="section"><view class="section-title">费用明细 <text class="optional">选填</text></view><view class="field-group fee-group"><textarea class="fee-input" value="{{feeDetails}}" data-key="feeDetails" bindinput="onInput" placeholder="记录房费、餐费或其他费用说明" maxlength="200" auto-height="true" /><view class="textarea-footer"><text>按实际情况填写即可</text><text>{{feeDetails.length}} / 200</text></view></view></view>
+      <button wx:if="{{isEditing}}" class="delete-button" bindtap="onDelete">删除这条登记</button>
     </view>
-
-    <view class="section">
-      <view class="section-heading"><text class="section-mark section-mark-coral">01</text><text class="section-title">订单信息</text></view>
-      <view class="field-grid">
-        <view class="field-row field-wide"><text class="field-label">旅店/订单 <text class="required">*</text></text><input class="field-input" value="{{hotelOrder}}" data-key="hotelOrder" bindinput="onInput" placeholder="如：某某旅店：平台订单" maxlength="80" /></view>
-        <view class="field-row field-wide"><text class="field-label">入住基地 <text class="required">*</text></text><input class="field-input" value="{{base}}" data-key="base" bindinput="onInput" placeholder="填写基地名称" maxlength="40" /></view>
-      </view>
-    </view>
-
-    <view class="section">
-      <view class="section-heading"><text class="section-mark section-mark-blue">02</text><text class="section-title">入住信息</text></view>
-      <view class="field-grid">
-        <view class="field-row"><text class="field-label">客户姓名 <text class="required">*</text></text><input class="field-input" value="{{customerName}}" data-key="customerName" bindinput="onInput" placeholder="入住人姓名" maxlength="30" /></view>
-        <view class="field-row"><text class="field-label">客户电话 <text class="required">*</text></text><input class="field-input" type="text" value="{{phone}}" data-key="phone" bindinput="onInput" placeholder="联系电话" maxlength="20" /></view>
-        <view class="field-row"><text class="field-label">入住时间 <text class="required">*</text></text><picker mode="date" value="{{arrivalDate}}" bindchange="onDateChange"><view class="picker-value">{{arrivalDate}}</view></picker></view>
-        <view class="field-row"><text class="field-label">入住天数 <text class="required">*</text></text><view class="number-entry"><input class="field-input numeric-input" type="number" value="{{nights}}" data-key="nights" bindinput="onInput" /><text class="unit">晚</text></view></view>
-        <view class="field-row"><text class="field-label">入住人数 <text class="required">*</text></text><input class="field-input" value="{{guestCount}}" data-key="guestCount" bindinput="onInput" placeholder="如：2大2小" maxlength="20" /></view>
-        <view class="field-row"><text class="field-label">入住房型 <text class="required">*</text></text><input class="field-input" value="{{roomType}}" data-key="roomType" bindinput="onInput" placeholder="如：亲子房" maxlength="30" /></view>
-        <view class="field-row field-wide field-meal"><text class="field-label">是否含餐</text><view class="segmented"><view class="segment {{mealIncluded === '是' ? 'segment-active' : ''}}" data-value="是" bindtap="onMealChange">含餐</view><view class="segment {{mealIncluded === '否' ? 'segment-active' : ''}}" data-value="否" bindtap="onMealChange">不含餐</view></view></view>
-      </view>
-    </view>
-
-    <view class="section fee-section">
-      <view class="section-heading"><text class="section-mark section-mark-gold">03</text><text class="section-title">费用明细</text></view>
-      <textarea class="fee-input" value="{{feeDetails}}" data-key="feeDetails" bindinput="onInput" placeholder="填写费用说明" maxlength="200" auto-height="true" />
-    </view>
-    <view class="form-bottom-space"></view>
   </scroll-view>
-
-  <view class="form-actions">
-    <button wx:if="{{isEditing}}" class="delete-button" bindtap="onDelete">删除</button>
-    <button class="save-button" bindtap="onSave">{{isEditing ? '保存修改' : '保存登记'}}</button>
-  </view>
+  <view class="form-actions"><button class="save-button" bindtap="onSave"><image class="icon" src="/assets/icons/check-white.svg" />{{isEditing ? '保存修改' : '保存登记'}}</button></view>
 </view>

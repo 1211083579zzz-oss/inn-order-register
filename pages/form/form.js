@@ -48,6 +48,11 @@ Page({
     this.setData({ arrivalDate: event.detail.value });
   },
 
+  onNightsStep(event) {
+    const nights = Math.max(1, Math.floor(Number(this.data.nights) || 1) + Number(event.currentTarget.dataset.step));
+    this.setData({ nights: String(nights) });
+  },
+
   onMealChange(event) {
     this.setData({ mealIncluded: event.currentTarget.dataset.value });
   },
@@ -119,7 +124,7 @@ Page({
       title: '删除订单',
       content: '删除后无法从本机恢复，确认删除这条登记吗？',
       confirmText: '删除',
-      confirmColor: '#b54842',
+      confirmColor: '#bd3142',
       success: ({ confirm }) => {
         if (!confirm) return;
         deleteOrder(this.data.orderId);

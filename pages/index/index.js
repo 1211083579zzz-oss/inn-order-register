@@ -1,4 +1,4 @@
-const { dateString, getOrders, makeBackup, mergeOrders, parseBackup } = require('../../utils/orders');
+const { dateString, getOrderStatus, getOrders, makeBackup, mergeOrders, parseBackup } = require('../../utils/orders');
 
 Page({
   data: {
@@ -6,7 +6,10 @@ Page({
     orders: [],
     orderCount: 0,
     todayLabel: '',
-    hasData: false
+    hasData: false,
+    activeFilter: 'all',
+    filterTitle: '全部登记',
+    filters: [{ key: 'all', label: '全部' }, { key: 'upcoming', label: '待入住' }, { key: 'staying', label: '入住中' }, { key: 'finished', label: '已结束' }]
   },
 
   onShow() {
@@ -21,7 +24,13 @@ Page({
   refreshOrders() {
     const allOrders = getOrders();
     const query = this.data.query.trim().toLowerCase();
-    const orders = allOrders
+    const labels = { '待入住': 'upcoming', '入住中': 'staying', '已离店': 'finished' };
+    const prepared = allOrders.map(order => {
+      const status = getOrderStatus(order);
+      return { ...order, statusKey: labels[status], statusLabel: status === '已离店' ? '已结束' : status, dateDisplay: order.arrivalDate.replace(/-/g, '.') };
+    });
+    const orders = prepared
+      .filter(order => this.data.activeFilter === 'all' || order.statusKey === this.data.activeFilter)
       .filter((order) => !query || [
         order.hotelOrder,
         order.base,
@@ -39,7 +48,8 @@ Page({
       orders,
       orderCount: orders.length,
       hasData: allOrders.length > 0,
-      todayLabel: dateString(new Date()).replace(/-/g, '/')
+      filterTitle: this.data.activeFilter === 'all' ? '全部登记' : this.data.filters.find(item => item.key === this.data.activeFilter).label,
+      todayLabel: `${new Date().getMonth() + 1}月${new Date().getDate()}日 星期${'日一二三四五六'[new Date().getDay()]}`
     });
   },
 
@@ -51,7 +61,16 @@ Page({
     this.setData({ query: '' }, () => this.refreshOrders());
   },
 
+  onFilter(event) {
+    this.setData({ activeFilter: event.currentTarget.dataset.filter }, () => this.refreshOrders());
+  },
+
+  onResetFilter() {
+    this.setData({ activeFilter: 'all', query: '' }, () => this.refreshOrders());
+  },
+
   onAddOrder() {
+    this.setData({ activeFilter: 'all', query: '' });
     wx.navigateTo({ url: '/pages/form/form' });
   },
 

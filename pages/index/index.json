@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "住宿订单登记",
+  "navigationBarTitleText": "住宿登记",
   "enablePullDownRefresh": true,
-  "backgroundColor": "#f4f6f5"
+  "backgroundColor": "#f4f6fa"
 }

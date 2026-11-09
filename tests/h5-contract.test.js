@@ -7,8 +7,8 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const script = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 
 assert.match(html, /name="viewport"[^>]*viewport-fit=cover/);
-assert.match(html, /href="\.\/styles\.css"/);
-assert.match(html, /src="\.\/app\.js"/);
+assert.match(html, /href="\.\/styles\.css(?:\?[^"]*)?"/);
+assert.match(html, /src="\.\/app\.js(?:\?[^"]*)?"/);
 assert.doesNotMatch(html, /<script[^>]+src="https?:\/\//i);
 assert.doesNotMatch(html, /<link[^>]+href="https?:\/\//i);
 assert.doesNotMatch(script, /\bfetch\s*\(|XMLHttpRequest|\bwx\.request\s*\(/);

@@ -1,7 +1,7 @@
 page {
   min-height: 100%;
-  background: #f4f6f5;
-  color: #1d2928;
+  background: #f4f6fa;
+  color: #17233c;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 28rpx;
 }
