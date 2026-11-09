@@ -18,7 +18,7 @@ assert.match(script, /localStorage\.setItem\(STORAGE_KEY/);
 for (const label of ['旅店/订单', '入住基地', '客户姓名', '客户电话', '入住时间', '入住天数', '入住人数', '入住房型', '是否含餐', '费用明细']) {
   assert.ok(html.includes(label), `H5 contains ${label}`);
 }
-const formMarkup = html.match(/<form id="order-form">([\s\S]*?)<\/form>/)[1];
+const formMarkup = html.match(/<form\b(?=[^>]*\bid="order-form")[^>]*>([\s\S]*?)<\/form>/)[1];
 assert.deepEqual(new Set(Array.from(formMarkup.matchAll(/name="([^"]+)"/g), (match) => match[1])), new Set([
   'hotelOrder', 'base', 'customerName', 'phone', 'arrivalDate', 'nights', 'guestCount', 'roomType', 'mealIncluded', 'feeDetails'
 ]));
