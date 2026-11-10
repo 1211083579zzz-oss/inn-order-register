@@ -164,8 +164,8 @@
       const date = `${Number(order.arrivalDate.slice(5, 7))}月${Number(order.arrivalDate.slice(8, 10))}日`;
       const weekday = new Intl.DateTimeFormat('zh-CN', { weekday: 'short' }).format(arrivalDate);
       const deadline = arrivalView === 'staying' ? '入住中' : days === 0 ? '今天入住' : `${days} 天后入住`;
-      const context = [order.base, order.roomType, arrivalView === 'staying' ? `还有 ${remaining} 晚` : `${order.nights} 晚`].filter(Boolean).join(' · ');
-      return `<button class="arrival-row${arrivalView === 'arrivals' && days === 0 ? ' arrival-today' : ''}${arrivalView === 'staying' ? ' arrival-staying' : ''}" type="button" data-arrival-id="${escapeHtml(order.id)}" aria-label="${escapeHtml(deadline)}，${escapeHtml(order.customerName)}，${escapeHtml(date)}${escapeHtml(weekday)}，${escapeHtml(company?.name || '待归类住客')}，查看登记"><span class="arrival-copy"><span class="arrival-row-heading"><strong class="arrival-guest">${escapeHtml(order.customerName || '未填写姓名')}</strong><span class="arrival-when"><strong class="visually-hidden">${label}</strong><span>${deadline}</span></span></span><span class="arrival-checkin"><time datetime="${escapeHtml(order.arrivalDate)}">${escapeHtml(date)}</time><span>${escapeHtml(weekday)}${arrivalView === 'staying' ? '入住' : '到店'}</span></span><span class="arrival-person">${icon('company')}<span>${escapeHtml(company?.name || '待归类住客')}</span></span><span class="arrival-bottom"><span class="arrival-context">${escapeHtml(context)}</span><span class="arrival-open">查看${icon('chevron', 'chevron')}</span></span></span></button>`;
+      const context = [weekday, order.roomType, arrivalView === 'staying' ? `剩余 ${remaining} 晚` : `${order.nights} 晚`].filter(Boolean).join(' · ');
+      return `<button class="arrival-row${arrivalView === 'arrivals' && days === 0 ? ' arrival-today' : ''}${arrivalView === 'staying' ? ' arrival-staying' : ''}" type="button" data-arrival-id="${escapeHtml(order.id)}" aria-label="${escapeHtml(deadline)}，${escapeHtml(order.customerName)}，${escapeHtml(date)}${escapeHtml(weekday)}，${escapeHtml(company?.name || '未分类')}，查看登记"><time class="arrival-calendar" datetime="${escapeHtml(order.arrivalDate)}" aria-hidden="true"><span>${Number(order.arrivalDate.slice(5, 7))}月</span><strong>${Number(order.arrivalDate.slice(8, 10))}</strong></time><span class="arrival-copy"><span class="arrival-row-heading"><strong class="arrival-guest">${escapeHtml(order.customerName || '未填写姓名')}</strong><span class="arrival-when"><strong class="visually-hidden">${label}</strong><span>${deadline}</span></span></span><span class="arrival-person">${escapeHtml(company?.name || '未分类')}</span><span class="arrival-context">${escapeHtml(context)}</span></span>${icon('chevron', 'arrival-chevron')}</button>`;
     }).join('') || '<p class="arrival-empty">未来 3 天没有入住安排</p>';
     const expand = document.querySelector('#arrival-expand');
     expand.hidden = entries.length <= 3;
@@ -213,6 +213,23 @@
     return { all: orders.length, upcoming: orders.filter(order => stayState(order).key === 'upcoming').length, staying: orders.filter(order => stayState(order).key === 'staying').length, finished: orders.filter(order => stayState(order).key === 'finished').length };
   }
 
+  function companyStates(summary) {
+    return ['upcoming', 'staying', 'finished'].filter(key => summary[key] > 0).map(key => `<span class="company-state company-state-${key}">${filterLabels[key]} <b>${summary[key]}</b></span>`).join('') || '<span class="company-state">入住信息待确认</span>';
+  }
+
+  function nextArrival(orders) {
+    const date = orders.map(order => order.arrivalDate).filter(date => date >= today && window.InnArrivals.calendarDay(date) !== null).sort()[0];
+    if (!date) return '';
+    const todayCount = orders.filter(order => order.arrivalDate === today).length;
+    const label = date === today ? `今天 ${todayCount} 条入住` : `下次入住 ${date.slice(0, 4) === today.slice(0, 4) ? '' : date.slice(0, 4) + '年'}${Number(date.slice(5, 7))}月${Number(date.slice(8, 10))}日`;
+    return `<span class="company-next${date === today ? ' company-next-today' : ''}">${icon('calendar')}<span>${label}</span></span>`;
+  }
+
+  function updateCompanyShortcuts() {
+    const name = orderForm.elements.companyName.value.trim();
+    document.querySelectorAll('[data-company-shortcut]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.companyShortcut === name)));
+  }
+
   function renderOverview() {
     const { companies, orders } = store.read();
     const activeCompanies = companies.filter(company => orders.some(order => order.companyId === company.id));
@@ -244,22 +261,23 @@
     document.querySelector('#company-list').classList.toggle('directory-is-empty', !visible.length);
     document.querySelector('#company-list').innerHTML = visible.map(company => {
       const summary = counts(company.orders);
-      return `<button class="company-row" type="button" data-company-id="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${summary.all} 条登记，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已结束 ${summary.finished}，查看住客"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${summary.all} 条</span></span><span class="company-statistics"><span>待入住 <b>${summary.upcoming}</b></span><span class="current-count">入住中 <b>${summary.staying}</b></span><span>已结束 <b>${summary.finished}</b></span></span></span>${icon('chevron', 'chevron')}</button>`;
+      return `<button class="company-row" type="button" data-company-id="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${summary.all} 条登记，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已结束 ${summary.finished}，查看住客"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${summary.all} 条登记</span></span><span class="company-statistics">${companyStates(summary)}</span>${nextArrival(company.orders)}</span>${icon('chevron', 'chevron')}</button>`;
     }).join('') || (groups.length
       ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>没有符合条件的公司</h3><p>换个关键词，或查看全部公司。</p><button class="empty-reset" type="button" data-company-reset>查看全部公司</button></div>`
-      : `<div class="empty-state directory-empty"><span class="empty-icon">${icon('company')}</span><h3>还没有旅居公司分类</h3><p>新增一条入住登记，填写旅居公司名称，<br>保存后会自动在这里分类显示。</p></div>`);
+      : `<div class="empty-state directory-empty"><span class="empty-icon">${icon('company')}</span><h3>从第一条入住登记开始</h3><p>填写住客和旅居公司，<br>这里会自动整理成公司分类。</p></div>`);
   }
 
   function renderCompanyDetail() {
     if (selectedCompanyId === null) return;
     const company = store.read().companies.find(item => item.id === selectedCompanyId);
     const name = company?.name || (selectedCompanyId === '' ? '未分类' : '公司分类');
-    document.querySelector('#company-title').textContent = '分类入住记录';
+    document.querySelector('#company-title').textContent = '住客登记';
     document.querySelector('#company-detail-symbol').textContent = Array.from(name)[0] || '旅';
     document.querySelector('#company-name').textContent = name;
     const companies = store.read().companies;
-    const count = readOrders().filter(order => selectedCompanyId ? order.companyId === selectedCompanyId : !companies.some(company => company.id === order.companyId)).length;
-    document.querySelector('#company-detail-summary').textContent = `${count} 条入住登记`;
+    const orders = readOrders().filter(order => selectedCompanyId ? order.companyId === selectedCompanyId : !companies.some(company => company.id === order.companyId));
+    document.querySelector('#company-detail-summary').textContent = `共 ${orders.length} 条入住登记`;
+    document.querySelector('#company-detail-states').innerHTML = companyStates(counts(orders));
     renderOrders(document.querySelector('#company-guest-list'), document.querySelector('#company-guest-search').value, companyFilter, selectedCompanyId);
   }
 
@@ -307,6 +325,12 @@
     orderForm.dataset.id = order ? order.id : '';
     orderForm.elements.companyName.value = company?.name || '';
     document.querySelector('#company-suggestions').innerHTML = companies.map(item => `<option value="${escapeHtml(item.name)}"></option>`).join('');
+    const usedIds = [...new Set([company?.id, ...readOrders().map(item => item.companyId)].filter(Boolean))];
+    const recentCompanies = usedIds.map(id => companies.find(item => item.id === id)).filter(Boolean).slice(0, 4);
+    const shortcuts = document.querySelector('#company-shortcuts');
+    shortcuts.hidden = !recentCompanies.length;
+    shortcuts.innerHTML = recentCompanies.map(item => `<button type="button" data-company-shortcut="${escapeHtml(item.name)}" aria-pressed="false" aria-label="使用旅居公司：${escapeHtml(item.name)}">${escapeHtml(item.name)}</button>`).join('');
+    updateCompanyShortcuts();
 
     if (order) {
       const normalized = normalizeOrder(order);
@@ -393,6 +417,12 @@
     const company = event.target.closest('[data-company-id]');
     if (company) openCompany(company.dataset.companyId);
   });
+  document.querySelector('#company-shortcuts').addEventListener('click', event => {
+    const button = event.target.closest('[data-company-shortcut]');
+    if (!button) return;
+    orderForm.elements.companyName.value = button.dataset.companyShortcut;
+    orderForm.elements.companyName.dispatchEvent(new Event('input', { bubbles: true }));
+  });
   document.querySelector('#add-company-guest').addEventListener('click', () => openForm());
   document.querySelector('#company-guest-search').addEventListener('input', renderCompanyDetail);
   document.querySelector('#clear-company-guest-search').addEventListener('click', () => { document.querySelector('#company-guest-search').value = ''; renderCompanyDetail(); document.querySelector('#company-guest-search').focus(); });
@@ -473,6 +503,7 @@
   orderForm.elements.feeDetails.addEventListener('input', updateFeeCount);
   orderForm.addEventListener('input', event => {
     if (event.target.name === 'nights') syncNightsStepper();
+    if (event.target.name === 'companyName') updateCompanyShortcuts();
     if (event.target.name && orderForm.classList.contains('submitted')) validateField(event.target);
   });
   orderForm.addEventListener('keydown', event => {

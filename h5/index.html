@@ -9,17 +9,17 @@
   <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=companies-12">
-  <script src="./storage.js?v=companies-12" defer></script>
-  <script src="./arrivals.js?v=companies-12" defer></script>
-  <script src="./sync-config.js?v=companies-12" defer></script>
-  <script src="./sync-core.js?v=companies-12" defer></script>
-  <script src="./sync-client.js?v=companies-12" defer></script>
-  <script src="./motion.js?v=companies-12" defer></script>
-  <script src="./app.js?v=companies-12" defer></script>
-  <script src="./sync-ui.js?v=companies-12" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=polish-13">
+  <script src="./storage.js?v=polish-13" defer></script>
+  <script src="./arrivals.js?v=polish-13" defer></script>
+  <script src="./sync-config.js?v=polish-13" defer></script>
+  <script src="./sync-core.js?v=polish-13" defer></script>
+  <script src="./sync-client.js?v=polish-13" defer></script>
+  <script src="./motion.js?v=polish-13" defer></script>
+  <script src="./app.js?v=polish-13" defer></script>
+  <script src="./sync-ui.js?v=polish-13" defer></script>
 </head>
-<body>
+<body data-experience="13">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -75,7 +75,7 @@
     <div class="page-panel company-page">
       <header class="view-nav"><button class="text-button back-button" type="button" data-close="company-overlay"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg>首页</button><h2 id="company-title" tabindex="-1">公司入住统计</h2><span class="nav-spacer" aria-hidden="true"></span></header>
       <div class="view-scroll company-content">
-        <div class="company-profile"><div class="company-profile-row"><span id="company-detail-symbol" class="company-symbol" aria-hidden="true"></span><div class="company-profile-copy"><h3 id="company-name"></h3><p id="company-detail-summary" class="company-contact"></p></div></div></div>
+        <div class="company-profile"><div class="company-profile-row"><span id="company-detail-symbol" class="company-symbol" aria-hidden="true"></span><div class="company-profile-copy"><h3 id="company-name"></h3><p id="company-detail-summary" class="company-contact"></p></div></div><div id="company-detail-states" class="company-statistics company-detail-states" aria-label="公司入住情况"></div></div>
         <div class="guest-tools"><div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="company-guest-search" type="search" aria-label="搜索公司客人" placeholder="搜索住客、电话或订单" autocomplete="off" enterkeyhint="search"><button id="clear-company-guest-search" class="clear-search" type="button" aria-label="清空客人搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
         <div class="filters" role="group" aria-label="筛选公司客人入住状态"><span id="company-filter-selection" class="filter-selection" aria-hidden="true"></span><button class="filter active" data-company-filter="all" aria-pressed="true" type="button">全部</button><button class="filter" data-company-filter="upcoming" aria-pressed="false" type="button">待入住</button><button class="filter" data-company-filter="staying" aria-pressed="false" type="button">入住中</button><button class="filter" data-company-filter="finished" aria-pressed="false" type="button">已结束</button></div></div>
         <div class="list-heading"><h3 id="company-list-title">客人入住</h3><span id="company-guest-count">0 条记录</span></div>
@@ -91,7 +91,7 @@
       <header class="view-nav"><button class="text-button back-button" type="button" data-close="form-overlay"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg>返回</button><h2 id="form-title" tabindex="-1">新增登记</h2><span class="nav-spacer" aria-hidden="true"></span></header>
       <div class="view-scroll">
         <form id="order-form" novalidate>
-          <fieldset><legend>旅居公司</legend><div class="field-group"><label class="field"><span>公司名称 <b>*</b></span><input id="order-company" name="companyName" list="company-suggestions" required maxlength="80" placeholder="填写或选择旅居公司" autocomplete="off" enterkeyhint="next"></label></div><datalist id="company-suggestions"></datalist><p class="field-note">直接填写名称，保存后自动按公司分类。</p></fieldset>
+          <fieldset><legend>旅居公司</legend><div class="field-group"><label class="field"><span>公司名称 <b>*</b></span><input id="order-company" name="companyName" list="company-suggestions" required maxlength="80" placeholder="填写或选择旅居公司" autocomplete="off" enterkeyhint="next"></label></div><datalist id="company-suggestions"></datalist><div id="company-shortcuts" class="company-shortcuts" role="group" aria-label="快速选择已有旅居公司" hidden></div><p class="field-note">填写新公司名称，保存后自动分类。</p></fieldset>
           <fieldset><legend>订单信息</legend><div class="field-group">
             <label class="field"><span>旅店/订单 <b>*</b></span><input name="hotelOrder" required maxlength="80" placeholder="旅店或订单名称" autocomplete="off" enterkeyhint="next"></label>
             <label class="field"><span>入住基地 <b>*</b></span><input name="base" required maxlength="40" placeholder="基地名称" autocomplete="off" enterkeyhint="next"></label>
@@ -131,7 +131,7 @@
           <form id="sync-conflicts" class="sync-conflicts" hidden><h4>确认同时修改的内容</h4><p>两台设备修改了同一项，两份内容都已保留。请选择要使用的内容。</p><div id="sync-conflict-fields"></div><button id="sync-resolve" class="primary-button" type="submit">保存选择并同步</button></form>
           <p id="sync-error" class="form-error" role="alert" hidden></p>
         </section>
-        <div class="backup-intro"><span class="backup-emblem"><svg class="icon" aria-hidden="true"><use href="#i-backup"/></svg></span><h3>备份你的入住记录</h3><p>复制后粘贴到备忘录保存，<br>换设备时也能合并恢复。</p></div>
+        <div class="backup-intro"><h3>本机备份</h3><p>复制到备忘录保存，换设备时可合并恢复。</p></div>
         <button id="copy-backup" class="backup-export" type="button"><span class="action-icon"><svg class="icon"><use href="#i-copy"/></svg></span><span class="action-copy"><strong>复制本机备份</strong><span id="backup-count">备份全部登记信息</span></span><svg class="icon chevron"><use href="#i-chevron"/></svg></button>
         <div class="import-section"><label for="backup-data">恢复已有备份</label><p>粘贴备份内容，合并到本机记录。</p><textarea id="backup-data" class="backup-data" rows="4" spellcheck="false" placeholder="在这里粘贴备份内容"></textarea><button id="import-backup" class="primary-button" type="button"><svg class="icon"><use href="#i-import"/></svg>合并导入</button><p class="import-note">相同编号以备份内容为准。</p></div>
         <p class="device-note"><svg class="icon"><use href="#i-lock"/></svg>备份与导入均在本机完成</p>
