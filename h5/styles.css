@@ -57,13 +57,7 @@ h1, h2, h3 { text-wrap: balance; }
 .page-heading { margin-bottom: 20px; }
 .date-label { margin-bottom: 8px; color: var(--secondary); font-size: var(--caption); }
 .heading-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.module-tabs { display: flex; gap: 24px; margin: 0 0 20px; border-bottom: 1px solid var(--line); }
-.module-tabs button { position: relative; justify-content: flex-start; padding: 0 0 10px; color: var(--secondary); background: transparent; font-size: 1rem; }
-.module-tabs button.selected { color: var(--blue); font-weight: 600; }
-.module-tabs button.selected::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; border-radius: 1px; background: var(--blue); content: ''; }
-.category-filters { display: flex; gap: 8px; margin: 16px 0 0; overflow-x: auto; padding: 2px; scroll-padding: 2px; }
-.category-chip { min-height: 44px; flex: none; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--secondary); background: var(--surface); font-size: var(--caption); }
-.category-chip.selected { border-color: var(--blue-soft); color: var(--blue); background: var(--blue-soft); font-weight: 600; }
+.hierarchy-caption { margin: -6px 0 22px; color: var(--secondary); font-size: var(--caption); line-height: 1.8; }
 .company-list { overflow: hidden; border-radius: var(--radius-group); }
 .company-row { display: flex; width: 100%; min-height: 100px; align-items: center; gap: 12px; padding: 18px 16px; border-bottom: 1px solid var(--line); color: var(--ink); background: var(--surface); text-align: left; }
 .company-row:last-child { border-bottom: 0; }
@@ -91,7 +85,9 @@ h1, h2, h3 { text-wrap: balance; }
 #company-form { padding-top: 20px; padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
 .field-note { margin: 8px 16px 0; color: var(--secondary); font-size: var(--caption); line-height: 1.7; }
 .membership { display: flex; flex-direction: column; gap: 4px; margin-top: 20px; padding: 12px 16px; border-radius: var(--radius-group); background: var(--blue-soft); }
-.membership label { color: var(--secondary); font-size: var(--caption); }
+.membership-label { color: var(--secondary); font-size: var(--caption); }
+.membership > strong { color: var(--blue); font-size: 1rem; font-weight: 600; overflow-wrap: anywhere; }
+.empty-create { min-height: 44px; margin-top: 20px; padding: 0 20px; border-radius: var(--radius-control); color: var(--blue); background: var(--blue-soft); font-size: 1rem; font-weight: 600; }
 .membership .select-wrap { display: flex; align-items: center; min-width: 0; }
 .membership .select-wrap select { color: var(--blue); font-weight: 550; }
 .record-company { display: flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--secondary); font-size: var(--caption); overflow-wrap: anywhere; }

@@ -87,6 +87,18 @@
       return commit({ ...data, orders: normalized });
     }
 
+    function saveOrder(input, parentCompanyId) {
+      const data = read();
+      const order = normalizeOrder(input);
+      if (!parentCompanyId || order.companyId !== parentCompanyId || !data.companies.some(company => company.id === parentCompanyId)) throw new Error('请先进入旅居公司，再登记该公司的住客');
+      const existing = data.orders.find(item => item.id === order.id);
+      if (existing?.companyId && existing.companyId !== parentCompanyId) throw new Error('请进入住客所属的旅居公司修改登记');
+      order.createdAt = existing?.createdAt || order.createdAt;
+      order.updatedAt = new Date().toISOString();
+      commit({ ...data, orders: existing ? data.orders.map(item => item.id === order.id ? order : item) : [order, ...data.orders] });
+      return order;
+    }
+
     function removeCompany(id) {
       const data = read();
       return commit({ ...data, companies: data.companies.filter(company => company.id !== id), orders: data.orders.map(order => order.companyId === id ? { ...order, companyId: '', updatedAt: new Date().toISOString() } : order) });
@@ -129,7 +141,7 @@
       return commit({ version: 2, companies: [...companies.values()], orders: [...orders.values()] });
     }
 
-    return { read, saveCompany, saveOrders, removeCompany, backup, parseBackup, mergeBackup };
+    return { read, saveCompany, saveOrder, saveOrders, removeCompany, backup, parseBackup, mergeBackup };
   }
 
   const api = { DATA_KEY, LEGACY_KEY, APP, createStore, normalizeOrder };
