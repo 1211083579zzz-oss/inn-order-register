@@ -16,15 +16,14 @@
   const backupData = document.querySelector('#backup-data');
   const allViews = Array.from(document.querySelectorAll('.page-view'));
   const navigation = window.createInnNavigation(document.querySelector('#home-view'), allViews);
-  const companyForm = document.querySelector('#company-form');
   let selectedCompanyId = null;
-  let pendingCompanyId = null;
   let companyFilter = 'all';
+  let homeFilter = 'all';
   const confirmation = document.querySelector('#confirm-dialog');
   let pendingConfirmation;
   let confirmationOpener;
   let confirmationEntry;
-  const requiredMessages = { hotelOrder: '请填写旅店或订单名称', base: '请填写入住基地', customerName: '请填写客户姓名', phone: '请填写客户电话', arrivalDate: '请选择入住时间', nights: '入住天数应为至少 1 晚的整数', guestCount: '请填写入住人数', roomType: '请填写入住房型' };
+  const requiredMessages = { companyName: '请填写旅居公司名称', hotelOrder: '请填写旅店或订单名称', base: '请填写入住基地', customerName: '请填写客户姓名', phone: '请填写客户电话', arrivalDate: '请选择入住时间', nights: '入住天数应为至少 1 晚的整数', guestCount: '请填写入住人数', roomType: '请填写入住房型' };
 
   function localDate(date) {
     const year = date.getFullYear();
@@ -174,35 +173,35 @@
     expand.setAttribute('aria-expanded', String(arrivalsExpanded));
   }
 
-  function renderOrders(target, queryValue, filterValue, companyId) {
-    const orders = readOrders().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  function renderOrders(target, queryValue, filterValue, companyId = null) {
+    const { orders, companies } = store.read();
+    const home = companyId === null;
     const query = queryValue.trim().toLocaleLowerCase();
-    const visible = orders.filter((order) => order.companyId === companyId && (filterValue === 'all' || stayState(order).key === filterValue) && (!query || [
-      order.hotelOrder, order.base, order.customerName, order.phone, order.arrivalDate,
-      order.nights, order.guestCount, order.roomType, order.mealIncluded, order.feeDetails
+    const inGroup = orders.filter(order => home || (order.companyId || '') === companyId);
+    const visible = inGroup.filter(order => (filterValue === 'all' || stayState(order).key === filterValue) && (!query || [
+      order.hotelOrder, order.base, order.customerName, order.phone, order.arrivalDate, order.roomType,
+      companies.find(company => company.id === order.companyId)?.name || '未分类'
     ].join(' ').toLocaleLowerCase().includes(query)));
-    document.querySelector('#company-guest-count').textContent = `${visible.length} 条入住记录`;
-    document.querySelector('#company-list-title').textContent = filterValue === 'all' ? '住客记录' : filterLabels[filterValue];
-    document.querySelector('#clear-company-guest-search').hidden = !queryValue;
-    document.querySelectorAll('[data-company-filter]').forEach(button => {
-      const selected = button.dataset.companyFilter === filterValue;
-      button.classList.toggle('active', selected);
-      button.setAttribute('aria-pressed', String(selected));
-    });
-    document.querySelector('#company-filter-selection').style.setProperty('--selected-index', Object.keys(filterLabels).indexOf(filterValue));
-
+    document.querySelector(home ? '#home-guest-count' : '#company-guest-count').textContent = `${visible.length} 条记录`;
+    document.querySelector(home ? '#home-list-title' : '#company-list-title').textContent = filterLabels[filterValue];
+    document.querySelector(home ? '#clear-guest-search' : '#clear-company-guest-search').hidden = !queryValue;
+    if (!home) {
+      document.querySelectorAll('[data-company-filter]').forEach(button => {
+        const selected = button.dataset.companyFilter === filterValue;
+        button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected));
+      });
+      document.querySelector('#company-filter-selection').style.setProperty('--selected-index', Object.keys(filterLabels).indexOf(filterValue));
+    }
     if (!visible.length) {
       const filtered = Boolean(query) || filterValue !== 'all';
-      const title = query ? '没有找到相关登记' : filterValue !== 'all' ? `暂无${filterLabels[filterValue]}记录` : companyId ? '这家公司还没有住客登记' : '历史住客已归类完成';
-      const description = query ? '试试住客姓名、电话号码或订单名称' : filtered ? '切换到全部，查看本公司的入住记录' : companyId ? '轻点下方“新增客人入住”，\n登记会自动保存在这家公司里。' : '返回旅居公司，查看已归类的入住信息。';
-      target.innerHTML = `<div class="empty-state"><span class="empty-icon">${icon(query ? 'search' : 'book')}</span><h3>${title}</h3><p>${description.replace(/\n/g, '<br>')}</p>${filtered && orders.some(order => order.companyId === companyId) ? '<button class="empty-reset" type="button" data-reset>查看本公司全部住客</button>' : ''}</div>`;
+      target.innerHTML = `<div class="empty-state"><span class="empty-icon">${icon(query ? 'search' : 'book')}</span><h3>${filtered ? '没有符合条件的登记' : '还没有入住登记'}</h3><p>${filtered ? '换个关键词，或查看全部登记。' : '轻点下方“新增入住登记”，填写住客和旅居公司。'}</p>${filtered && inGroup.length ? '<button class="empty-reset" type="button" data-reset>查看全部登记</button>' : ''}</div>`;
       return;
     }
-
     target.innerHTML = visible.map((order) => {
       const state = stayState(order);
       return `<article class="order-card${order.id === highlightedOrderId ? ' reminder-target' : ''}" data-id="${escapeHtml(order.id)}">
         <div class="record-heading"><h3 class="guest-name">${escapeHtml(order.customerName || '未填写姓名')}</h3><span class="status status-${state.key}">${state.label}</span></div>
+        ${home ? `<p class="record-company">${escapeHtml(companies.find(item => item.id === order.companyId)?.name || '未分类')}</p>` : ''}
         <div class="stay-line">${icon('calendar')}<time datetime="${escapeHtml(order.arrivalDate)}">${escapeHtml(order.arrivalDate.replace(/-/g, '.'))}</time><span class="stay-caption">入住</span><span class="night-tag">${escapeHtml(order.nights)} 晚</span></div>
         <div class="stay-details"><span class="room-type">${escapeHtml(order.roomType)}</span><span>${escapeHtml(order.guestCount)}</span><span>${order.mealIncluded === '是' ? '含餐' : '不含餐'}</span></div>
         <div class="order-location"><span class="hotel-order">${escapeHtml(order.hotelOrder || '未填写订单名称')}</span><span class="base-line">${escapeHtml(order.base || '未填写基地')}</span></div>
@@ -212,43 +211,47 @@
     }).join('');
   }
 
+  function counts(orders) {
+    return { all: orders.length, upcoming: orders.filter(order => stayState(order).key === 'upcoming').length, staying: orders.filter(order => stayState(order).key === 'staying').length, finished: orders.filter(order => stayState(order).key === 'finished').length };
+  }
+
+  function renderOverview() {
+    const summary = counts(readOrders());
+    for (const [key, value] of Object.entries(summary)) document.querySelector(key === 'all' ? '#overview-total' : '#overview-' + key).textContent = value;
+    document.querySelectorAll('[data-home-filter]').forEach(button => {
+      const selected = button.dataset.homeFilter === homeFilter;
+      button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected));
+    });
+    renderOrders(document.querySelector('#home-order-list'), document.querySelector('#guest-search').value, homeFilter);
+  }
+
   function renderCompanies() {
     const { companies, orders } = store.read();
-    const query = document.querySelector('#company-search').value.trim().toLocaleLowerCase();
-    const visible = companies.filter(company => !query || [company.name, company.contact, company.phone].join(' ').toLocaleLowerCase().includes(query)).sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
-    document.querySelector('#company-count').textContent = `${visible.length} 家公司`;
-    document.querySelector('#clear-company-search').hidden = !query;
-    let markup = visible.map(company => {
-      const guests = orders.filter(order => order.companyId === company.id);
-      const staying = guests.filter(order => stayState(order).key === 'staying').length;
-      return `<button class="company-row" type="button" data-company-id="${escapeHtml(company.id)}" aria-label="进入 ${escapeHtml(company.name)} 的住客列表，${guests.length} 条入住记录"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0] || '旅')}</span><span class="company-row-copy"><strong>${escapeHtml(company.name)}</strong><span>${guests.length} 条入住${staying ? `<i>·</i><span class="current-count">${staying} 条入住中</span>` : ''}</span></span>${icon('chevron', 'chevron')}</button>`;
-    }).join('');
-    if (!visible.length) markup = `<div class="empty-state"><span class="empty-icon">${icon(query ? 'search' : 'company')}</span><h3>${query ? '没有找到相关公司' : '先添加旅居公司，再登记住客'}</h3><p>${query ? '试试其他公司名称或联系人' : '每家公司的住客分开保存。<br>添加公司后，就能进入登记入住信息。'}</p>${!query ? '<button class="empty-create" type="button" data-create-company>新增旅居公司</button>' : ''}</div>`;
-    const unassigned = orders.filter(order => !order.companyId).length;
-    if (unassigned && !query) markup += `<button class="company-row unassigned-row" type="button" data-company-id="" aria-label="待归类住客，${unassigned} 条历史记录"><span class="company-symbol">${icon('users')}</span><span class="company-row-copy"><strong>待归类住客</strong><span>${unassigned} 条历史记录待选择公司</span></span>${icon('chevron', 'chevron')}</button>`;
-    document.querySelector('#company-list').innerHTML = markup;
+    const groups = companies.map(company => ({ ...company, orders: orders.filter(order => order.companyId === company.id) })).filter(company => company.orders.length).sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+    document.querySelector('#company-count').textContent = `${groups.length} 家公司`;
+    const unassigned = orders.filter(order => !companies.some(company => company.id === order.companyId));
+    if (unassigned.length) groups.push({ id: '', name: '未分类', orders: unassigned });
+    document.querySelector('#company-list').innerHTML = groups.map(company => {
+      const summary = counts(company.orders);
+      return `<button class="company-row" type="button" data-company-id="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${summary.all} 条登记，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已结束 ${summary.finished}，查看分类"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${summary.all} 条</span></span><span class="company-statistics"><span>待入住 <b>${summary.upcoming}</b></span><span class="current-count">入住中 <b>${summary.staying}</b></span><span>已结束 <b>${summary.finished}</b></span></span></span>${icon('chevron', 'chevron')}</button>`;
+    }).join('') || '<p class="classification-empty">填写第一条入住登记后，这里会自动按旅居公司分类统计。</p>';
   }
 
   function renderCompanyDetail() {
     if (selectedCompanyId === null) return;
     const company = store.read().companies.find(item => item.id === selectedCompanyId);
-    const name = company?.name || (selectedCompanyId === '' ? '待归类住客' : '公司已删除');
-    document.querySelector('#company-title').textContent = selectedCompanyId === '' ? '待归类住客' : '住客登记';
+    const name = company?.name || (selectedCompanyId === '' ? '未分类' : '公司分类');
+    document.querySelector('#company-title').textContent = '分类入住记录';
     document.querySelector('#company-detail-symbol').textContent = Array.from(name)[0] || '旅';
     document.querySelector('#company-name').textContent = name;
-    const contact = document.querySelector('#company-contact');
-    contact.textContent = selectedCompanyId === '' ? '这些是旧版留下的记录。打开记录，选择旅居公司后保存归类。' : [company?.contact, company?.phone].filter(Boolean).join(' · ');
-    contact.hidden = !contact.textContent;
-    document.querySelector('#company-notes').textContent = company?.notes || '';
-    document.querySelector('#company-notes').hidden = !company?.notes;
-    document.querySelector('#edit-company').hidden = !company;
-    document.querySelector('#add-company-guest').hidden = !company;
-    document.querySelector('.company-toolbar').hidden = !company;
+    const count = readOrders().filter(order => (order.companyId || '') === selectedCompanyId).length;
+    document.querySelector('#company-detail-summary').textContent = `${count} 条入住登记`;
     renderOrders(document.querySelector('#company-guest-list'), document.querySelector('#company-guest-search').value, companyFilter, selectedCompanyId);
   }
 
   function render() {
     today = localDate(new Date());
+    renderOverview();
     renderCompanies();
     renderArrivalReminders();
     renderCompanyDetail();
@@ -269,17 +272,6 @@
     }
   }
 
-  function openCompanyForm(company) {
-    companyForm.reset();
-    companyForm.dataset.id = company?.id || '';
-    companyForm.querySelectorAll('[aria-invalid]').forEach(control => setFieldError(control, ''));
-    document.querySelector('#company-form-error').hidden = true;
-    if (company) Object.entries(company).forEach(([key, value]) => { if (companyForm.elements.namedItem(key)) companyForm.elements[key].value = value; });
-    document.querySelector('#company-form-title').textContent = company ? '编辑公司档案' : '登记旅居公司';
-    document.querySelector('#delete-company').hidden = !company;
-    navigation.open('company-form-overlay', { companyId: company?.id || null });
-  }
-
   function openOverlay(id) {
     navigation.open(id);
   }
@@ -290,11 +282,7 @@
 
   function openForm(order) {
     const companies = store.read().companies;
-    const company = companies.find(item => item.id === selectedCompanyId);
-    const legacy = Boolean(order && !order.companyId && selectedCompanyId === '');
-    if (!company && !legacy) { showToast('请先进入旅居公司，再登记住客'); return; }
-    if (order?.companyId && order.companyId !== company?.id) { showToast('请进入住客所属的旅居公司'); return; }
-    if (legacy && !companies.length) { showToast('请先新增旅居公司，再归类历史住客'); return; }
+    const company = companies.find(item => item.id === (order ? order.companyId : selectedCompanyId));
     orderForm.reset();
     orderForm.classList.remove('submitted');
     Array.from(orderForm.elements).filter(control => control.name).forEach(control => setFieldError(control, ''));
@@ -303,11 +291,8 @@
     orderForm.elements.nights.value = '1';
     orderForm.elements.mealIncluded.value = '否';
     orderForm.dataset.id = order ? order.id : '';
-    orderForm.dataset.companyId = company?.id || '';
-    document.querySelector('#order-company-name').textContent = company?.name || '请选择归属公司';
-    document.querySelector('#legacy-company-choice').hidden = !legacy;
-    document.querySelector('#order-company').innerHTML = '<option value="">选择旅居公司</option>' + companies.map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('');
-    document.querySelector('#order-company').value = company?.id || '';
+    orderForm.elements.companyName.value = company?.name || '';
+    document.querySelector('#company-suggestions').innerHTML = companies.map(item => `<option value="${escapeHtml(item.name)}"></option>`).join('');
 
     if (order) {
       const normalized = normalizeOrder(order);
@@ -332,8 +317,6 @@
   }
 
   function getFormOrder() {
-    const companyId = orderForm.dataset.companyId || document.querySelector('#order-company').value;
-    if (!companyId) throw new Error('请先选择旅居公司，住客登记必须归属公司');
     const values = Object.fromEntries(new FormData(orderForm).entries());
     if (['hotelOrder', 'base', 'customerName', 'phone', 'guestCount', 'roomType'].some(key => !values[key].trim())) {
       throw new Error('请填写完整的订单、客户和入住信息');
@@ -344,7 +327,7 @@
     const now = new Date().toISOString();
     return normalizeOrder({
       id: orderForm.dataset.id || `ord_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      companyId,
+      companyId: old?.companyId || '',
       hotelOrder: values.hotelOrder.trim(),
       base: values.base.trim(),
       customerName: values.customerName.trim(),
@@ -387,51 +370,25 @@
     if (order) openCompany(order.companyId || '', order.id);
     else renderArrivalReminders();
   });
-  document.querySelector('#add-company').addEventListener('click', () => openCompanyForm());
-  document.querySelector('#company-search').addEventListener('input', renderCompanies);
-  document.querySelector('#clear-company-search').addEventListener('click', () => { document.querySelector('#company-search').value = ''; renderCompanies(); document.querySelector('#company-search').focus(); });
+  document.querySelector('#add-order').addEventListener('click', () => openForm());
+  document.querySelector('#guest-search').addEventListener('input', renderOverview);
+  document.querySelector('#clear-guest-search').addEventListener('click', () => { document.querySelector('#guest-search').value = ''; renderOverview(); document.querySelector('#guest-search').focus(); });
+  document.querySelectorAll('[data-home-filter]').forEach(button => button.addEventListener('click', () => { homeFilter = button.dataset.homeFilter; renderOverview(); }));
   document.querySelector('#company-list').addEventListener('click', event => {
-    if (event.target.closest('[data-create-company]')) { openCompanyForm(); return; }
     const company = event.target.closest('[data-company-id]');
     if (company) openCompany(company.dataset.companyId);
   });
-  document.querySelector('#edit-company').addEventListener('click', () => openCompanyForm(store.read().companies.find(company => company.id === selectedCompanyId)));
+  document.querySelector('#home-order-list').addEventListener('click', event => {
+    if (event.target.closest('[data-call]')) return;
+    if (event.target.closest('[data-reset]')) { homeFilter = 'all'; document.querySelector('#guest-search').value = ''; renderOverview(); return; }
+    const card = event.target.closest('[data-id]');
+    const order = card && readOrders().find(item => item.id === card.dataset.id);
+    if (order) openForm(order);
+  });
   document.querySelector('#add-company-guest').addEventListener('click', () => openForm());
   document.querySelector('#company-guest-search').addEventListener('input', renderCompanyDetail);
   document.querySelector('#clear-company-guest-search').addEventListener('click', () => { document.querySelector('#company-guest-search').value = ''; renderCompanyDetail(); document.querySelector('#company-guest-search').focus(); });
   document.querySelectorAll('[data-company-filter]').forEach(button => button.addEventListener('click', () => { companyFilter = button.dataset.companyFilter; renderCompanyDetail(); }));
-  companyForm.addEventListener('submit', event => {
-    event.preventDefault();
-    const values = Object.fromEntries(new FormData(companyForm));
-    const name = companyForm.elements.namedItem('name');
-    const phone = companyForm.elements.namedItem('phone');
-    setFieldError(name, name.value.trim() ? '' : '请填写公司名称');
-    setFieldError(phone, phone.validity.valid ? '' : '请输入有效的公司联系电话');
-    if (!name.value.trim() || !phone.validity.valid) { (!name.value.trim() ? name : phone).focus(); return; }
-    try {
-      const existing = store.read().companies.find(item => item.id === companyForm.dataset.id);
-      const company = store.saveCompany({ ...existing, ...values, id: existing?.id });
-      if (!existing) pendingCompanyId = company.id;
-      document.querySelector('#company-search').value = '';
-      closeOverlay('company-form-overlay');
-      render();
-      showToast(`已保存 ${company.name}`);
-    } catch (error) {
-      document.querySelector('#company-form-error').textContent = error.message || '保存失败，请检查本机空间';
-      document.querySelector('#company-form-error').hidden = false;
-    }
-  });
-  document.querySelector('#delete-company').addEventListener('click', async event => {
-    const id = companyForm.dataset.id;
-    const count = readOrders().filter(order => order.companyId === id).length;
-    if (!await confirmAction({ title: '删除公司档案？', message: count ? `该公司的 ${count} 条住客登记会移到“待归类住客”，入住信息继续保留。` : '删除后可重新登记该公司。', accept: '删除公司', destructive: true, opener: event.currentTarget })) return;
-    try {
-      store.removeCompany(id);
-      closeOverlay('company-form-overlay');
-      render();
-      showToast('公司档案已删除，客人登记已保留');
-    } catch { showToast('删除失败，请检查本机空间'); }
-  });
   window.addEventListener('innviewchange', event => {
     if (event.detail.id === 'company-overlay') {
       selectedCompanyId = event.detail.context.companyId ?? '';
@@ -441,11 +398,6 @@
     } else if (!event.detail.id) {
       selectedCompanyId = null;
       refreshCalendar();
-      if (pendingCompanyId) {
-        const id = pendingCompanyId;
-        pendingCompanyId = null;
-        setTimeout(() => openCompany(id), 0);
-      }
     }
   });
   document.querySelector('#open-backup').addEventListener('click', () => {
@@ -482,7 +434,9 @@
     }
     try {
       const order = getFormOrder();
-      store.saveOrder(order, orderForm.dataset.companyId || document.querySelector('#order-company').value);
+      store.saveRegistration(order, orderForm.elements.companyName.value);
+      homeFilter = 'all';
+      document.querySelector('#guest-search').value = '';
       closeOverlay('form-overlay');
       companyFilter = 'all';
       document.querySelector('#company-guest-search').value = '';

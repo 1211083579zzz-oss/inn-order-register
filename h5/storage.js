@@ -100,6 +100,27 @@
       return order;
     }
 
+    function saveRegistration(input, companyName) {
+      const data = read();
+      const name = text(companyName);
+      if (!name || name.length > 80) throw new Error('请填写 1–80 字的旅居公司名称');
+      const limits = { hotelOrder: 80, base: 40, customerName: 30, phone: 20, guestCount: 20, roomType: 30 };
+      if (Object.entries(limits).some(([key, limit]) => !text(input[key]) || text(input[key]).length > limit)) throw new Error('请填写完整有效的客户和入住信息');
+      if (!/^[0-9+\-\s]{6,20}$/.test(text(input.phone))) throw new Error('请输入有效联系电话');
+      if (!Number.isInteger(Number(input.nights)) || Number(input.nights) < 1) throw new Error('入住天数至少为 1 晚');
+      const date = new Date(String(input.arrivalDate) + 'T12:00:00Z');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(input.arrivalDate)) || !Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== input.arrivalDate) throw new Error('请选择有效的入住日期');
+      if (text(input.feeDetails).length > 200) throw new Error('费用明细最多 200 字');
+      const company = data.companies.find(item => nameKey(item.name) === nameKey(name)) || normalizeCompany({ name });
+      const existing = data.orders.find(item => item.id === input.id);
+      const order = normalizeOrder({ ...input, companyId: company.id, createdAt: existing?.createdAt || input.createdAt, updatedAt: new Date().toISOString() });
+      const companies = data.companies.some(item => item.id === company.id) ? data.companies : [...data.companies, company];
+      const orders = existing ? data.orders.map(item => item.id === order.id ? order : item) : [order, ...data.orders];
+      // Company classification and guest must be one write, including offline or quota failures.
+      commit({ ...data, companies, orders });
+      return order;
+    }
+
     function removeCompany(id) {
       const data = read();
       return commit({ ...data, companies: data.companies.filter(company => company.id !== id), orders: data.orders.map(order => order.companyId === id ? { ...order, companyId: '', updatedAt: new Date().toISOString() } : order) });
@@ -142,7 +163,7 @@
       return commit({ version: 2, companies: [...companies.values()], orders: [...orders.values()] });
     }
 
-    return { read, saveCompany, saveOrder, saveOrders, removeCompany, backup, parseBackup, mergeBackup };
+    return { read, saveCompany, saveOrder, saveOrders, saveRegistration, removeCompany, backup, parseBackup, mergeBackup };
   }
 
   const api = { DATA_KEY, LEGACY_KEY, APP, createStore, normalizeOrder };

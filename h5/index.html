@@ -6,18 +6,18 @@
   <meta name="theme-color" content="#f5f7fb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="description" content="简单好用的住宿登记，信息仅保存在当前设备。">
+  <meta name="description" content="简单好用的住宿登记，直接登记住客，按旅居公司分类统计，支持本机保存和加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=sync-10-1794313394094">
-  <script src="./storage.js?v=sync-10-1794313394094" defer></script>
-  <script src="./arrivals.js?v=sync-10-1794313394094" defer></script>
-  <script src="./sync-config.js?v=sync-10-1794313394094" defer></script>
-  <script src="./sync-core.js?v=sync-10-1794313394094" defer></script>
-  <script src="./sync-client.js?v=sync-10-1794313394094" defer></script>
-  <script src="./motion.js?v=sync-10-1794313394094" defer></script>
-  <script src="./app.js?v=sync-10-1794313394094" defer></script>
-  <script src="./sync-ui.js?v=sync-10-1794313394094" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=direct-11">
+  <script src="./storage.js?v=direct-11" defer></script>
+  <script src="./arrivals.js?v=direct-11" defer></script>
+  <script src="./sync-config.js?v=direct-11" defer></script>
+  <script src="./sync-core.js?v=direct-11" defer></script>
+  <script src="./sync-client.js?v=direct-11" defer></script>
+  <script src="./motion.js?v=direct-11" defer></script>
+  <script src="./app.js?v=direct-11" defer></script>
+  <script src="./sync-ui.js?v=direct-11" defer></script>
 </head>
 <body>
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -47,7 +47,17 @@
       <div class="top-actions"><span class="local-badge"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span id="device-storage-label">本机保存</span></span><button id="open-backup" class="backup-button" type="button" aria-label="数据、同步与备份"><svg class="icon" aria-hidden="true"><use href="#i-backup"/></svg><span>数据</span></button></div>
     </header>
     <main id="main-content" class="content">
-      <div class="page-heading"><p id="today-label" class="date-label" hidden></p><h1 id="home-title">旅居公司</h1><p class="hierarchy-caption">选一家旅居公司，登记和查看住客。</p></div>
+      <div class="page-heading"><p id="today-label" class="date-label" hidden></p><h1 id="home-title">入住登记</h1><p class="hierarchy-caption">直接登记住客，按旅居公司分类查看。</p></div>
+      <section class="registration-overview" aria-label="入住统计与筛选">
+        <button type="button" class="overview-state active" data-home-filter="all" aria-pressed="true"><span>全部登记</span><strong id="overview-total">0</strong></button>
+        <button type="button" class="overview-state" data-home-filter="upcoming" aria-pressed="false"><span>待入住</span><strong id="overview-upcoming">0</strong></button>
+        <button type="button" class="overview-state" data-home-filter="staying" aria-pressed="false"><span>入住中</span><strong id="overview-staying">0</strong></button>
+        <button type="button" class="overview-state" data-home-filter="finished" aria-pressed="false"><span>已结束</span><strong id="overview-finished">0</strong></button>
+      </section>
+      <section id="company-module" aria-labelledby="company-statistics-title">
+        <div class="list-heading"><h2 id="company-statistics-title">按旅居公司统计</h2><span id="company-count">0 家公司</span></div>
+        <div id="company-list" class="company-list" aria-label="旅居公司分类统计" aria-live="polite"></div>
+      </section>
       <section id="arrival-reminders" class="arrival-reminders" data-design="9" aria-labelledby="arrival-title" hidden>
         <div class="arrival-heading"><h2 id="arrival-title">入住提醒</h2><span id="arrival-overview" class="arrival-overview"></span><div class="arrival-switch" role="group" aria-label="查看入住提醒">
           <button type="button" data-arrival-view="arrivals" class="active" aria-pressed="true" aria-controls="arrival-list">待入住<span id="arrival-count">0</span></button>
@@ -58,50 +68,27 @@
         <div id="arrival-list" class="arrival-list"></div>
         <button id="arrival-expand" class="arrival-expand" type="button" aria-expanded="false" aria-controls="arrival-list" hidden></button>
       </section>
-      <div id="company-module">
-        <div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="company-search" type="search" aria-label="搜索旅居公司" placeholder="搜索公司或联系人" autocomplete="off" enterkeyhint="search"><button id="clear-company-search" class="clear-search" type="button" aria-label="清空公司搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
-        <div class="list-heading"><h2>公司列表</h2><span id="company-count">0 家公司</span></div>
-        <section id="company-list" class="company-list" aria-label="旅居公司列表" aria-live="polite"></section>
-      </div>
+      <section id="guest-module" aria-labelledby="home-list-title">
+        <div class="list-heading"><h2 id="home-list-title">全部登记</h2><span id="home-guest-count">0 条记录</span></div>
+        <div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="guest-search" type="search" aria-label="搜索住客或公司" placeholder="搜索住客、公司、电话或订单" autocomplete="off" enterkeyhint="search"><button id="clear-guest-search" class="clear-search" type="button" aria-label="清空搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
+        <div id="home-order-list" class="order-list" aria-live="polite"></div>
+      </section>
     </main>
-    <footer class="home-toolbar"><button id="add-company" class="primary-button add-button" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span>新增旅居公司</span></button></footer>
+    <footer class="home-toolbar"><button id="add-order" class="primary-button add-button" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span>新增入住登记</span></button></footer>
   </div>
 
   <section id="company-overlay" class="page-view" data-presentation="push" data-state="closed" role="dialog" aria-modal="true" aria-labelledby="company-title" hidden>
     <div class="view-dimmer" aria-hidden="true"></div>
     <div class="page-panel company-page">
-      <header class="view-nav"><button class="text-button back-button" type="button" data-close="company-overlay"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg>公司</button><h2 id="company-title" tabindex="-1">公司客人</h2><button id="edit-company" class="text-button sheet-done" type="button">编辑</button></header>
+      <header class="view-nav"><button class="text-button back-button" type="button" data-close="company-overlay"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg>首页</button><h2 id="company-title" tabindex="-1">公司入住统计</h2><span class="nav-spacer" aria-hidden="true"></span></header>
       <div class="view-scroll company-content">
-        <div class="company-profile"><div class="company-profile-row"><span id="company-detail-symbol" class="company-symbol" aria-hidden="true"></span><div class="company-profile-copy"><h3 id="company-name"></h3><p id="company-contact" class="company-contact"></p></div></div><p id="company-notes" class="company-notes" hidden></p></div>
+        <div class="company-profile"><div class="company-profile-row"><span id="company-detail-symbol" class="company-symbol" aria-hidden="true"></span><div class="company-profile-copy"><h3 id="company-name"></h3><p id="company-detail-summary" class="company-contact"></p></div></div></div>
         <div class="guest-tools"><div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="company-guest-search" type="search" aria-label="搜索公司客人" placeholder="搜索住客、电话或订单" autocomplete="off" enterkeyhint="search"><button id="clear-company-guest-search" class="clear-search" type="button" aria-label="清空客人搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
         <div class="filters" role="group" aria-label="筛选公司客人入住状态"><span id="company-filter-selection" class="filter-selection" aria-hidden="true"></span><button class="filter active" data-company-filter="all" aria-pressed="true" type="button">全部</button><button class="filter" data-company-filter="upcoming" aria-pressed="false" type="button">待入住</button><button class="filter" data-company-filter="staying" aria-pressed="false" type="button">入住中</button><button class="filter" data-company-filter="finished" aria-pressed="false" type="button">已结束</button></div></div>
         <div class="list-heading"><h3 id="company-list-title">客人入住</h3><span id="company-guest-count">0 条记录</span></div>
         <section id="company-guest-list" class="order-list" aria-live="polite" aria-labelledby="company-list-title"></section>
       </div>
-      <footer class="company-toolbar"><button id="add-company-guest" class="primary-button" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>新增客人入住</button></footer>
-    </div>
-  </section>
-
-  <section id="company-form-overlay" class="page-view" data-presentation="sheet" data-state="closed" role="dialog" aria-modal="true" aria-labelledby="company-form-title" hidden>
-    <div class="view-dimmer" aria-hidden="true"></div>
-    <div class="page-panel company-form-panel">
-      <div class="sheet-grabber" aria-hidden="true"><span></span></div>
-      <header class="view-nav"><button class="text-button" type="button" data-close="company-form-overlay">取消</button><h2 id="company-form-title" tabindex="-1">登记旅居公司</h2><span aria-hidden="true"></span></header>
-      <div class="view-scroll">
-        <form id="company-form" novalidate>
-          <fieldset><legend>公司档案</legend><div class="field-group">
-            <label class="field"><span>公司名称 <b>*</b></span><input name="name" required maxlength="80" placeholder="填写旅居公司名称" autocomplete="off" enterkeyhint="next"></label>
-          </div><p class="field-note">每家旅居公司单独管理住客。保存后进入该公司的住客列表。</p></fieldset>
-          <fieldset><legend>联系信息 <span class="optional">选填</span></legend><div class="field-group">
-            <label class="field"><span>联系人</span><input name="contact" maxlength="30" placeholder="公司联系人" autocomplete="off" enterkeyhint="next"></label>
-            <label class="field"><span>联系电话</span><input name="phone" type="tel" inputmode="tel" pattern="[0-9+\-\s]{6,20}" maxlength="20" placeholder="公司联系电话" autocomplete="off" enterkeyhint="next"></label>
-          </div></fieldset>
-          <fieldset><legend>备注 <span class="optional">选填</span></legend><div class="field-group fee-group"><textarea name="notes" rows="3" maxlength="200" aria-label="公司备注" placeholder="补充公司的合作或接待说明"></textarea></div></fieldset>
-          <p id="company-form-error" class="form-error" role="alert" hidden></p>
-          <button id="delete-company" class="delete-button" type="button" hidden>删除公司档案</button>
-          <div class="form-actions"><button id="save-company" class="primary-button" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span>保存公司</span></button></div>
-        </form>
-      </div>
+      <footer class="company-toolbar"><button id="add-company-guest" class="primary-button" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>新增入住登记</button></footer>
     </div>
   </section>
 
@@ -110,8 +97,8 @@
     <div class="page-panel">
       <header class="view-nav"><button class="text-button back-button" type="button" data-close="form-overlay"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg>返回</button><h2 id="form-title" tabindex="-1">新增登记</h2><span class="nav-spacer" aria-hidden="true"></span></header>
       <div class="view-scroll">
-        <div class="membership"><span class="membership-label">旅居公司</span><strong id="order-company-name"></strong><span id="legacy-company-choice" class="select-wrap" hidden><select id="order-company" aria-label="将历史住客归入旅居公司"></select><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></span></div>
         <form id="order-form" novalidate>
+          <fieldset><legend>旅居公司</legend><div class="field-group"><label class="field"><span>公司名称 <b>*</b></span><input id="order-company" name="companyName" list="company-suggestions" required maxlength="80" placeholder="填写或选择旅居公司" autocomplete="off" enterkeyhint="next"></label></div><datalist id="company-suggestions"></datalist><p class="field-note">直接填写名称，保存后自动按公司分类。</p></fieldset>
           <fieldset><legend>订单信息</legend><div class="field-group">
             <label class="field"><span>旅店/订单 <b>*</b></span><input name="hotelOrder" required maxlength="80" placeholder="旅店或订单名称" autocomplete="off" enterkeyhint="next"></label>
             <label class="field"><span>入住基地 <b>*</b></span><input name="base" required maxlength="40" placeholder="基地名称" autocomplete="off" enterkeyhint="next"></label>
