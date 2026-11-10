@@ -141,9 +141,15 @@
     section.hidden = !data.orders.length;
     if (section.hidden) return;
     const summary = window.InnArrivals.summarize(data, today);
+    if (!summary[arrivalView].length && (summary.arrivals.length || summary.staying.length)) arrivalView = summary.arrivals.length ? 'arrivals' : 'staying';
     document.querySelector('#arrival-date').textContent = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric' }).format(new Date(`${today}T12:00:00`));
     document.querySelector('#arrival-count').textContent = summary.arrivals.length;
     document.querySelector('#staying-count').textContent = summary.staying.length;
+    const showSwitch = summary.arrivals.length > 0 && summary.staying.length > 0;
+    document.querySelector('.arrival-switch').hidden = !showSwitch;
+    const overview = document.querySelector('#arrival-overview');
+    overview.hidden = showSwitch;
+    overview.textContent = summary.arrivals.length ? `${summary.arrivals.length} 条待入住` : summary.staying.length ? `${summary.staying.length} 条在住` : '未来 3 天';
     document.querySelectorAll('[data-arrival-view]').forEach(button => {
       const selected = button.dataset.arrivalView === arrivalView;
       button.classList.toggle('active', selected);
@@ -155,10 +161,13 @@
       : summary.staying.length ? `${summary.staying.length} 条入住中的记录` : '暂无入住中的记录';
     document.querySelector('#arrival-list').innerHTML = entries.slice(0, arrivalsExpanded ? undefined : 3).map(({ order, company, days, remaining }) => {
       const label = arrivalView === 'staying' ? '入住中' : ['今天', '明天', '后天', '3天后'][days];
-      const date = `${Number(order.arrivalDate.slice(5, 7))}.${order.arrivalDate.slice(8, 10)}`;
+      const arrivalDate = new Date(`${order.arrivalDate}T12:00:00`);
+      const date = `${Number(order.arrivalDate.slice(5, 7))}月${Number(order.arrivalDate.slice(8, 10))}日`;
+      const weekday = new Intl.DateTimeFormat('zh-CN', { weekday: 'short' }).format(arrivalDate);
+      const deadline = arrivalView === 'staying' ? '入住中' : days === 0 ? '今天入住' : `${days} 天后入住`;
       const context = [order.base, order.roomType, arrivalView === 'staying' ? `还有 ${remaining} 晚` : `${order.nights} 晚`].filter(Boolean).join(' · ');
-      return `<button class="arrival-row${arrivalView === 'arrivals' && days === 0 ? ' arrival-today' : ''}" type="button" data-arrival-id="${escapeHtml(order.id)}" aria-label="${escapeHtml(label)}，${escapeHtml(order.customerName)}，${escapeHtml(company?.name || '待归类住客')}，查看登记"><span class="arrival-when"><strong>${label}</strong><span>${date}</span></span><span class="arrival-copy"><span class="arrival-person"><strong>${escapeHtml(order.customerName || '未填写姓名')}</strong><span>${escapeHtml(company?.name || '待归类住客')}</span></span><span class="arrival-context">${escapeHtml(context)}</span></span>${icon('chevron', 'chevron')}</button>`;
-    }).join('') || '<p class="arrival-empty">' + (arrivalView === 'arrivals' ? '客人临近入住时，会自动出现在这里。' : '客人入住后，可在这里查看在住情况。') + '</p>';
+      return `<button class="arrival-row${arrivalView === 'arrivals' && days === 0 ? ' arrival-today' : ''}${arrivalView === 'staying' ? ' arrival-staying' : ''}" type="button" data-arrival-id="${escapeHtml(order.id)}" aria-label="${escapeHtml(deadline)}，${escapeHtml(order.customerName)}，${escapeHtml(date)}${escapeHtml(weekday)}，${escapeHtml(company?.name || '待归类住客')}，查看登记"><span class="arrival-copy"><span class="arrival-row-heading"><strong class="arrival-guest">${escapeHtml(order.customerName || '未填写姓名')}</strong><span class="arrival-when"><strong class="visually-hidden">${label}</strong><span>${deadline}</span></span></span><span class="arrival-checkin"><time datetime="${escapeHtml(order.arrivalDate)}">${escapeHtml(date)}</time><span>${escapeHtml(weekday)}${arrivalView === 'staying' ? '入住' : '到店'}</span></span><span class="arrival-person">${icon('company')}<span>${escapeHtml(company?.name || '待归类住客')}</span></span><span class="arrival-bottom"><span class="arrival-context">${escapeHtml(context)}</span><span class="arrival-open">查看${icon('chevron', 'chevron')}</span></span></span></button>`;
+    }).join('') || '<p class="arrival-empty">未来 3 天没有入住安排</p>';
     const expand = document.querySelector('#arrival-expand');
     expand.hidden = entries.length <= 3;
     expand.textContent = arrivalsExpanded ? '收起提醒' : `查看全部 ${entries.length} 条`;
