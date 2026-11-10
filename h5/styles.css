@@ -57,6 +57,45 @@ h1, h2, h3 { text-wrap: balance; }
 .page-heading { margin-bottom: 20px; }
 .date-label { margin-bottom: 8px; color: var(--secondary); font-size: var(--caption); }
 .heading-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.module-tabs { display: flex; gap: 24px; margin: 0 0 20px; border-bottom: 1px solid var(--line); }
+.module-tabs button { position: relative; justify-content: flex-start; padding: 0 0 10px; color: var(--secondary); background: transparent; font-size: 1rem; }
+.module-tabs button.selected { color: var(--blue); font-weight: 600; }
+.module-tabs button.selected::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; border-radius: 1px; background: var(--blue); content: ''; }
+.category-filters { display: flex; gap: 8px; margin: 16px 0 0; overflow-x: auto; padding: 2px; scroll-padding: 2px; }
+.category-chip { min-height: 44px; flex: none; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--secondary); background: var(--surface); font-size: var(--caption); }
+.category-chip.selected { border-color: var(--blue-soft); color: var(--blue); background: var(--blue-soft); font-weight: 600; }
+.company-list { overflow: hidden; border-radius: var(--radius-group); }
+.company-row { display: flex; width: 100%; min-height: 100px; align-items: center; gap: 12px; padding: 18px 16px; border-bottom: 1px solid var(--line); color: var(--ink); background: var(--surface); text-align: left; }
+.company-row:last-child { border-bottom: 0; }
+.company-row:active { background: var(--control-soft); }
+.company-symbol { display: grid; width: 42px; height: 46px; flex: none; place-items: center; border-radius: 10px; color: var(--blue); background: var(--blue-soft); }
+.company-symbol .icon { width: 24px; height: 24px; }
+.company-row-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 7px; }
+.company-row-copy strong { font-size: 1rem; font-weight: 600; line-height: 1.6; overflow-wrap: anywhere; }
+.company-row-copy > span { color: var(--secondary); font-size: var(--caption); line-height: 1.7; overflow-wrap: anywhere; }
+.company-row-copy i { margin: 0 6px; font-style: normal; }
+.unassigned-row { margin-top: 16px; border-radius: var(--radius-group); }
+.unassigned-row .company-symbol { color: var(--secondary); background: var(--canvas); }
+.company-list .empty-state { padding-right: 8px; padding-left: 8px; }
+.company-page { max-width: 960px; }
+.company-profile { padding: 24px 0; }
+.company-category { margin-bottom: 8px; color: var(--blue); font-size: var(--caption); }
+.company-profile h3 { font-size: 1.5rem; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
+.company-contact { margin-top: 10px; color: var(--secondary); font-size: var(--caption); overflow-wrap: anywhere; }
+.company-notes { margin-top: 12px; color: var(--secondary); font-size: var(--caption); white-space: pre-wrap; overflow-wrap: anywhere; }
+.company-toolbar { flex: none; padding: 12px var(--page-gutter) calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--surface); }
+.company-content { padding-bottom: 24px; }
+.company-content .list-heading h3 { font-size: .9375rem; font-weight: 600; }
+.company-form-panel { height: min(800px, calc(var(--visual-height, 100dvh) - 36px - env(safe-area-inset-top))); overflow: hidden; border-radius: 16px 16px 0 0; }
+.company-form-panel .view-nav { min-height: 52px; padding-top: 0; touch-action: none; }
+#company-form { padding-top: 20px; padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
+.field-note { margin: 8px 16px 0; color: var(--secondary); font-size: var(--caption); line-height: 1.7; }
+.membership { display: flex; flex-direction: column; gap: 4px; margin-top: 20px; padding: 12px 16px; border-radius: var(--radius-group); background: var(--blue-soft); }
+.membership label { color: var(--secondary); font-size: var(--caption); }
+.membership .select-wrap { display: flex; align-items: center; min-width: 0; }
+.membership .select-wrap select { color: var(--blue); font-weight: 550; }
+.record-company { display: flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--secondary); font-size: var(--caption); overflow-wrap: anywhere; }
+.record-company .icon { width: 16px; height: 16px; }
 h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; }
 .local-badge { display: inline-flex; align-items: center; gap: 4px; color: var(--secondary); font-size: var(--caption); white-space: nowrap; }
 .local-badge .icon { width: 14px; height: 14px; }
@@ -217,6 +256,7 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
   .page-panel { max-width: 600px; max-height: 900px; overflow: hidden; border-radius: 16px; }
   .page-view[data-presentation="sheet"] { align-items: center; }
   .backup-panel { max-height: calc(var(--visual-height, 100dvh) - 64px); border-radius: 16px; }
+  .company-form-panel { max-height: calc(var(--visual-height, 100dvh) - 64px); border-radius: 16px; }
   .view-scroll { padding-right: 28px; padding-left: 28px; }
   .form-actions { padding-right: 28px; padding-left: 28px; }
 }

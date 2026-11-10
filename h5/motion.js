@@ -15,8 +15,28 @@
     let generation = 0;
     let animations = [];
     let skipClick = false;
+    const stack = [];
+    let requestedStack = null;
 
-    history.replaceState({ ...history.state, innSession: session, innView: null }, '');
+    history.replaceState({ ...history.state, innSession: session, innView: null, innStack: [], innConfirm: null }, '');
+
+    function underlay(view) { return stack.find(entry => entry.id === view.id)?.underlay || home; }
+    function announce() {
+      const current = stack[stack.length - 1];
+      window.dispatchEvent(new CustomEvent('innviewchange', { detail: { id: current?.id || null, context: current?.context || {} } }));
+    }
+
+    function reconcileHistory() {
+      if (!requestedStack || active?.dataset.state === 'closing') return;
+      const matches = stack.every((entry, index) => requestedStack[index]?.id === entry.id && JSON.stringify(requestedStack[index]?.context || {}) === JSON.stringify(entry.context));
+      if (stack.length > requestedStack.length || !matches) {
+        if (active) close(active.id, true);
+      } else if (stack.length < requestedStack.length) {
+        const next = requestedStack[stack.length];
+        if (views.has(next.id)) open(next.id, next.context || {}, true);
+        else requestedStack = null;
+      } else requestedStack = null;
+    }
 
     function syncViewport() {
       if (!active) return;
@@ -46,7 +66,7 @@
       const frame = geometry(view, progress);
       view.querySelector('.page-panel').style.transform = frame.panel;
       view.querySelector('.view-dimmer').style.opacity = frame.shade;
-      home.style.transform = frame.home;
+      underlay(view).style.transform = frame.home;
       view.dataset.progress = progress.toFixed(3);
     }
 
@@ -68,7 +88,7 @@
       animations = [
         view.querySelector('.page-panel').animate([{ transform: first.panel }, { transform: last.panel }], options),
         view.querySelector('.view-dimmer').animate([{ opacity: first.shade }, { opacity: last.shade }], options),
-        home.animate([{ transform: first.home }, { transform: last.home }], options)
+        underlay(view).animate([{ transform: first.home }, { transform: last.home }], options)
       ];
       Promise.all(animations.map(animation => animation.finished)).then(() => {
         if (token !== generation) return;
@@ -90,38 +110,52 @@
 
     function finishClose(view) {
       stopAnimations();
+      const entry = stack.pop();
       view.hidden = true;
       view.inert = false;
       view.dataset.state = 'closed';
       view.dataset.progress = '1.000';
       view.querySelector('.page-panel').style.removeProperty('transform');
       view.querySelector('.view-dimmer').style.removeProperty('opacity');
-      home.style.removeProperty('transform');
-      home.style.removeProperty('transform-origin');
-      home.classList.remove('sheet-underlay');
-      home.inert = false;
-      document.body.classList.remove('modal-open');
-      Object.assign(document.body.style, bodyStyles);
-      active = null;
+      entry.underlay.style.removeProperty('transform');
+      entry.underlay.style.removeProperty('transform-origin');
+      entry.underlay.classList.remove('sheet-underlay');
+      active = stack.length ? views.get(stack[stack.length - 1].id) : null;
+      if (active) active.inert = false;
+      else {
+        home.inert = false;
+        document.body.classList.remove('modal-open');
+        Object.assign(document.body.style, bodyStyles);
+        window.scrollTo(0, savedScroll);
+      }
       gesture = null;
-      window.scrollTo(0, savedScroll);
-      const focus = savedFocus?.isConnected && savedFocus.tabIndex >= 0 ? savedFocus : home.querySelector('#add-order');
+      const sourceFocus = entry.opener || savedFocus;
+      const focus = sourceFocus?.isConnected && sourceFocus.tabIndex >= 0 ? sourceFocus : active?.querySelector('h2') || home.querySelector('.home-toolbar button:not([hidden])');
       focus?.focus({ preventScroll: true });
+      announce();
+      reconcileHistory();
     }
 
-    function open(id, fromHistory = false) {
-      if (active || historyPending || !views.has(id)) return;
+    function open(id, context = {}, fromHistory = false) {
+      if (historyPending || !views.has(id) || stack.some(entry => entry.id === id) || (active && active.dataset.state !== 'open')) return;
       const view = views.get(id);
-      lockHome();
+      const parent = active;
+      const opener = document.activeElement;
+      if (!parent) lockHome();
+      else { parent.inert = true; opener?.blur(); }
+      const beneath = parent ? parent.querySelector('.page-panel') : home;
+      stack.push({ id, context, underlay: beneath, opener });
       active = view;
+      view.style.zIndex = String(20 + stack.length);
       view.hidden = false;
       view.inert = false;
-      home.classList.toggle('sheet-underlay', view.dataset.presentation === 'sheet');
+      beneath.classList.toggle('sheet-underlay', view.dataset.presentation === 'sheet');
       view.querySelector('.view-scroll').scrollTop = 0;
       syncViewport();
-      if (!fromHistory) history.pushState({ ...history.state, innSession: session, innView: id }, '');
+      if (!fromHistory) history.pushState({ ...history.state, innSession: session, innView: id, innStack: stack.map(entry => ({ id: entry.id, context: entry.context })), innConfirm: null }, '');
+      announce();
       view.querySelector('h2').focus({ preventScroll: true });
-      animate(view, 1, 0, view.dataset.presentation === 'sheet' ? 380 : 360, 'opening', () => { view.dataset.state = 'open'; });
+      animate(view, 1, 0, view.dataset.presentation === 'sheet' ? 380 : 360, 'opening', () => { view.dataset.state = 'open'; reconcileHistory(); });
     }
 
     function visibleProgress(view) {
@@ -206,9 +240,8 @@
 
     window.addEventListener('popstate', event => {
       historyPending = false;
-      const requested = event.state?.innSession === session ? event.state.innView : null;
-      if (active && requested !== active.id) close(active.id, true, gesture?.progress ?? null);
-      else if (!active && views.has(requested)) open(requested, true);
+      requestedStack = event.state?.innSession === session ? event.state.innStack || [] : [];
+      reconcileHistory();
     });
     window.addEventListener('resize', () => {
       if (!active) return;
