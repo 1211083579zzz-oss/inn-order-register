@@ -254,17 +254,23 @@
       const candidates = company.orders.filter(order => homeFilter === 'all' || stayState(order).key === homeFilter);
       return candidates.length && (!query || company.name.toLocaleLowerCase().includes(query) || candidates.some(order => [order.customerName, order.phone, order.hotelOrder, order.base, order.roomType, order.arrivalDate].join(' ').toLocaleLowerCase().includes(query)));
     });
-    document.querySelector('#company-directory-tools').hidden = !groups.length;
+    const empty = !groups.length;
+    document.querySelector('#home-view').dataset.empty = String(empty);
+    document.querySelector('#home-onboarding').hidden = !empty;
+    document.querySelector('.home-toolbar').hidden = empty;
+    document.querySelector('#company-list').hidden = empty;
+    document.querySelector('#home-directory-heading').hidden = empty || (homeFilter === 'all' && !query);
+    document.querySelector('#company-directory-tools').hidden = empty;
     document.querySelector('#clear-company-query').hidden = !search.value;
     document.querySelector('#company-count').textContent = `${visible.length} 个分类`;
-    document.querySelector('#company-statistics-title').textContent = homeFilter === 'all' ? '公司分类' : `${filterLabels[homeFilter]}的公司`;
+    document.querySelector('#company-statistics-title').textContent = query ? '搜索结果' : homeFilter === 'all' ? '公司分类' : `${filterLabels[homeFilter]}的公司`;
     document.querySelector('#company-list').classList.toggle('directory-is-empty', !visible.length);
     document.querySelector('#company-list').innerHTML = visible.map(company => {
       const summary = counts(company.orders);
       return `<button class="company-row" type="button" data-company-id="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${summary.all} 条登记，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已结束 ${summary.finished}，查看住客"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${summary.all} 条登记</span></span><span class="company-statistics">${companyStates(summary)}</span>${nextArrival(company.orders)}</span>${icon('chevron', 'chevron')}</button>`;
     }).join('') || (groups.length
       ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>没有符合条件的公司</h3><p>换个关键词，或查看全部公司。</p><button class="empty-reset" type="button" data-company-reset>查看全部公司</button></div>`
-      : `<div class="empty-state directory-empty"><span class="empty-icon">${icon('company')}</span><h3>从第一条入住登记开始</h3><p>填写住客和旅居公司，<br>这里会自动整理成公司分类。</p></div>`);
+      : '');
   }
 
   function renderCompanyDetail() {
@@ -412,6 +418,14 @@
   document.querySelector('#company-query').addEventListener('input', renderCompanies);
   document.querySelector('#clear-company-query').addEventListener('click', () => { document.querySelector('#company-query').value = ''; renderCompanies(); document.querySelector('#company-query').focus(); });
   document.querySelectorAll('[data-home-filter]').forEach(button => button.addEventListener('click', () => { homeFilter = button.dataset.homeFilter; renderOverview(); renderCompanies(); }));
+  document.querySelector('#home-onboarding').addEventListener('click', event => {
+    const button = event.target.closest('[data-home-action]');
+    if (!button) return;
+    button.focus({ preventScroll: true });
+    const action = button.dataset.homeAction;
+    if (action === 'register') openForm();
+    else if (action === 'join' || action === 'restore') openBackup(action);
+  });
   document.querySelector('#company-list').addEventListener('click', event => {
     if (event.target.closest('[data-company-reset]')) { homeFilter = 'all'; document.querySelector('#company-query').value = ''; renderOverview(); renderCompanies(); return; }
     const company = event.target.closest('[data-company-id]');
@@ -438,12 +452,32 @@
       refreshCalendar();
     }
   });
-  document.querySelector('#open-backup').addEventListener('click', () => {
+  function openBackup(section = '') {
     backupData.value = '';
     const data = store.read();
     document.querySelector('#backup-count').textContent = `${data.companies.length} 家公司 · ${data.orders.length} 条客人登记`;
+    if (section) {
+      // Wait for the sheet to finish opening so navigation cannot steal the input focus.
+      const observer = new MutationObserver(() => {
+        if (backupOverlay.dataset.state === 'open') {
+          observer.disconnect();
+          if (section === 'restore') {
+            backupData.closest('.import-section').scrollIntoView({ block: 'start' });
+            backupData.focus({ preventScroll: true });
+          } else if (!window.InnSync?.status().connected) {
+            document.querySelector('#sync-open-join').click();
+            document.querySelector('#sync-join-form').scrollIntoView({ block: 'center' });
+          } else {
+            document.querySelector('#sync-connected').scrollIntoView({ block: 'center' });
+            document.querySelector('#sync-now').focus({ preventScroll: true });
+          }
+        } else if (backupOverlay.hidden) observer.disconnect();
+      });
+      observer.observe(backupOverlay, { attributes: true, attributeFilter: ['data-state', 'hidden'] });
+    }
     openOverlay('backup-overlay');
-  });
+  }
+  document.querySelector('#open-backup').addEventListener('click', () => openBackup());
   document.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => closeOverlay(button.dataset.close)));
   allViews.forEach((overlay) => overlay.addEventListener('click', (event) => {
     if (event.target === overlay) closeOverlay(overlay.id);

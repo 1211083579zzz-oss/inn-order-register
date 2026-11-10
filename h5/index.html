@@ -9,17 +9,17 @@
   <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=polish-13">
-  <script src="./storage.js?v=polish-13" defer></script>
-  <script src="./arrivals.js?v=polish-13" defer></script>
-  <script src="./sync-config.js?v=polish-13" defer></script>
-  <script src="./sync-core.js?v=polish-13" defer></script>
-  <script src="./sync-client.js?v=polish-13" defer></script>
-  <script src="./motion.js?v=polish-13" defer></script>
-  <script src="./app.js?v=polish-13" defer></script>
-  <script src="./sync-ui.js?v=polish-13" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=home-14">
+  <script src="./storage.js?v=home-14" defer></script>
+  <script src="./arrivals.js?v=home-14" defer></script>
+  <script src="./sync-config.js?v=home-14" defer></script>
+  <script src="./sync-core.js?v=home-14" defer></script>
+  <script src="./sync-client.js?v=home-14" defer></script>
+  <script src="./motion.js?v=home-14" defer></script>
+  <script src="./app.js?v=home-14" defer></script>
+  <script src="./sync-ui.js?v=home-14" defer></script>
 </head>
-<body data-experience="13">
+<body data-experience="13" data-home-design="14">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -38,6 +38,7 @@
     <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="3"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
     <symbol id="i-import" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+    <symbol id="i-sync" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a7.5 7.5 0 0 1 12-2L20 8M4 16l2.5 3a7.5 7.5 0 0 0 12-2"/></symbol>
     <symbol id="i-company" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h1m4 0h1m-6 4h1m4 0h1m-5 10v-5h4v5M3 21h18"/></symbol>
   </defs></svg>
 
@@ -48,12 +49,26 @@
     </header>
     <main id="main-content" class="content">
       <div class="page-heading"><p id="today-label" class="date-label" hidden></p><h1 id="home-title">旅居公司</h1><p id="home-summary" class="hierarchy-caption" hidden></p></div>
-      <section id="company-module" aria-labelledby="company-statistics-title">
+      <section id="company-module" aria-labelledby="home-title">
         <div id="company-directory-tools" class="company-directory-tools" hidden>
           <div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="company-query" type="search" aria-label="搜索旅居公司或住客" placeholder="搜索公司或住客" autocomplete="off" enterkeyhint="search"><button id="clear-company-query" class="clear-search" type="button" aria-label="清空公司搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
           <div class="filters" role="group" aria-label="按住客状态筛选旅居公司"><span id="directory-filter-selection" class="filter-selection" aria-hidden="true"></span><button class="filter active" type="button" data-home-filter="all" aria-pressed="true">全部</button><button class="filter" type="button" data-home-filter="upcoming" aria-pressed="false">待入住</button><button class="filter" type="button" data-home-filter="staying" aria-pressed="false">入住中</button><button class="filter" type="button" data-home-filter="finished" aria-pressed="false">已结束</button></div>
         </div>
-        <div class="list-heading"><h2 id="company-statistics-title">公司分类</h2><span id="company-count" role="status">0 个分类</span></div>
+        <div id="home-onboarding" class="home-onboarding" hidden>
+          <section class="first-order" aria-labelledby="first-order-title">
+            <div class="first-order-heading"><span class="first-order-mark" aria-hidden="true"><svg class="icon"><use href="#i-book"/></svg></span><h2 id="first-order-title">开始登记入住</h2></div>
+            <p>填写住客和旅居公司，保存后自动按公司归类。</p>
+            <button id="start-first-order" class="primary-button" type="button" data-home-action="register"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span>新增入住登记</span></button>
+          </section>
+          <section class="home-resume" aria-labelledby="home-resume-title">
+            <h2 id="home-resume-title">已有登记？在这里接续</h2>
+            <div class="resume-actions">
+              <button id="home-join-sync" class="resume-action" type="button" data-home-action="join"><span class="resume-icon" aria-hidden="true"><svg class="icon"><use href="#i-sync"/></svg></span><span class="resume-copy"><strong>从其他设备同步</strong><span>使用已有空间的配对码</span></span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+              <button id="home-restore-backup" class="resume-action" type="button" data-home-action="restore"><span class="resume-icon" aria-hidden="true"><svg class="icon"><use href="#i-import"/></svg></span><span class="resume-copy"><strong>从备份恢复</strong><span>导入之前保存的登记内容</span></span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+            </div>
+          </section>
+        </div>
+        <div id="home-directory-heading" class="list-heading" hidden><h2 id="company-statistics-title">公司分类</h2><span id="company-count" role="status"></span></div>
         <div id="company-list" class="company-list" aria-label="旅居公司分类" aria-live="polite"></div>
       </section>
       <section id="arrival-reminders" class="arrival-reminders" data-design="9" aria-labelledby="arrival-title" hidden>

@@ -393,3 +393,32 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
   .top-actions { gap: 4px; }
   .local-badge .icon { display: none; }
 }
+
+/* First use is a working entry point; saved records replace it with the real directory. */
+.first-order { padding: 24px; border-radius: var(--radius-group); background: var(--surface); }
+.first-order-heading { display: flex; align-items: center; gap: 12px; }
+.first-order-mark { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border-radius: var(--radius-control); color: var(--blue); background: var(--blue-soft); }
+.first-order-mark .icon { width: 23px; height: 23px; }
+.first-order h2 { font-size: 1.25rem; font-weight: 650; line-height: 1.5; text-wrap: pretty; }
+.first-order > p { margin-top: 14px; color: var(--secondary); font-size: .9375rem; line-height: 1.8; text-wrap: pretty; }
+.first-order .primary-button { min-height: 52px; margin-top: 24px; }
+.home-resume { margin-top: 28px; }
+.home-resume > h2 { margin: 0 0 12px 4px; color: var(--secondary); font-size: var(--caption); font-weight: 500; line-height: 1.6; text-wrap: pretty; }
+.resume-actions { overflow: hidden; border-radius: var(--radius-group); background: var(--surface); }
+.resume-action { position: relative; width: 100%; min-height: 88px; justify-content: flex-start; gap: 12px; padding: 18px 16px; color: var(--ink); background: transparent; text-align: left; }
+.resume-action + .resume-action::before { position: absolute; top: 0; right: 0; left: 64px; height: 1px; background: var(--line); content: ''; }
+.resume-icon { display: grid; width: 36px; height: 36px; flex: none; place-items: center; border-radius: 10px; color: var(--avatar-ink); background: var(--avatar-surface); }
+.resume-icon .icon { width: 20px; height: 20px; }
+.resume-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
+.resume-copy strong { font-size: 1rem; font-weight: 600; line-height: 1.5; }
+.resume-copy > span { color: var(--secondary); font-size: var(--caption); line-height: 1.6; }
+.resume-action .chevron { width: 16px; height: 16px; color: var(--secondary); }
+.resume-action:active { background: var(--control-soft); }
+.resume-action:focus-visible { outline-offset: -3px; }
+@media (hover: hover) and (pointer: fine) { .resume-action:hover { background: var(--control-soft); } }
+@media (max-width: 359px) {
+  .first-order { padding: 20px; }
+  .resume-action { gap: 10px; padding: 16px 12px; }
+  .resume-icon { width: 32px; height: 32px; }
+  .resume-action + .resume-action::before { left: 54px; }
+}
