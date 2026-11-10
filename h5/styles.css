@@ -339,20 +339,16 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 }
 
 /* Direct registration: classification is derived from guest records. */
-.registration-overview { display: flex; gap: 4px; padding: 4px; margin-bottom: 24px; background: var(--control); border-radius: 12px; }
-.overview-state { min-width: 0; min-height: 62px; flex: 1; flex-direction: column; gap: 2px; padding: 8px 2px; border-radius: 9px; color: var(--secondary); background: transparent; }
-.overview-state > span { font-size: var(--caption); white-space: nowrap; }
-.overview-state > strong { color: var(--ink); font-size: 1.125rem; font-weight: 650; font-variant-numeric: tabular-nums; }
-.overview-state.active { color: var(--blue); background: var(--surface); }
-.overview-state.active > strong { color: var(--blue); }
 #company-module { margin-bottom: 28px; }
-#guest-module > .search-box { margin-bottom: 16px; }
+.company-directory-tools { margin-bottom: 18px; }
+.company-directory-tools .search-box { margin-bottom: 12px; }
+.company-directory-tools .filters { margin-bottom: 0; }
+.company-row-heading strong { color: var(--ink); }
+.company-list.directory-is-empty { border: 0; background: transparent; }
+.directory-empty { padding: 64px 12px 48px; }
 .company-row-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .company-row-heading strong { min-width: 0; flex: 1; }
 .company-total { flex: none; color: var(--secondary); font-size: var(--caption); font-variant-numeric: tabular-nums; }
 .company-row-copy .company-statistics { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .8125rem; }
 .company-statistics b { font-weight: 600; font-variant-numeric: tabular-nums; }
-.classification-empty { padding: 16px; border-radius: 12px; color: var(--secondary); background: var(--surface); font-size: var(--caption); line-height: 1.8; }
-.record-company { margin-top: 5px; color: var(--secondary); font-size: var(--caption); overflow-wrap: anywhere; }
-#home-order-list .empty-state { padding: 32px 8px; }
-@media (max-width: 359px) { .company-row { padding: 14px 12px; gap: 10px; } .company-row-copy .company-statistics { gap: 3px 8px; font-size: .75rem; } .overview-state > span { font-size: .8125rem; } }
+@media (max-width: 359px) { .company-row { padding: 14px 12px; gap: 10px; } .company-row-copy .company-statistics { gap: 3px 8px; font-size: .75rem; } }

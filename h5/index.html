@@ -6,18 +6,18 @@
   <meta name="theme-color" content="#f5f7fb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="description" content="简单好用的住宿登记，直接登记住客，按旅居公司分类统计，支持本机保存和加密同步。">
+  <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=direct-11">
-  <script src="./storage.js?v=direct-11" defer></script>
-  <script src="./arrivals.js?v=direct-11" defer></script>
-  <script src="./sync-config.js?v=direct-11" defer></script>
-  <script src="./sync-core.js?v=direct-11" defer></script>
-  <script src="./sync-client.js?v=direct-11" defer></script>
-  <script src="./motion.js?v=direct-11" defer></script>
-  <script src="./app.js?v=direct-11" defer></script>
-  <script src="./sync-ui.js?v=direct-11" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=companies-12">
+  <script src="./storage.js?v=companies-12" defer></script>
+  <script src="./arrivals.js?v=companies-12" defer></script>
+  <script src="./sync-config.js?v=companies-12" defer></script>
+  <script src="./sync-core.js?v=companies-12" defer></script>
+  <script src="./sync-client.js?v=companies-12" defer></script>
+  <script src="./motion.js?v=companies-12" defer></script>
+  <script src="./app.js?v=companies-12" defer></script>
+  <script src="./sync-ui.js?v=companies-12" defer></script>
 </head>
 <body>
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -47,16 +47,14 @@
       <div class="top-actions"><span class="local-badge"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span id="device-storage-label">本机保存</span></span><button id="open-backup" class="backup-button" type="button" aria-label="数据、同步与备份"><svg class="icon" aria-hidden="true"><use href="#i-backup"/></svg><span>数据</span></button></div>
     </header>
     <main id="main-content" class="content">
-      <div class="page-heading"><p id="today-label" class="date-label" hidden></p><h1 id="home-title">入住登记</h1><p class="hierarchy-caption">直接登记住客，按旅居公司分类查看。</p></div>
-      <section class="registration-overview" aria-label="入住统计与筛选">
-        <button type="button" class="overview-state active" data-home-filter="all" aria-pressed="true"><span>全部登记</span><strong id="overview-total">0</strong></button>
-        <button type="button" class="overview-state" data-home-filter="upcoming" aria-pressed="false"><span>待入住</span><strong id="overview-upcoming">0</strong></button>
-        <button type="button" class="overview-state" data-home-filter="staying" aria-pressed="false"><span>入住中</span><strong id="overview-staying">0</strong></button>
-        <button type="button" class="overview-state" data-home-filter="finished" aria-pressed="false"><span>已结束</span><strong id="overview-finished">0</strong></button>
-      </section>
+      <div class="page-heading"><p id="today-label" class="date-label" hidden></p><h1 id="home-title">旅居公司</h1><p id="home-summary" class="hierarchy-caption" hidden></p></div>
       <section id="company-module" aria-labelledby="company-statistics-title">
-        <div class="list-heading"><h2 id="company-statistics-title">按旅居公司统计</h2><span id="company-count">0 家公司</span></div>
-        <div id="company-list" class="company-list" aria-label="旅居公司分类统计" aria-live="polite"></div>
+        <div id="company-directory-tools" class="company-directory-tools" hidden>
+          <div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="company-query" type="search" aria-label="搜索旅居公司或住客" placeholder="搜索公司或住客" autocomplete="off" enterkeyhint="search"><button id="clear-company-query" class="clear-search" type="button" aria-label="清空公司搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
+          <div class="filters" role="group" aria-label="按住客状态筛选旅居公司"><span id="directory-filter-selection" class="filter-selection" aria-hidden="true"></span><button class="filter active" type="button" data-home-filter="all" aria-pressed="true">全部</button><button class="filter" type="button" data-home-filter="upcoming" aria-pressed="false">待入住</button><button class="filter" type="button" data-home-filter="staying" aria-pressed="false">入住中</button><button class="filter" type="button" data-home-filter="finished" aria-pressed="false">已结束</button></div>
+        </div>
+        <div class="list-heading"><h2 id="company-statistics-title">公司分类</h2><span id="company-count" role="status">0 个分类</span></div>
+        <div id="company-list" class="company-list" aria-label="旅居公司分类" aria-live="polite"></div>
       </section>
       <section id="arrival-reminders" class="arrival-reminders" data-design="9" aria-labelledby="arrival-title" hidden>
         <div class="arrival-heading"><h2 id="arrival-title">入住提醒</h2><span id="arrival-overview" class="arrival-overview"></span><div class="arrival-switch" role="group" aria-label="查看入住提醒">
@@ -67,11 +65,6 @@
         <p id="arrival-summary" class="visually-hidden" role="status" aria-live="polite"></p>
         <div id="arrival-list" class="arrival-list"></div>
         <button id="arrival-expand" class="arrival-expand" type="button" aria-expanded="false" aria-controls="arrival-list" hidden></button>
-      </section>
-      <section id="guest-module" aria-labelledby="home-list-title">
-        <div class="list-heading"><h2 id="home-list-title">全部登记</h2><span id="home-guest-count">0 条记录</span></div>
-        <div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="guest-search" type="search" aria-label="搜索住客或公司" placeholder="搜索住客、公司、电话或订单" autocomplete="off" enterkeyhint="search"><button id="clear-guest-search" class="clear-search" type="button" aria-label="清空搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
-        <div id="home-order-list" class="order-list" aria-live="polite"></div>
       </section>
     </main>
     <footer class="home-toolbar"><button id="add-order" class="primary-button add-button" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span>新增入住登记</span></button></footer>
