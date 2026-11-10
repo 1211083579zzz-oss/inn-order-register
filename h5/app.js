@@ -139,7 +139,7 @@
       order.nights, order.guestCount, order.roomType, order.mealIncluded, order.feeDetails
     ].join(' ').toLocaleLowerCase().includes(query)));
     document.querySelector('#company-guest-count').textContent = `${visible.length} 条入住记录`;
-    document.querySelector('#company-list-title').textContent = filterValue === 'all' ? '住客入住信息' : filterLabels[filterValue];
+    document.querySelector('#company-list-title').textContent = filterValue === 'all' ? '住客记录' : filterLabels[filterValue];
     document.querySelector('#clear-company-guest-search').hidden = !queryValue;
     document.querySelectorAll('[data-company-filter]').forEach(button => {
       const selected = button.dataset.companyFilter === filterValue;
@@ -159,12 +159,12 @@
     target.innerHTML = visible.map((order) => {
       const state = stayState(order);
       return `<article class="order-card" data-id="${escapeHtml(order.id)}">
-        <div class="record-heading"><h3 class="hotel-order">${escapeHtml(order.hotelOrder || '未填写订单名称')}</h3><span class="status status-${state.key}">${state.label}</span></div>
-        <div class="base-line">${icon('pin')}<span>${escapeHtml(order.base || '未填写基地')}</span></div>
-        <div class="stay-line"><time datetime="${escapeHtml(order.arrivalDate)}">${escapeHtml(order.arrivalDate.replace(/-/g, '.'))}</time><span class="stay-caption">入住</span><span class="night-tag">${escapeHtml(order.nights)} 晚</span></div>
-        <div class="guest-row"><strong class="guest-name">${escapeHtml(order.customerName || '未填写姓名')}</strong>${order.phone ? `<a class="phone-link" data-call href="tel:${encodeURIComponent(order.phone.replace(/[\s-]/g, ''))}" aria-label="拨打 ${escapeHtml(order.customerName)} 的电话 ${escapeHtml(order.phone)}">${icon('phone')}${escapeHtml(order.phone)}</a>` : ''}</div>
-        <div class="stay-details"><span>${icon('users')}${escapeHtml(order.guestCount)}</span><span>${icon('bed')}${escapeHtml(order.roomType)}</span><span>${icon('meal')}${order.mealIncluded === '是' ? '含餐' : '不含餐'}</span></div>
-        <div class="record-footer"><div class="fee-line">${order.feeDetails ? `<span class="fee-label">费用明细</span><span class="fee-value">${escapeHtml(order.feeDetails)}</span>` : '<span class="fee-empty">未填写费用明细</span>'}</div><button class="record-open" type="button" aria-label="编辑 ${escapeHtml(order.hotelOrder)} 的登记">${icon('chevron')}</button></div>
+        <div class="record-heading"><h3 class="guest-name">${escapeHtml(order.customerName || '未填写姓名')}</h3><span class="status status-${state.key}">${state.label}</span></div>
+        <div class="stay-line">${icon('calendar')}<time datetime="${escapeHtml(order.arrivalDate)}">${escapeHtml(order.arrivalDate.replace(/-/g, '.'))}</time><span class="stay-caption">入住</span><span class="night-tag">${escapeHtml(order.nights)} 晚</span></div>
+        <div class="stay-details"><span class="room-type">${escapeHtml(order.roomType)}</span><span>${escapeHtml(order.guestCount)}</span><span>${order.mealIncluded === '是' ? '含餐' : '不含餐'}</span></div>
+        <div class="order-location"><span class="hotel-order">${escapeHtml(order.hotelOrder || '未填写订单名称')}</span><span class="base-line">${escapeHtml(order.base || '未填写基地')}</span></div>
+        ${order.feeDetails ? `<div class="fee-line"><span class="fee-label">费用</span><span class="fee-value">${escapeHtml(order.feeDetails)}</span></div>` : ''}
+        <div class="record-footer">${order.phone ? `<a class="phone-link" data-call href="tel:${encodeURIComponent(order.phone.replace(/[\s-]/g, ''))}" aria-label="拨打 ${escapeHtml(order.customerName)} 的电话 ${escapeHtml(order.phone)}">${icon('phone')}${escapeHtml(order.phone)}</a>` : '<span class="fee-empty">未填写电话</span>'}<button class="record-open" type="button" aria-label="编辑 ${escapeHtml(order.customerName)} 的登记">编辑${icon('chevron')}</button></div>
       </article>`;
     }).join('');
   }
@@ -178,11 +178,11 @@
     let markup = visible.map(company => {
       const guests = orders.filter(order => order.companyId === company.id);
       const staying = guests.filter(order => stayState(order).key === 'staying').length;
-      return `<button class="company-row" type="button" data-company-id="${escapeHtml(company.id)}" aria-label="进入 ${escapeHtml(company.name)} 的住客列表，${guests.length} 条入住记录"><span class="company-symbol">${icon('company')}</span><span class="company-row-copy"><strong>${escapeHtml(company.name)}</strong><span>${guests.length} 条住客入住记录${staying ? `<i>·</i>${staying} 条入住中` : ''}</span></span>${icon('chevron', 'chevron')}</button>`;
+      return `<button class="company-row" type="button" data-company-id="${escapeHtml(company.id)}" aria-label="进入 ${escapeHtml(company.name)} 的住客列表，${guests.length} 条入住记录"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0] || '旅')}</span><span class="company-row-copy"><strong>${escapeHtml(company.name)}</strong><span>${guests.length} 条入住${staying ? `<i>·</i><span class="current-count">${staying} 条入住中</span>` : ''}</span></span>${icon('chevron', 'chevron')}</button>`;
     }).join('');
     if (!visible.length) markup = `<div class="empty-state"><span class="empty-icon">${icon(query ? 'search' : 'company')}</span><h3>${query ? '没有找到相关公司' : '先添加旅居公司，再登记住客'}</h3><p>${query ? '试试其他公司名称或联系人' : '每家公司的住客分开保存。<br>添加公司后，就能进入登记入住信息。'}</p>${!query ? '<button class="empty-create" type="button" data-create-company>新增旅居公司</button>' : ''}</div>`;
     const unassigned = orders.filter(order => !order.companyId).length;
-    if (unassigned && !query) markup += `<button class="company-row unassigned-row" type="button" data-company-id="" aria-label="待归类住客，${unassigned} 条历史记录"><span class="company-symbol">${icon('users')}</span><span class="company-row-copy"><strong>待归类住客</strong><span>${unassigned} 条历史记录，选择旅居公司后归类</span></span>${icon('chevron', 'chevron')}</button>`;
+    if (unassigned && !query) markup += `<button class="company-row unassigned-row" type="button" data-company-id="" aria-label="待归类住客，${unassigned} 条历史记录"><span class="company-symbol">${icon('users')}</span><span class="company-row-copy"><strong>待归类住客</strong><span>${unassigned} 条历史记录待选择公司</span></span>${icon('chevron', 'chevron')}</button>`;
     document.querySelector('#company-list').innerHTML = markup;
   }
 
@@ -190,7 +190,8 @@
     if (selectedCompanyId === null) return;
     const company = store.read().companies.find(item => item.id === selectedCompanyId);
     const name = company?.name || (selectedCompanyId === '' ? '待归类住客' : '公司已删除');
-    document.querySelector('#company-title').textContent = name;
+    document.querySelector('#company-title').textContent = selectedCompanyId === '' ? '待归类住客' : '住客登记';
+    document.querySelector('#company-detail-symbol').textContent = Array.from(name)[0] || '旅';
     document.querySelector('#company-name').textContent = name;
     const contact = document.querySelector('#company-contact');
     contact.textContent = selectedCompanyId === '' ? '这些是旧版留下的记录。打开记录，选择旅居公司后保存归类。' : [company?.contact, company?.phone].filter(Boolean).join(' · ');
