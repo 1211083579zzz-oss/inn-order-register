@@ -1,8 +1,12 @@
 (function () {
   'use strict';
 
-  const today = localDate(new Date());
+  let today = localDate(new Date());
   let toastTimer;
+  let calendarTimer;
+  let arrivalView = 'arrivals';
+  let arrivalsExpanded = false;
+  let highlightedOrderId = '';
   const filterLabels = { all: '全部登记', upcoming: '待入住', staying: '入住中', finished: '已结束' };
   const icon = (name, extra = '') => `<svg class="icon ${extra}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
@@ -131,6 +135,36 @@
     return { key: 'finished', label: '已结束' };
   }
 
+  function renderArrivalReminders() {
+    const data = store.read();
+    const section = document.querySelector('#arrival-reminders');
+    section.hidden = !data.orders.length;
+    if (section.hidden) return;
+    const summary = window.InnArrivals.summarize(data, today);
+    document.querySelector('#arrival-date').textContent = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric' }).format(new Date(`${today}T12:00:00`));
+    document.querySelector('#arrival-count').textContent = summary.arrivals.length;
+    document.querySelector('#staying-count').textContent = summary.staying.length;
+    document.querySelectorAll('[data-arrival-view]').forEach(button => {
+      const selected = button.dataset.arrivalView === arrivalView;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+    const entries = summary[arrivalView];
+    document.querySelector('#arrival-summary').textContent = arrivalView === 'arrivals'
+      ? summary.todayCount || summary.upcomingCount ? `${summary.todayCount} 条今日入住 · ${summary.upcomingCount} 条即将入住` : '未来 3 天暂无入住安排'
+      : summary.staying.length ? `${summary.staying.length} 条入住中的记录` : '暂无入住中的记录';
+    document.querySelector('#arrival-list').innerHTML = entries.slice(0, arrivalsExpanded ? undefined : 3).map(({ order, company, days, remaining }) => {
+      const label = arrivalView === 'staying' ? '入住中' : ['今天', '明天', '后天', '3天后'][days];
+      const date = `${Number(order.arrivalDate.slice(5, 7))}.${order.arrivalDate.slice(8, 10)}`;
+      const context = [order.base, order.roomType, arrivalView === 'staying' ? `还有 ${remaining} 晚` : `${order.nights} 晚`].filter(Boolean).join(' · ');
+      return `<button class="arrival-row${arrivalView === 'arrivals' && days === 0 ? ' arrival-today' : ''}" type="button" data-arrival-id="${escapeHtml(order.id)}" aria-label="${escapeHtml(label)}，${escapeHtml(order.customerName)}，${escapeHtml(company?.name || '待归类住客')}，查看登记"><span class="arrival-when"><strong>${label}</strong><span>${date}</span></span><span class="arrival-copy"><span class="arrival-person"><strong>${escapeHtml(order.customerName || '未填写姓名')}</strong><span>${escapeHtml(company?.name || '待归类住客')}</span></span><span class="arrival-context">${escapeHtml(context)}</span></span>${icon('chevron', 'chevron')}</button>`;
+    }).join('') || '<p class="arrival-empty">' + (arrivalView === 'arrivals' ? '客人临近入住时，会自动出现在这里。' : '客人入住后，可在这里查看在住情况。') + '</p>';
+    const expand = document.querySelector('#arrival-expand');
+    expand.hidden = entries.length <= 3;
+    expand.textContent = arrivalsExpanded ? '收起提醒' : `查看全部 ${entries.length} 条`;
+    expand.setAttribute('aria-expanded', String(arrivalsExpanded));
+  }
+
   function renderOrders(target, queryValue, filterValue, companyId) {
     const orders = readOrders().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
     const query = queryValue.trim().toLocaleLowerCase();
@@ -158,7 +192,7 @@
 
     target.innerHTML = visible.map((order) => {
       const state = stayState(order);
-      return `<article class="order-card" data-id="${escapeHtml(order.id)}">
+      return `<article class="order-card${order.id === highlightedOrderId ? ' reminder-target' : ''}" data-id="${escapeHtml(order.id)}">
         <div class="record-heading"><h3 class="guest-name">${escapeHtml(order.customerName || '未填写姓名')}</h3><span class="status status-${state.key}">${state.label}</span></div>
         <div class="stay-line">${icon('calendar')}<time datetime="${escapeHtml(order.arrivalDate)}">${escapeHtml(order.arrivalDate.replace(/-/g, '.'))}</time><span class="stay-caption">入住</span><span class="night-tag">${escapeHtml(order.nights)} 晚</span></div>
         <div class="stay-details"><span class="room-type">${escapeHtml(order.roomType)}</span><span>${escapeHtml(order.guestCount)}</span><span>${order.mealIncluded === '是' ? '含餐' : '不含餐'}</span></div>
@@ -205,17 +239,25 @@
   }
 
   function render() {
+    today = localDate(new Date());
     renderCompanies();
+    renderArrivalReminders();
     renderCompanyDetail();
   }
 
-  function openCompany(id) {
+  function openCompany(id, orderId = '') {
     if (id && !store.read().companies.some(company => company.id === id)) return;
     selectedCompanyId = id;
+    highlightedOrderId = orderId;
     companyFilter = 'all';
     document.querySelector('#company-guest-search').value = '';
     renderCompanyDetail();
-    navigation.open('company-overlay', { companyId: id });
+    navigation.open('company-overlay', { companyId: id, orderId });
+    if (orderId) {
+      const card = Array.from(document.querySelectorAll('#company-guest-list .order-card')).find(item => item.dataset.id === orderId);
+      card?.scrollIntoView({ block: 'center' });
+      card?.querySelector('.record-open').focus({ preventScroll: true });
+    }
   }
 
   function openCompanyForm(company) {
@@ -248,7 +290,7 @@
     orderForm.classList.remove('submitted');
     Array.from(orderForm.elements).filter(control => control.name).forEach(control => setFieldError(control, ''));
     document.querySelector('#form-error').hidden = true;
-    orderForm.elements.arrivalDate.value = today;
+    orderForm.elements.arrivalDate.value = localDate(new Date());
     orderForm.elements.nights.value = '1';
     orderForm.elements.mealIncluded.value = '否';
     orderForm.dataset.id = order ? order.id : '';
@@ -320,6 +362,22 @@
   }
 
   document.querySelector('#today-label').textContent = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date());
+  document.querySelectorAll('[data-arrival-view]').forEach(button => button.addEventListener('click', () => {
+    arrivalView = button.dataset.arrivalView;
+    arrivalsExpanded = false;
+    renderArrivalReminders();
+  }));
+  document.querySelector('#arrival-expand').addEventListener('click', () => {
+    arrivalsExpanded = !arrivalsExpanded;
+    renderArrivalReminders();
+  });
+  document.querySelector('#arrival-list').addEventListener('click', event => {
+    const button = event.target.closest('[data-arrival-id]');
+    if (!button) return;
+    const order = readOrders().find(item => item.id === button.dataset.arrivalId);
+    if (order) openCompany(order.companyId || '', order.id);
+    else renderArrivalReminders();
+  });
   document.querySelector('#add-company').addEventListener('click', () => openCompanyForm());
   document.querySelector('#company-search').addEventListener('input', renderCompanies);
   document.querySelector('#clear-company-search').addEventListener('click', () => { document.querySelector('#company-search').value = ''; renderCompanies(); document.querySelector('#company-search').focus(); });
@@ -368,10 +426,12 @@
   window.addEventListener('innviewchange', event => {
     if (event.detail.id === 'company-overlay') {
       selectedCompanyId = event.detail.context.companyId ?? '';
+      highlightedOrderId = event.detail.context.orderId || '';
       renderCompanyDetail();
       if (selectedCompanyId && !store.read().companies.some(company => company.id === selectedCompanyId) && document.querySelector('#company-overlay').dataset.state === 'open') closeOverlay('company-overlay');
     } else if (!event.detail.id) {
       selectedCompanyId = null;
+      refreshCalendar();
       if (pendingCompanyId) {
         const id = pendingCompanyId;
         pendingCompanyId = null;
@@ -519,8 +579,29 @@
     else if (!confirmation.open && event.state?.innConfirm) history.back();
   });
 
+  function refreshCalendar() {
+    const date = localDate(new Date());
+    if (date !== today) {
+      today = date;
+      try { render(); } catch (error) { showToast(error.message || '本机记录无法读取'); }
+    }
+    clearTimeout(calendarTimer);
+    const next = new Date();
+    next.setHours(24, 0, 0, 100);
+    calendarTimer = setTimeout(refreshCalendar, Math.max(1000, next.getTime() - Date.now()));
+  }
+
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshCalendar(); });
+  window.addEventListener('pageshow', refreshCalendar);
+  window.addEventListener('focus', refreshCalendar);
+  window.addEventListener('storage', event => {
+    if (event.key !== null && !['inn-order-data-v2', 'inn-order-records-v1'].includes(event.key)) return;
+    try { render(); } catch (error) { showToast(error.message || '本机记录无法读取'); }
+  });
+
   try { render(); } catch (error) {
     document.querySelector('#company-list').textContent = error.message || '本机记录无法读取';
     document.querySelector('#company-list').setAttribute('role', 'alert');
   }
+  refreshCalendar();
 }());

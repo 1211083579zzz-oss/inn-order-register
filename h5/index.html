@@ -9,10 +9,11 @@
   <meta name="description" content="简单好用的住宿登记，信息仅保存在当前设备。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=visual-7">
-  <script src="./storage.js?v=visual-7" defer></script>
-  <script src="./motion.js?v=visual-7" defer></script>
-  <script src="./app.js?v=visual-7" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=arrivals-8">
+  <script src="./storage.js?v=arrivals-8" defer></script>
+  <script src="./arrivals.js?v=arrivals-8" defer></script>
+  <script src="./motion.js?v=arrivals-8" defer></script>
+  <script src="./app.js?v=arrivals-8" defer></script>
 </head>
 <body>
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -43,6 +44,17 @@
     </header>
     <main id="main-content" class="content">
       <div class="page-heading"><p id="today-label" class="date-label" hidden></p><h1 id="home-title">旅居公司</h1><p class="hierarchy-caption">选一家旅居公司，登记和查看住客。</p></div>
+      <section id="arrival-reminders" class="arrival-reminders" aria-labelledby="arrival-title" hidden>
+        <div class="arrival-heading"><h2 id="arrival-title"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>入住提醒</h2><span id="arrival-date" class="arrival-date"></span></div>
+        <div class="arrival-switch" role="group" aria-label="查看入住提醒">
+          <button type="button" data-arrival-view="arrivals" class="active" aria-pressed="true" aria-controls="arrival-list">近期入住<span id="arrival-count">0</span></button>
+          <button type="button" data-arrival-view="staying" aria-pressed="false" aria-controls="arrival-list">入住中<span id="staying-count">0</span></button>
+        </div>
+        <p id="arrival-summary" class="arrival-summary" role="status" aria-live="polite"></p>
+        <div id="arrival-list" class="arrival-list"></div>
+        <button id="arrival-expand" class="arrival-expand" type="button" aria-expanded="false" aria-controls="arrival-list" hidden></button>
+        <p class="arrival-note">按登记日期自动更新，提前 3 天提醒</p>
+      </section>
       <div id="company-module">
         <div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="company-search" type="search" aria-label="搜索旅居公司" placeholder="搜索公司或联系人" autocomplete="off" enterkeyhint="search"><button id="clear-company-search" class="clear-search" type="button" aria-label="清空公司搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
         <div class="list-heading"><h2>公司列表</h2><span id="company-count">0 家公司</span></div>
