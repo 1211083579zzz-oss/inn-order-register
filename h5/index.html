@@ -9,11 +9,15 @@
   <meta name="description" content="简单好用的住宿登记，信息仅保存在当前设备。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=reminders-9">
-  <script src="./storage.js?v=reminders-9" defer></script>
-  <script src="./arrivals.js?v=reminders-9" defer></script>
-  <script src="./motion.js?v=reminders-9" defer></script>
-  <script src="./app.js?v=reminders-9" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=sync-10-1794313394094">
+  <script src="./storage.js?v=sync-10-1794313394094" defer></script>
+  <script src="./arrivals.js?v=sync-10-1794313394094" defer></script>
+  <script src="./sync-config.js?v=sync-10-1794313394094" defer></script>
+  <script src="./sync-core.js?v=sync-10-1794313394094" defer></script>
+  <script src="./sync-client.js?v=sync-10-1794313394094" defer></script>
+  <script src="./motion.js?v=sync-10-1794313394094" defer></script>
+  <script src="./app.js?v=sync-10-1794313394094" defer></script>
+  <script src="./sync-ui.js?v=sync-10-1794313394094" defer></script>
 </head>
 <body>
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -40,7 +44,7 @@
   <div id="home-view" class="app-shell">
     <header class="topbar">
       <div class="app-brand"><span class="app-icon"><svg class="icon"><use href="#i-bed"/></svg></span><span>住宿登记</span></div>
-      <div class="top-actions"><span class="local-badge"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>本机保存</span><button id="open-backup" class="backup-button" type="button" aria-label="备份与恢复"><svg class="icon" aria-hidden="true"><use href="#i-backup"/></svg><span>备份</span></button></div>
+      <div class="top-actions"><span class="local-badge"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span id="device-storage-label">本机保存</span></span><button id="open-backup" class="backup-button" type="button" aria-label="数据、同步与备份"><svg class="icon" aria-hidden="true"><use href="#i-backup"/></svg><span>数据</span></button></div>
     </header>
     <main id="main-content" class="content">
       <div class="page-heading"><p id="today-label" class="date-label" hidden></p><h1 id="home-title">旅居公司</h1><p class="hierarchy-caption">选一家旅居公司，登记和查看住客。</p></div>
@@ -136,8 +140,17 @@
     <div class="view-dimmer" aria-hidden="true"></div>
     <div class="page-panel backup-panel">
       <div class="sheet-grabber" aria-hidden="true"><span></span></div>
-      <header class="view-nav"><span class="nav-spacer" aria-hidden="true"></span><h2 id="backup-title" tabindex="-1">备份与恢复</h2><button class="text-button sheet-done" type="button" data-close="backup-overlay">完成</button></header>
+      <header class="view-nav"><span class="nav-spacer" aria-hidden="true"></span><h2 id="backup-title" tabindex="-1">数据与同步</h2><button class="text-button sheet-done" type="button" data-close="backup-overlay">完成</button></header>
       <div class="view-scroll backup-content">
+        <section id="cloud-sync" class="cloud-sync" aria-labelledby="sync-title">
+          <div class="sync-heading"><span class="action-icon"><svg class="icon" aria-hidden="true"><use href="#i-backup"/></svg></span><div><h3 id="sync-title">多设备同步</h3><p id="sync-status" role="status" aria-live="polite">当前仅保存在本机</p></div></div>
+          <p id="sync-description" class="sync-description">创建一个同步空间，其他设备用配对码加入。断网也能登记，联网后自动同步。</p>
+          <div id="sync-setup" class="sync-setup"><button id="sync-create" class="primary-button" type="button">创建同步空间</button><button id="sync-open-join" class="sync-secondary" type="button">加入已有空间</button></div>
+          <form id="sync-join-form" class="sync-join-form" hidden><label for="sync-code-input">粘贴另一台设备的配对码</label><textarea id="sync-code-input" rows="2" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="INN1- 开头的完整配对码"></textarea><button id="sync-join" class="primary-button" type="submit">加入并合并本机记录</button><button id="sync-cancel-join" class="sync-secondary" type="button">返回</button></form>
+          <div id="sync-connected" hidden><div class="sync-connected-actions"><button id="sync-copy-code" class="sync-secondary" type="button">复制配对码</button><button id="sync-now" class="sync-secondary" type="button">立即同步</button></div><p class="sync-description">在其他设备打开同一链接，选择“加入已有空间”。配对码可读写这份登记，请只分享给共同管理的人。</p><textarea id="sync-code-output" class="sync-code-output" rows="2" readonly aria-label="当前同步空间配对码" hidden></textarea><button id="sync-disconnect" class="text-button sync-disconnect" type="button">断开此设备</button></div>
+          <form id="sync-conflicts" class="sync-conflicts" hidden><h4>确认同时修改的内容</h4><p>两台设备修改了同一项，两份内容都已保留。请选择要使用的内容。</p><div id="sync-conflict-fields"></div><button id="sync-resolve" class="primary-button" type="submit">保存选择并同步</button></form>
+          <p id="sync-error" class="form-error" role="alert" hidden></p>
+        </section>
         <div class="backup-intro"><span class="backup-emblem"><svg class="icon" aria-hidden="true"><use href="#i-backup"/></svg></span><h3>备份你的入住记录</h3><p>复制后粘贴到备忘录保存，<br>换设备时也能合并恢复。</p></div>
         <button id="copy-backup" class="backup-export" type="button"><span class="action-icon"><svg class="icon"><use href="#i-copy"/></svg></span><span class="action-copy"><strong>复制本机备份</strong><span id="backup-count">备份全部登记信息</span></span><svg class="icon chevron"><use href="#i-chevron"/></svg></button>
         <div class="import-section"><label for="backup-data">恢复已有备份</label><p>粘贴备份内容，合并到本机记录。</p><textarea id="backup-data" class="backup-data" rows="4" spellcheck="false" placeholder="在这里粘贴备份内容"></textarea><button id="import-backup" class="primary-button" type="button"><svg class="icon"><use href="#i-import"/></svg>合并导入</button><p class="import-note">相同编号以备份内容为准。</p></div>

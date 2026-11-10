@@ -245,6 +245,27 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 .field[data-invalid] b { color: var(--danger); }
 .field-error { flex-basis: 100%; color: var(--danger); font-size: var(--caption); line-height: 1.5; }
 .backup-content { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+.cloud-sync { margin-top: 20px; padding: 16px; border-radius: var(--radius-group); background: var(--surface); }
+.sync-heading { display: flex; align-items: center; gap: 12px; }
+.sync-heading > div { flex: 1; min-width: 0; }
+.sync-heading h3 { font-size: 1.0625rem; font-weight: 650; }
+.sync-heading p { margin-top: 3px; color: var(--secondary); font-size: var(--caption); overflow-wrap: anywhere; }
+.sync-description { margin: 12px 0 16px; color: var(--secondary); font-size: var(--caption); line-height: 1.8; }
+.sync-setup, .sync-connected-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.sync-setup > button, .sync-connected-actions > button { flex: 1; min-width: 120px; }
+.sync-secondary { min-height: 48px; padding: 0 12px; border-radius: var(--radius-control); color: var(--blue); background: var(--blue-soft); font-size: 1rem; font-weight: 550; }
+.sync-join-form > label { display: block; margin: 16px 0 8px; color: var(--label); font-size: var(--caption); }
+.sync-join-form textarea, .sync-code-output { display: block; width: 100%; min-height: 80px; margin-bottom: 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--canvas); font-size: 1rem; line-height: 1.6; overflow-wrap: anywhere; resize: vertical; }
+.sync-join-form .sync-secondary { width: 100%; margin-top: 8px; }
+.sync-connected-actions { margin-top: 16px; }
+.sync-disconnect { min-height: 44px; color: var(--secondary); font-size: var(--caption); }
+.sync-conflicts { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+.sync-conflicts h4 { margin: 0 0 6px; color: var(--ink); font-size: 1rem; }
+.sync-conflicts > p { margin: 0 0 12px; color: var(--secondary); font-size: var(--caption); line-height: 1.7; }
+.sync-conflict-field { display: flex; min-width: 0; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.sync-conflict-field > span { color: var(--label); font-size: var(--caption); overflow-wrap: anywhere; }
+.sync-conflict-field select { width: 100%; min-height: 44px; padding: 8px; border-radius: 8px; background: var(--canvas); font-size: 1rem; }
+.cloud-sync .form-error { margin: 12px 0 0; }
 .backup-intro { padding: 24px 0; text-align: center; }
 .backup-emblem { display: inline-grid; width: 64px; height: 64px; place-items: center; margin-bottom: 16px; border-radius: 16px; color: var(--blue); background: #e7effe; }
 .backup-emblem .icon { width: 28px; height: 28px; }

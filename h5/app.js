@@ -607,6 +607,9 @@
     if (event.key !== null && !['inn-order-data-v2', 'inn-order-records-v1'].includes(event.key)) return;
     try { render(); } catch (error) { showToast(error.message || '本机记录无法读取'); }
   });
+  window.addEventListener('innsyncdata', () => {
+    try { render(); } catch (error) { showToast(error.message || '本机记录无法读取'); }
+  });
 
   try { render(); } catch (error) {
     document.querySelector('#company-list').textContent = error.message || '本机记录无法读取';

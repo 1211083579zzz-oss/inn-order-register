@@ -1,0 +1,12 @@
+{
+  "name": "inn-order-encrypted-sync",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy",
+    "connect": "node connect.mjs",
+    "check": "node connect.mjs --dry-run"
+  },
+  "devDependencies": { "wrangler": "4.159.0" }
+}

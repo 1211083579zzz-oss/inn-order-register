@@ -1,0 +1,7 @@
+cloud/node_modules/
+cloud/.wrangler/
+cloud/dist/
+cloud/cloud-sync-evidence/
+cloud/deployment.json
+.env
+.dev.vars

@@ -35,6 +35,7 @@
   function createStore(storage) {
     function commit(data) {
       storage.setItem(DATA_KEY, JSON.stringify(data));
+      if (typeof root.dispatchEvent === 'function' && typeof root.CustomEvent === 'function') root.dispatchEvent(new root.CustomEvent('innrecordschange'));
       return data;
     }
 

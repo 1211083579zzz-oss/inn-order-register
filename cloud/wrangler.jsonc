@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "inn-order-encrypted-sync",
+  "main": "worker.js",
+  "compatibility_date": "2026-07-01",
+  "workers_dev": true,
+  "vars": {
+    "ALLOWED_ORIGINS": "https://1211083579zzz-oss.github.io"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "SPACES", "class_name": "RegisterSpace" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RegisterSpace"] }],
+  "observability": { "enabled": false }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "inn-order-register-sync",
+  "pages_build_output_dir": "./site",
+  "compatibility_date": "2026-07-01",
+  "services": [{ "binding": "SYNC", "service": "inn-order-encrypted-sync" }]
+}
