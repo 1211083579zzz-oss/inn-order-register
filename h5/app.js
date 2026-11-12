@@ -7,6 +7,7 @@
   let arrivalView = 'arrivals';
   let arrivalsExpanded = false;
   let highlightedOrderId = '';
+  let registrationSaving = false;
   const filterLabels = { all: '全部登记', upcoming: '待入住', staying: '入住中', finished: '已结束' };
   const icon = (name, extra = '') => `<svg class="icon ${extra}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
@@ -318,7 +319,14 @@
     document.querySelector('#fee-count').textContent = `${orderForm.elements.feeDetails.value.length} / 200`;
   }
 
+  function setRegistrationSaving(saving) {
+    registrationSaving = saving;
+    orderForm.setAttribute('aria-busy', String(saving));
+    document.querySelectorAll('#save-order, #save-order-top').forEach(button => { button.disabled = saving; });
+  }
+
   function openForm(order) {
+    setRegistrationSaving(false);
     const companies = store.read().companies;
     const company = companies.find(item => item.id === (order ? order.companyId : selectedCompanyId));
     orderForm.reset();
@@ -499,6 +507,7 @@
 
   orderForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (registrationSaving || formOverlay.hidden || formOverlay.inert) return;
     orderForm.classList.add('submitted');
     const invalid = Array.from(orderForm.elements).filter(control => control.name && !validateField(control));
     if (invalid.length) {
@@ -506,9 +515,11 @@
       invalid[0].closest('.field').scrollIntoView({ block: 'center' });
       return;
     }
+    setRegistrationSaving(true);
     try {
       const order = getFormOrder();
       store.saveRegistration(order, orderForm.elements.companyName.value);
+      orderForm.dataset.id = order.id;
       homeFilter = 'all';
       document.querySelector('#company-query').value = '';
       closeOverlay('form-overlay');
@@ -517,6 +528,7 @@
       render();
       showToast('登记已保存');
     } catch (error) {
+      setRegistrationSaving(false);
       const message = error.message || '保存失败，请检查本机存储空间';
       document.querySelector('#form-error').textContent = message;
       document.querySelector('#form-error').hidden = false;
