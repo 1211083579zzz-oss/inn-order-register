@@ -2,6 +2,7 @@
   'use strict';
 
   const DATA_KEY = 'inn-order-data-v2';
+  const ANCHOR_KEY = 'inn-order-last-anchor-v1';
   const LEGACY_KEY = 'inn-order-records-v1';
   const APP = 'wechat-inn-orders';
   const text = value => String(value ?? '').trim();
@@ -64,6 +65,20 @@
   }
 
   function createStore(storage) {
+    function preferredAnchor() {
+      const saved = storage.getItem(ANCHOR_KEY);
+      if (saved !== null) return text(saved).slice(0, 30);
+      const latest = read().orders.slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))[0];
+      return text(latest?.anchorName);
+    }
+
+    function rememberAnchor(name) {
+      const value = text(name).normalize('NFKC');
+      if (value.length > 30) throw new Error('登记主播最多 30 字');
+      storage.setItem(ANCHOR_KEY, value);
+      return value;
+    }
+
     function commit(data) {
       storage.setItem(DATA_KEY, JSON.stringify(data));
       if (typeof root.dispatchEvent === 'function' && typeof root.CustomEvent === 'function') root.dispatchEvent(new root.CustomEvent('innrecordschange'));
@@ -198,10 +213,10 @@
       return commit({ version: 2, companies: [...companies.values()], orders: [...orders.values()] });
     }
 
-    return { read, saveCompany, saveOrder, saveOrders, saveRegistration, removeCompany, backup, parseBackup, mergeBackup };
+    return { read, saveCompany, saveOrder, saveOrders, saveRegistration, removeCompany, backup, parseBackup, mergeBackup, preferredAnchor, rememberAnchor };
   }
 
-  const api = { DATA_KEY, LEGACY_KEY, APP, createStore, normalizeOrder, nameKey, findDuplicates, registrationMonth, groupByAnchor };
+  const api = { DATA_KEY, LEGACY_KEY, ANCHOR_KEY, APP, createStore, normalizeOrder, nameKey, findDuplicates, registrationMonth, groupByAnchor };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.InnStorage = api;
 }(typeof window !== 'undefined' ? window : globalThis));

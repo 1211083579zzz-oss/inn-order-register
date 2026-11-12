@@ -252,7 +252,19 @@
   function updateAnchorRecognition() {
     const name = orderForm.elements.anchorName.value.trim();
     const group = window.InnStorage.groupByAnchor(readOrders(), localDate(new Date()).slice(0, 7)).find(item => item.id === window.InnStorage.nameKey(name));
-    document.querySelector('#anchor-recognition').textContent = name ? `自动归入「${group?.name || name}」 · 本月 ${group?.orders.length || 0} 单` : '填写主播姓名，保存后自动归到该主播名下。';
+    document.querySelector('#anchor-recognition').textContent = name ? `自动归入「${group?.name || name}」 · 本月 ${group?.orders.length || 0} 单。保存后下次默认沿用。` : '输入主播姓名或选择已有主播，保存后下次默认沿用。';
+    const picker = document.querySelector('#anchor-picker');
+    picker.value = Array.from(picker.options).find(option => window.InnStorage.nameKey(option.value) === window.InnStorage.nameKey(name))?.value || '';
+  }
+
+  function renderAnchorPicker() {
+    const names = window.InnStorage.groupByAnchor(readOrders()).filter(group => group.id).map(group => group.name);
+    const remembered = store.preferredAnchor();
+    if (remembered && !names.some(name => window.InnStorage.nameKey(name) === window.InnStorage.nameKey(remembered))) names.push(remembered);
+    names.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+    document.querySelector('#anchor-suggestions').innerHTML = names.map(name => `<option value="${escapeHtml(name)}"></option>`).join('');
+    document.querySelector('#anchor-picker').innerHTML = '<option value="">不填写主播</option>' + names.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+    document.querySelector('#anchor-picker-wrap').hidden = !names.length;
   }
 
   function renderOverview() {
@@ -388,8 +400,7 @@
     orderForm.elements.arrivalDate.value = localDate(new Date());
     orderForm.elements.nights.value = '1';
     orderForm.elements.departureDate.value = window.InnArrivals.dateAfter(orderForm.elements.arrivalDate.value, 1);
-    orderForm.elements.anchorName.value = selectedAnchorKey !== null ? window.InnStorage.groupByAnchor(readOrders()).find(group => group.id === selectedAnchorKey)?.orders[0]?.anchorName || '' : '';
-    document.querySelector('#anchor-suggestions').innerHTML = window.InnStorage.groupByAnchor(readOrders()).filter(group => group.id).map(group => `<option value="${escapeHtml(group.name)}"></option>`).join('');
+    orderForm.elements.anchorName.value = selectedAnchorKey !== null ? window.InnStorage.groupByAnchor(readOrders()).find(group => group.id === selectedAnchorKey)?.orders[0]?.anchorName || '' : store.preferredAnchor();
     orderForm.elements.mealIncluded.value = '否';
     orderForm.dataset.id = order ? order.id : '';
     orderForm.elements.companyName.value = company?.name || '';
@@ -417,6 +428,7 @@
       document.querySelector('#delete-order').hidden = true;
     }
     updateFeeCount();
+    renderAnchorPicker();
     updateAnchorRecognition();
     synchronizeStayDates('departureDate');
     navigation.open('form-overlay', { companyId: selectedCompanyId, anchorKey: selectedAnchorKey, orderId: order?.id || '' });
@@ -483,6 +495,10 @@
     else renderArrivalReminders();
   });
   document.querySelector('#add-order').addEventListener('click', () => openForm());
+  document.querySelector('#anchor-picker').addEventListener('change', event => {
+    orderForm.elements.anchorName.value = event.target.value;
+    orderForm.elements.anchorName.dispatchEvent(new Event('input', { bubbles: true }));
+  });
   document.querySelectorAll('[data-directory-mode]').forEach(button => button.addEventListener('click', () => {
     directoryMode = button.dataset.directoryMode;
     homeFilter = 'all';
@@ -592,6 +608,7 @@
     setRegistrationSaving(true);
     const attempt = registrationAttempt;
     try {
+      const isNew = !orderForm.dataset.id;
       const order = getFormOrder();
       const companyName = orderForm.elements.companyName.value;
       const reviewed = new Set();
@@ -603,15 +620,20 @@
         duplicates.forEach(match => reviewed.add(match.order.id));
         duplicates = window.InnStorage.findDuplicates(order, readOrders());
       }
-      store.saveRegistration(order, companyName);
+      const savedOrder = store.saveRegistration(order, companyName);
       orderForm.dataset.id = order.id;
+      let remembered = true;
+      if (isNew) {
+        try { store.rememberAnchor(savedOrder.anchorName); }
+        catch { remembered = false; }
+      }
       homeFilter = 'all';
       document.querySelector('#company-query').value = '';
       closeOverlay('form-overlay');
       companyFilter = 'all';
       document.querySelector('#company-guest-search').value = '';
       render();
-      showToast('登记已保存');
+      showToast(remembered ? '登记已保存' : '登记已保存，但未能记住默认主播');
     } catch (error) {
       if (attempt !== registrationAttempt) return;
       setRegistrationSaving(false);

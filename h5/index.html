@@ -9,17 +9,17 @@
   <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=orders-17">
+  <link rel="stylesheet" href="./styles.css?v=anchor-18">
   <script src="./arrivals.js?v=orders-17" defer></script>
-  <script src="./storage.js?v=orders-17" defer></script>
+  <script src="./storage.js?v=anchor-18" defer></script>
   <script src="./sync-config.js?v=home-14" defer></script>
   <script src="./sync-core.js?v=orders-17" defer></script>
   <script src="./sync-client.js?v=home-14" defer></script>
   <script src="./motion.js?v=save-15" defer></script>
-  <script src="./app.js?v=orders-17" defer></script>
+  <script src="./app.js?v=anchor-18" defer></script>
   <script src="./sync-ui.js?v=home-14" defer></script>
 </head>
-<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17">
+<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -110,10 +110,10 @@
         <form id="order-form" novalidate>
           <fieldset><legend>旅居公司</legend><div class="field-group"><label class="field"><span>公司名称 <b>*</b></span><input id="order-company" name="companyName" list="company-suggestions" required maxlength="80" placeholder="填写或选择旅居公司" autocomplete="off" enterkeyhint="next"></label></div><datalist id="company-suggestions"></datalist><div id="company-shortcuts" class="company-shortcuts" role="group" aria-label="快速选择已有旅居公司" hidden></div><p class="field-note">填写新公司名称，保存后自动分类。</p></fieldset>
           <fieldset><legend>订单信息</legend><div class="field-group">
-            <label class="field"><span>登记主播</span><input name="anchorName" list="anchor-suggestions" maxlength="30" placeholder="填写姓名，自动归到该主播" autocomplete="off" enterkeyhint="next"></label>
+            <div class="field"><label for="anchor-name">登记主播</label><span class="anchor-control"><input id="anchor-name" name="anchorName" list="anchor-suggestions" maxlength="30" placeholder="输入主播姓名" autocomplete="off" enterkeyhint="next"><span id="anchor-picker-wrap" class="anchor-picker-wrap" hidden><span aria-hidden="true">选择<svg class="icon"><use href="#i-chevron"/></svg></span><select id="anchor-picker" aria-label="选择已登记主播"><option value="">不填写主播</option></select></span></span></div>
             <label class="field"><span>旅店/订单 <b>*</b></span><input name="hotelOrder" required maxlength="80" placeholder="旅店或订单名称" autocomplete="off" enterkeyhint="next"></label>
             <label class="field"><span>入住基地 <b>*</b></span><input name="base" required maxlength="40" placeholder="基地名称" autocomplete="off" enterkeyhint="next"></label>
-          </div><datalist id="anchor-suggestions"></datalist><p id="anchor-recognition" class="field-note" aria-live="polite">填写主播姓名，保存后自动归到该主播名下。</p></fieldset>
+          </div><datalist id="anchor-suggestions"></datalist><p id="anchor-recognition" class="field-note" aria-live="polite">输入主播姓名或选择已有主播，保存后下次默认沿用。</p></fieldset>
           <fieldset><legend>客户信息</legend><div class="field-group">
             <label class="field"><span>客户姓名 <b>*</b></span><input name="customerName" required maxlength="30" placeholder="客人姓名" autocomplete="off" enterkeyhint="next"></label>
             <label class="field"><span>客户电话 <b>*</b></span><input name="phone" type="tel" inputmode="tel" required pattern="[0-9+\-\s]{6,20}" maxlength="20" placeholder="联系电话" autocomplete="off" enterkeyhint="next"></label>

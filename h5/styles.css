@@ -430,6 +430,14 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 .departure-line { display: flex; align-items: baseline; gap: 6px; margin: 6px 0 0 25px; color: var(--secondary); font-size: var(--caption); }
 .departure-line time { font-variant-numeric: tabular-nums; }
 .order-attribution { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 10px; color: var(--blue); font-size: var(--caption); overflow-wrap: anywhere; }
+.anchor-control { display: flex; flex: 1; align-items: center; min-width: 0; gap: 8px; }
+.anchor-control > input { min-width: 0; }
+.anchor-picker-wrap { position: relative; display: inline-flex; flex: none; align-items: center; justify-content: center; width: 66px; min-height: 44px; color: var(--blue); }
+.anchor-picker-wrap > span { display: flex; align-items: center; gap: 3px; font-size: var(--caption); pointer-events: none; }
+.anchor-picker-wrap .icon { width: 13px; height: 13px; transform: rotate(90deg); }
+.anchor-picker-wrap select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.anchor-picker-wrap:focus-within { outline: 2px solid var(--blue); outline-offset: 0; border-radius: 8px; }
+@media (max-width: 359px) { .field > .anchor-control { width: 100%; flex-basis: auto; } }
 .confirm-dialog { max-height: calc(var(--visual-height, 100dvh) - 32px); overflow-y: auto; }
 .confirm-dialog[open] { display: flex; flex-direction: column; overflow: hidden; }
 .confirm-copy { min-height: 0; overflow-y: auto; }
