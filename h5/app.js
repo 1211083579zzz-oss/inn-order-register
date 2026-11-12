@@ -345,10 +345,12 @@
       }
       document.querySelector('#form-title').textContent = '修改登记';
       document.querySelector('#save-order span').textContent = '保存修改';
+      document.querySelector('#save-order-top').setAttribute('aria-label', '保存修改');
       document.querySelector('#delete-order').hidden = false;
     } else {
       document.querySelector('#form-title').textContent = '新增登记';
       document.querySelector('#save-order span').textContent = '保存登记';
+      document.querySelector('#save-order-top').setAttribute('aria-label', '保存登记');
       document.querySelector('#delete-order').hidden = true;
     }
     updateFeeCount();

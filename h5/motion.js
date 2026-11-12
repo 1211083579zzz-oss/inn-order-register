@@ -41,14 +41,11 @@
     function syncViewport() {
       if (!active) return;
       const viewport = window.visualViewport;
-      const keyboardVisible = viewport && viewport.scale === 1 && viewport.height < innerHeight - 80;
-      if (keyboardVisible) {
-        active.style.setProperty('--visual-height', `${viewport.height}px`);
-        active.style.setProperty('--visual-top', `${viewport.offsetTop}px`);
-      } else {
-        active.style.removeProperty('--visual-height');
-        active.style.removeProperty('--visual-top');
-      }
+      // WeChat chrome can reduce the usable viewport without opening a keyboard.
+      // Keep the existing layout during pinch zoom so zooming does not reflow the form.
+      if (viewport && Math.abs(viewport.scale - 1) > .01) return;
+      active.style.setProperty('--visual-height', `${Math.max(1, viewport?.height || innerHeight)}px`);
+      active.style.setProperty('--visual-top', `${viewport?.offsetTop || 0}px`);
     }
 
     function geometry(view, progress) {

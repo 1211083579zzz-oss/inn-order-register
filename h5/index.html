@@ -9,17 +9,17 @@
   <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=home-14">
+  <link rel="stylesheet" href="./styles.css?v=save-15">
   <script src="./storage.js?v=home-14" defer></script>
   <script src="./arrivals.js?v=home-14" defer></script>
   <script src="./sync-config.js?v=home-14" defer></script>
   <script src="./sync-core.js?v=home-14" defer></script>
   <script src="./sync-client.js?v=home-14" defer></script>
-  <script src="./motion.js?v=home-14" defer></script>
-  <script src="./app.js?v=home-14" defer></script>
+  <script src="./motion.js?v=save-15" defer></script>
+  <script src="./app.js?v=save-15" defer></script>
   <script src="./sync-ui.js?v=home-14" defer></script>
 </head>
-<body data-experience="13" data-home-design="14">
+<body data-experience="13" data-home-design="14" data-save-fix="15">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -103,7 +103,7 @@
   <section id="form-overlay" class="page-view" data-presentation="push" data-state="closed" role="dialog" aria-modal="true" aria-labelledby="form-title" hidden>
     <div class="view-dimmer" aria-hidden="true"></div>
     <div class="page-panel">
-      <header class="view-nav"><button class="text-button back-button" type="button" data-close="form-overlay"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg>返回</button><h2 id="form-title" tabindex="-1">新增登记</h2><span class="nav-spacer" aria-hidden="true"></span></header>
+      <header class="view-nav"><button class="text-button back-button" type="button" data-close="form-overlay"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg>返回</button><h2 id="form-title" tabindex="-1">新增登记</h2><button id="save-order-top" class="text-button nav-save" type="submit" form="order-form" aria-label="保存登记">保存</button></header>
       <div class="view-scroll">
         <form id="order-form" novalidate>
           <fieldset><legend>旅居公司</legend><div class="field-group"><label class="field"><span>公司名称 <b>*</b></span><input id="order-company" name="companyName" list="company-suggestions" required maxlength="80" placeholder="填写或选择旅居公司" autocomplete="off" enterkeyhint="next"></label></div><datalist id="company-suggestions"></datalist><div id="company-shortcuts" class="company-shortcuts" role="group" aria-label="快速选择已有旅居公司" hidden></div><p class="field-note">填写新公司名称，保存后自动分类。</p></fieldset>
@@ -125,9 +125,9 @@
           <fieldset><legend>费用明细 <span class="optional">选填</span></legend><div class="field-group fee-group"><textarea name="feeDetails" rows="3" maxlength="200" aria-label="费用明细" placeholder="房费、餐费或其他费用说明"></textarea><div class="textarea-footer"><span>最多 200 字</span><span id="fee-count">0 / 200</span></div></div></fieldset>
           <p id="form-error" class="form-error" role="alert" hidden></p>
           <button id="delete-order" class="delete-button" type="button" hidden>删除这条登记</button>
-          <div class="form-actions"><button id="save-order" class="primary-button" type="submit"><svg class="icon"><use href="#i-check"/></svg><span>保存登记</span></button></div>
         </form>
       </div>
+      <div class="form-actions"><button id="save-order" class="primary-button" type="submit" form="order-form"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span>保存登记</span></button></div>
     </div>
   </section>
 
