@@ -21,8 +21,8 @@ for (const label of ['旅店/订单', '入住基地', '客户姓名', '客户电
 }
 const formMarkup = html.match(/<form\b(?=[^>]*\bid="order-form")[^>]*>([\s\S]*?)<\/form>/)[1];
 assert.deepEqual(new Set(Array.from(formMarkup.matchAll(/name="([^"]+)"/g), (match) => match[1])), new Set([
-  'companyName', 'hotelOrder', 'base', 'customerName', 'phone', 'arrivalDate', 'nights', 'guestCount', 'roomType', 'mealIncluded', 'feeDetails'
+  'companyName', 'hotelOrder', 'base', 'anchorName', 'customerName', 'phone', 'arrivalDate', 'departureDate', 'nights', 'guestCount', 'roomType', 'mealIncluded', 'feeDetails'
 ]));
-assert.doesNotMatch(html, /累计已收|待收金额|旅民公司|主播|订单总额|收款方式/);
+assert.doesNotMatch(html, /累计已收|待收金额|旅民公司|订单总额|收款方式/);
 
 console.log('PASS H5 mobile viewport, local assets, local-only storage, and required fields');

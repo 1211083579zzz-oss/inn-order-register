@@ -7,14 +7,45 @@
   const text = value => String(value ?? '').trim();
   const identifier = prefix => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
   const nameKey = value => text(value).normalize('NFKC').toLocaleLowerCase().replace(/\s+/g, ' ');
+  const calendar = typeof module === 'object' && module.exports ? require('./arrivals.js') : root.InnArrivals;
+  const phoneKey = value => text(value).normalize('NFKC').replace(/[^0-9]/g, '').replace(/^(?:0086|86)(?=1\d{10}$)/, '');
+
+  function registrationMonth(order) {
+    const date = new Date(order.createdAt);
+    if (!Number.isFinite(date.getTime())) return '';
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  function groupByAnchor(orders, month = '') {
+    const groups = new Map();
+    orders.forEach(order => {
+      const key = nameKey(order.anchorName);
+      if (!groups.has(key)) groups.set(key, { id: key, name: text(order.anchorName) || '未填写主播', orders: [], total: 0 });
+      const group = groups.get(key);
+      group.total++;
+      if (!month || registrationMonth(order) === month) group.orders.push(order);
+    });
+    return [...groups.values()].sort((a, b) => a.id === '' ? 1 : b.id === '' ? -1 : a.name.localeCompare(b.name, 'zh-CN'));
+  }
+
+  function findDuplicates(input, orders) {
+    const name = nameKey(input.customerName), phone = phoneKey(input.phone);
+    return orders.filter(order => order.id !== input.id).map(order => ({ order, reasons: [
+      name && name === nameKey(order.customerName) ? '姓名相同' : '',
+      phone && phone === phoneKey(order.phone) ? '电话相同' : ''
+    ].filter(Boolean) })).filter(match => match.reasons.length).sort((a, b) => String(b.order.createdAt || '').localeCompare(String(a.order.createdAt || '')));
+  }
 
   function normalizeOrder(order) {
+    const departureDate = calendar.departureDate(order);
+    const start = calendar.calendarDay(text(order.arrivalDate)), end = calendar.calendarDay(departureDate);
     return {
       id: text(order.id) || identifier('ord'),
       companyId: text(order.companyId),
       hotelOrder: text(order.hotelOrder || [order.hotelName, order.orderTitle || order.orderSource].filter(Boolean).join('：')),
-      base: text(order.base), customerName: text(order.customerName), phone: text(order.phone),
-      arrivalDate: text(order.arrivalDate), nights: Math.max(1, Number(order.nights) || 1),
+      base: text(order.base), anchorName: text(order.anchorName), customerName: text(order.customerName), phone: text(order.phone),
+      arrivalDate: text(order.arrivalDate), departureDate,
+      nights: start !== null && end !== null && end > start ? end - start : Math.max(1, Number(order.nights) || 1),
       guestCount: text(order.guestCount || `${Number(order.adults || 0)}大${Number(order.children || 0)}小`),
       roomType: text(order.roomType), mealIncluded: order.mealIncluded === '是' ? '是' : '否',
       feeDetails: text(order.feeDetails),
@@ -110,10 +141,14 @@
       if (!Number.isInteger(Number(input.nights)) || Number(input.nights) < 1) throw new Error('入住天数至少为 1 晚');
       const date = new Date(String(input.arrivalDate) + 'T12:00:00Z');
       if (!/^\d{4}-\d{2}-\d{2}$/.test(String(input.arrivalDate)) || !Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== input.arrivalDate) throw new Error('请选择有效的入住日期');
+      const end = calendar.calendarDay(calendar.departureDate(input));
+      if (end === null || end <= calendar.calendarDay(input.arrivalDate)) throw new Error('离店日期必须晚于入住日期');
+      if (text(input.anchorName).length > 30) throw new Error('登记主播最多 30 字');
       if (text(input.feeDetails).length > 200) throw new Error('费用明细最多 200 字');
       const company = data.companies.find(item => nameKey(item.name) === nameKey(name)) || normalizeCompany({ name });
       const existing = data.orders.find(item => item.id === input.id);
-      const order = normalizeOrder({ ...input, companyId: company.id, createdAt: existing?.createdAt || input.createdAt, updatedAt: new Date().toISOString() });
+      const anchorName = data.orders.find(item => nameKey(item.anchorName) && nameKey(item.anchorName) === nameKey(input.anchorName))?.anchorName || text(input.anchorName).normalize('NFKC');
+      const order = normalizeOrder({ ...input, anchorName, companyId: company.id, createdAt: existing?.createdAt || input.createdAt, updatedAt: new Date().toISOString() });
       const companies = data.companies.some(item => item.id === company.id) ? data.companies : [...data.companies, company];
       const orders = existing ? data.orders.map(item => item.id === order.id ? order : item) : [order, ...data.orders];
       // Company classification and guest must be one write, including offline or quota failures.
@@ -166,7 +201,7 @@
     return { read, saveCompany, saveOrder, saveOrders, saveRegistration, removeCompany, backup, parseBackup, mergeBackup };
   }
 
-  const api = { DATA_KEY, LEGACY_KEY, APP, createStore, normalizeOrder };
+  const api = { DATA_KEY, LEGACY_KEY, APP, createStore, normalizeOrder, nameKey, findDuplicates, registrationMonth, groupByAnchor };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.InnStorage = api;
 }(typeof window !== 'undefined' ? window : globalThis));

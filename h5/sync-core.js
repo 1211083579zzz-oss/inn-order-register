@@ -2,9 +2,9 @@
   'use strict';
   const fields = {
     companies: ['name', 'category', 'contact', 'phone', 'notes', 'createdAt', 'updatedAt'],
-    orders: ['companyId', 'hotelOrder', 'base', 'customerName', 'phone', 'arrivalDate', 'nights', 'guestCount', 'roomType', 'mealIncluded', 'feeDetails', 'createdAt', 'updatedAt']
+    orders: ['companyId', 'hotelOrder', 'base', 'anchorName', 'customerName', 'phone', 'arrivalDate', 'departureDate', 'nights', 'guestCount', 'roomType', 'mealIncluded', 'feeDetails', 'createdAt', 'updatedAt']
   };
-  const labels = { name: '公司名称', category: '分类', contact: '联系人', phone: '电话', notes: '备注', companyId: '所属公司', hotelOrder: '旅店/订单', base: '入住基地', customerName: '姓名', arrivalDate: '入住日期', nights: '入住天数', guestCount: '入住人数', roomType: '房型', mealIncluded: '含餐', feeDetails: '费用明细', $deleted: '删除状态' };
+  const labels = { name: '公司名称', category: '分类', contact: '联系人', phone: '电话', notes: '备注', companyId: '所属公司', hotelOrder: '旅店/订单', base: '入住基地', anchorName: '登记主播', customerName: '姓名', arrivalDate: '入住日期', departureDate: '离店日期', nights: '入住天数', guestCount: '入住人数', roomType: '房型', mealIncluded: '含餐', feeDetails: '费用明细', $deleted: '删除状态' };
   const clone = value => JSON.parse(JSON.stringify(value));
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   const nameKey = value => String(value || '').normalize('NFKC').toLocaleLowerCase().replace(/\s+/g, ' ').trim();

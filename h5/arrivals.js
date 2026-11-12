@@ -14,6 +14,29 @@
     return date.getTime() / DAY;
   }
 
+  function dateAfter(value, nights) {
+    const start = calendarDay(value);
+    if (start === null || !Number.isSafeInteger(Number(nights))) return '';
+    const date = new Date((start + Number(nights)) * DAY);
+    if (!Number.isFinite(date.getTime())) return '';
+    const result = date.toISOString().slice(0, 10);
+    return calendarDay(result) === null ? '' : result;
+  }
+
+  function departureDate(order) {
+    if (order.departureDate) return String(order.departureDate);
+    const nights = Number(order.nights);
+    return Number.isInteger(nights) && nights > 0 ? dateAfter(order.arrivalDate, nights) : '';
+  }
+
+  function stayState(order, date) {
+    const start = calendarDay(order.arrivalDate), end = calendarDay(departureDate(order)), today = calendarDay(date);
+    if (start === null || end === null || today === null || end <= start) return { key: 'unknown', label: '待确认' };
+    if (today < start) return { key: 'upcoming', label: '待入住' };
+    if (today < end) return { key: 'staying', label: '入住中' };
+    return { key: 'finished', label: '已离店' };
+  }
+
   function summarize(data, date) {
     const today = calendarDay(date);
     const companies = new Map(data.companies.map(company => [company.id, company]));
@@ -22,10 +45,10 @@
     data.orders.forEach(order => {
       const start = calendarDay(order.arrivalDate);
       if (start === null || (order.companyId && !companies.has(order.companyId))) return;
-      const nights = Number(order.nights);
-      if (!Number.isInteger(nights) || nights < 1) return;
+      const end = calendarDay(departureDate(order));
+      if (end === null || end <= start) return;
       const days = start - today;
-      const entry = { order, company: companies.get(order.companyId) || null, days, remaining: start + nights - today };
+      const entry = { order, company: companies.get(order.companyId) || null, days, remaining: end - today };
       if (days >= 0 && days <= 3) arrivals.push(entry);
       else if (days < 0 && entry.remaining > 0) staying.push(entry);
     });
@@ -36,7 +59,7 @@
     return { date, arrivals, staying, todayCount, upcomingCount: arrivals.length - todayCount };
   }
 
-  const api = { calendarDay, summarize };
+  const api = { calendarDay, dateAfter, departureDate, stayState, summarize };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.InnArrivals = api;
 }(typeof window === 'undefined' ? globalThis : window));
