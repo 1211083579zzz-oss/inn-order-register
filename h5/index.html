@@ -9,17 +9,17 @@
   <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=anchor-18">
+  <link rel="stylesheet" href="./styles.css?v=shared-19">
   <script src="./arrivals.js?v=orders-17" defer></script>
   <script src="./storage.js?v=anchor-18" defer></script>
   <script src="./sync-config.js?v=home-14" defer></script>
   <script src="./sync-core.js?v=orders-17" defer></script>
-  <script src="./sync-client.js?v=home-14" defer></script>
+  <script src="./sync-client.js?v=shared-19" defer></script>
   <script src="./motion.js?v=save-15" defer></script>
-  <script src="./app.js?v=anchor-18" defer></script>
-  <script src="./sync-ui.js?v=home-14" defer></script>
+  <script src="./app.js?v=shared-19" defer></script>
+  <script src="./sync-ui.js?v=shared-19" defer></script>
 </head>
-<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18">
+<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -49,6 +49,7 @@
     </header>
     <main id="main-content" class="content">
       <div class="page-heading"><p id="today-label" class="date-label" hidden></p><h1 id="home-title">旅居公司</h1><p id="home-summary" class="hierarchy-caption" hidden></p></div>
+      <p id="shared-data-summary" class="shared-data-summary" role="status" aria-live="polite" hidden></p>
       <section id="company-module" aria-labelledby="home-title">
         <div id="directory-modes" class="directory-modes" role="group" aria-label="订单分类方式" hidden><button type="button" data-directory-mode="companies" aria-pressed="true">旅居公司</button><button type="button" data-directory-mode="anchors" aria-pressed="false">主播订单</button></div>
         <div id="company-directory-tools" class="company-directory-tools" hidden>
@@ -143,10 +144,11 @@
       <div class="view-scroll backup-content">
         <section id="cloud-sync" class="cloud-sync" aria-labelledby="sync-title">
           <div class="sync-heading"><span class="action-icon"><svg class="icon" aria-hidden="true"><use href="#i-backup"/></svg></span><div><h3 id="sync-title">多设备同步</h3><p id="sync-status" role="status" aria-live="polite">当前仅保存在本机</p></div></div>
-          <p id="sync-description" class="sync-description">创建一个同步空间，其他设备用配对码加入。断网也能登记，联网后自动同步。</p>
+          <p id="sync-description" class="sync-description">其他手机使用同一配对码加入，各自已有的登记会合并到一起。之后新增、修改都会自动同步，断网也能登记。</p>
+          <p id="sync-space-name" class="sync-space-name" hidden></p>
           <div id="sync-setup" class="sync-setup"><button id="sync-create" class="primary-button" type="button">创建同步空间</button><button id="sync-open-join" class="sync-secondary" type="button">加入已有空间</button></div>
           <form id="sync-join-form" class="sync-join-form" hidden><label for="sync-code-input">粘贴另一台设备的配对码</label><textarea id="sync-code-input" rows="2" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="INN1- 开头的完整配对码"></textarea><button id="sync-join" class="primary-button" type="submit">加入并合并本机记录</button><button id="sync-cancel-join" class="sync-secondary" type="button">返回</button></form>
-          <div id="sync-connected" hidden><div class="sync-connected-actions"><button id="sync-copy-code" class="sync-secondary" type="button">复制配对码</button><button id="sync-now" class="sync-secondary" type="button">立即同步</button></div><p class="sync-description">在其他设备打开同一链接，选择“加入已有空间”。配对码可读写这份登记，请只分享给共同管理的人。</p><textarea id="sync-code-output" class="sync-code-output" rows="2" readonly aria-label="当前同步空间配对码" hidden></textarea><button id="sync-disconnect" class="text-button sync-disconnect" type="button">断开此设备</button></div>
+          <div id="sync-connected" hidden><p id="sync-data-summary" class="sync-description" role="status" aria-live="polite"></p><div class="sync-connected-actions"><button id="sync-copy-code" class="sync-secondary" type="button">复制配对码</button><button id="sync-now" class="sync-secondary" type="button">立即同步</button></div><p class="sync-description">所有手机加入同一个空间后，共同查看汇总后的登记。其他手机请选择“加入已有空间”，使用这里复制的配对码。</p><textarea id="sync-code-output" class="sync-code-output" rows="2" readonly aria-label="当前同步空间配对码" hidden></textarea><button id="sync-disconnect" class="text-button sync-disconnect" type="button">断开此设备</button></div>
           <form id="sync-conflicts" class="sync-conflicts" hidden><h4>确认同时修改的内容</h4><p>两台设备修改了同一项，两份内容都已保留。请选择要使用的内容。</p><div id="sync-conflict-fields"></div><button id="sync-resolve" class="primary-button" type="submit">保存选择并同步</button></form>
           <p id="sync-error" class="form-error" role="alert" hidden></p>
         </section>

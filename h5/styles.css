@@ -64,6 +64,8 @@ h1, h2, h3 { text-wrap: balance; }
 .page-heading { margin-bottom: 20px; }
 .date-label { display: none; margin-bottom: 8px; color: var(--secondary); font-size: var(--caption); }
 .hierarchy-caption { margin: 8px 0 0; color: var(--secondary); font-size: var(--caption); line-height: 1.8; }
+.shared-data-summary { margin: -8px 0 20px; padding: 10px 12px; border-radius: 10px; color: var(--blue); background: var(--blue-soft); font-size: var(--caption); line-height: 1.6; overflow-wrap: anywhere; }
+.sync-space-name { margin: 12px 0 8px; color: var(--blue); font-size: var(--caption); font-weight: 550; overflow-wrap: anywhere; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; padding: 0; border: 0; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
 .arrival-reminders { margin: 0 0 24px; }
 .arrival-heading { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }

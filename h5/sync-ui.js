@@ -2,7 +2,7 @@
   'use strict';
   const element = id => document.getElementById(id);
   const message = value => { element('sync-error').textContent = value; element('sync-error').hidden = !value; };
-  const labels = { unconfigured: '同步服务尚未连接，本机记录正常保存', local: '当前仅保存在本机', syncing: '正在同步…', pending: '已保存在本机，等待同步', synced: '已同步', conflict: '有同时修改的内容需要确认', error: '修改已保存在本机，同步暂未完成' };
+  const labels = { unconfigured: '同步服务尚未连接，本机记录正常保存', local: '当前仅保存在本机', syncing: '正在汇总各设备登记…', pending: '已保存在本机，等待汇总同步', synced: '已汇总同步', conflict: '有同时修改的内容需要确认', error: '修改已保存在本机，同步暂未完成' };
   let busy = false, lastConflictView = '';
   const client = window.InnCloudSync.createClient({
     storage: localStorage, endpoint: window.InnCloudConfig.endpoint,
@@ -11,6 +11,13 @@
       const time = status.lastSync && new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit' }).format(new Date(status.lastSync));
       element('sync-status').textContent = (status.message || labels[status.state]) + (status.state === 'synced' && time ? ' · ' + time : '');
       element('device-storage-label').textContent = !status.connected ? '本机保存' : status.state === 'synced' ? '已同步' : status.state === 'conflict' ? '待确认' : '本机已存';
+      const totals = `${status.companyCount || 0} 家公司 · ${status.recordCount || 0} 条登记`;
+      const shared = element('shared-data-summary');
+      shared.hidden = !status.connected;
+      shared.textContent = status.state === 'synced' ? `共享汇总 · ${totals}` : status.state === 'conflict' ? `共享汇总 · ${totals} · 有修改待确认` : `${totals} · ${status.state === 'syncing' ? '正在汇总' : '等待汇总同步'}`;
+      element('sync-space-name').textContent = status.spaceId ? `共享空间 ${status.spaceId}` : '共享空间';
+      element('sync-data-summary').textContent = `当前共 ${totals}。公司分类、主播统计和订单明细均显示合并后的记录。`;
+      element('sync-space-name').hidden = !status.connected;
       element('sync-setup').hidden = Boolean(status.connected);
       element('sync-connected').hidden = !status.connected;
       element('sync-description').hidden = Boolean(status.connected);
@@ -68,8 +75,9 @@
   window.addEventListener('innrecordschange', () => client.schedule());
   window.addEventListener('online', () => client.synchronize());
   window.addEventListener('pageshow', () => client.synchronize());
+  window.addEventListener('focus', () => client.synchronize());
   window.addEventListener('storage', event => { if (event.key === 'inn-order-data-v2') client.schedule(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) client.synchronize(); });
-  setInterval(() => { if (!document.hidden) client.synchronize(); }, 20000);
+  setInterval(() => { if (!document.hidden) client.synchronize(); }, 5000);
   client.start();
 }());

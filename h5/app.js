@@ -346,6 +346,12 @@
     renderCompanies();
     renderArrivalReminders();
     renderCompanyDetail();
+    const data = store.read();
+    document.querySelector('#backup-count').textContent = `${data.companies.length} 家公司 · ${data.orders.length} 条客人登记`;
+    if (!formOverlay.hidden && !formOverlay.inert) {
+      renderAnchorPicker();
+      updateAnchorRecognition();
+    }
   }
 
   function openCompany(id, orderId = '') {

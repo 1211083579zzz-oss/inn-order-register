@@ -37,8 +37,11 @@
     };
     const persist = () => storage.setItem(META, JSON.stringify(session));
     function report(state, message = '') {
-      const conflicts = session ? core.project(session.document).conflicts : [];
-      status = { state, message, connected: Boolean(session), lastSync: session?.lastSync || '', conflicts, pending: Boolean(session?.dirty), configured: Boolean(configured) };
+      const { data, conflicts } = session ? core.project(session.document) : { data: core.emptyData(), conflicts: [] };
+      const activeCompanies = new Set(data.orders.map(order => order.companyId));
+      status = { state, message, connected: Boolean(session), lastSync: session?.lastSync || '', conflicts, pending: Boolean(session?.dirty), configured: Boolean(configured),
+        spaceId: session && keys ? keys.room.slice(0, 8) : '', recordCount: data.orders.length,
+        companyCount: data.companies.filter(company => activeCompanies.has(company.id)).length };
       onStatus(status);
     }
     function capture() {
