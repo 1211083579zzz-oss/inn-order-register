@@ -9,6 +9,7 @@
   const identifier = prefix => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
   const nameKey = value => text(value).normalize('NFKC').toLocaleLowerCase().replace(/\s+/g, ' ');
   const calendar = typeof module === 'object' && module.exports ? require('./arrivals.js') : root.InnArrivals;
+  const money = typeof module === 'object' && module.exports ? require('./money.js') : root.InnMoney;
   const phoneKey = value => text(value).normalize('NFKC').replace(/[^0-9]/g, '').replace(/^(?:0086|86)(?=1\d{10}$)/, '');
 
   function registrationMonth(order) {
@@ -50,6 +51,7 @@
       guestCount: text(order.guestCount || `${Number(order.adults || 0)}大${Number(order.children || 0)}小`),
       roomType: text(order.roomType), mealIncluded: order.mealIncluded === '是' ? '是' : '否',
       feeDetails: text(order.feeDetails),
+      incomeCents: money.cents(order.incomeCents), costCents: money.cents(order.costCents),
       createdAt: order.createdAt || new Date().toISOString(),
       updatedAt: order.updatedAt || order.createdAt || new Date().toISOString()
     };
@@ -160,10 +162,11 @@
       if (end === null || end <= calendar.calendarDay(input.arrivalDate)) throw new Error('离店日期必须晚于入住日期');
       if (text(input.anchorName).length > 30) throw new Error('登记主播最多 30 字');
       if (text(input.feeDetails).length > 200) throw new Error('费用明细最多 200 字');
+      money.cents(input.incomeCents); money.cents(input.costCents);
       const company = data.companies.find(item => nameKey(item.name) === nameKey(name)) || normalizeCompany({ name });
       const existing = data.orders.find(item => item.id === input.id);
       const anchorName = data.orders.find(item => nameKey(item.anchorName) && nameKey(item.anchorName) === nameKey(input.anchorName))?.anchorName || text(input.anchorName).normalize('NFKC');
-      const order = normalizeOrder({ ...input, anchorName, companyId: company.id, createdAt: existing?.createdAt || input.createdAt, updatedAt: new Date().toISOString() });
+      const order = normalizeOrder({ ...existing, ...input, anchorName, companyId: company.id, createdAt: existing?.createdAt || input.createdAt, updatedAt: new Date().toISOString() });
       const companies = data.companies.some(item => item.id === company.id) ? data.companies : [...data.companies, company];
       const orders = existing ? data.orders.map(item => item.id === order.id ? order : item) : [order, ...data.orders];
       // Company classification and guest must be one write, including offline or quota failures.

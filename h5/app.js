@@ -40,6 +40,7 @@
 
   const normalizeOrder = window.InnStorage.normalizeOrder;
   const store = window.InnStorage.createStore(localStorage);
+  const money = window.InnMoney;
   function readOrders() { return store.read().orders; }
   function writeOrders(orders) { return store.saveOrders(orders); }
 
@@ -123,8 +124,12 @@
   }
 
   function validateField(control) {
+    if (['incomeAmount', 'costAmount'].includes(control.name)) {
+      try { money.parse(control.value); control.setCustomValidity(''); }
+      catch (error) { control.setCustomValidity(error.message); }
+    }
     const invalid = !control.validity.valid || (control.required && !control.value.trim());
-    const message = control.name === 'phone' && control.value.trim() ? '请输入有效联系电话（6–20 位）' : requiredMessages[control.name];
+    const message = ['incomeAmount', 'costAmount'].includes(control.name) ? control.validationMessage : control.name === 'phone' && control.value.trim() ? '请输入有效联系电话（6–20 位）' : requiredMessages[control.name];
     setFieldError(control, invalid ? message : '');
     return !invalid;
   }
@@ -166,13 +171,38 @@
     const labels = { '7': '7 天', '14': '14 天', month: '一个月' };
     const list = ['7', '14', 'month'].map(key => compact
       ? `<span>${labels[key]} <b>${summary[key]}</b></span>`
-      : `<div><dt>${labels[key]}</dt><dd data-package-count="${key}">${summary[key]} <span>单</span></dd></div>`).join('');
+      : `<div><dt>${labels[key]}</dt><dd data-package-count="${key}">${summary[key]} <span>单</span></dd>${packageRevenue(orders, key)}</div>`).join('');
     return compact ? `<span class="anchor-package-line">${list}</span>${summary.other ? `<span class="anchor-custom-line">其他天数 ${summary.other} 单</span>` : ''}`
       : `<dl class="package-counts" aria-label="按入住时长统计">${list}</dl>${summary.other ? `<p class="package-other">另有 ${summary.other} 单为其他天数，已计入总单量</p>` : ''}`;
   }
 
   function renderMonthlySummary(element, orders, subtitle) {
-    element.innerHTML = `<div class="anchor-month-overview"><div><p class="anchor-month-caption">${escapeHtml(monthLabel(anchorMonth))}登记</p><p class="anchor-month-number"><strong data-month-order-count>${orders.length}</strong><span>单</span></p></div><p class="anchor-month-context">${subtitle.split(' · ').map(line => `<span>${escapeHtml(line)}</span>`).join('')}</p></div>${packageBreakdown(orders)}`;
+    element.innerHTML = `<div class="anchor-month-overview"><div><p class="anchor-month-caption">${escapeHtml(monthLabel(anchorMonth))}登记</p><p class="anchor-month-number"><strong data-month-order-count>${orders.length}</strong><span>单</span></p></div><p class="anchor-month-context">${subtitle.split(' · ').map(line => `<span>${escapeHtml(line)}</span>`).join('')}</p></div>${revenueSummary(orders)}${packageBreakdown(orders)}`;
+  }
+
+  function revenueSummary(orders) {
+    const summary = money.summarize(orders);
+    const labels = { income: '订单收入', cost: '成本支出', net: '净收益' };
+    const entries = Object.entries(labels).map(([key, label]) => `<div><dt>${label}</dt><dd data-revenue="${key}" data-cents="${summary[key]}" class="${key === 'net' && summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, key))}</dd></div>`).join('');
+    return `<dl class="revenue-totals" aria-label="月度金额汇总">${entries}</dl><p class="revenue-note">${summary.pendingCount ? `${summary.pendingCount} 单待补金额，未填项暂不计入。` : ''}净收益 = 收入 − 成本。</p>`;
+  }
+
+  function packageRevenue(orders, key) {
+    const summary = money.summarize(orders.filter(order => window.InnArrivals.stayPackage(order) === key));
+    return `<dd class="package-money"><span>收入</span><strong data-package-income="${key}" data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</strong><span>净收益</span><strong data-package-net="${key}" data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</strong></dd>`;
+  }
+
+  function anchorRevenue(orders) {
+    const summary = money.summarize(orders);
+    return `<span class="anchor-revenue-line"><span>收入 <b data-anchor-income data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</b></span><span>净收益 <b data-anchor-net data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</b></span></span>${summary.pendingCount ? `<span class="anchor-custom-line">${summary.pendingCount} 单待补金额</span>` : ''}`;
+  }
+
+  function updateRevenuePreview() {
+    const preview = document.querySelector('#revenue-preview');
+    try {
+      const income = money.parse(orderForm.elements.incomeAmount.value), cost = money.parse(orderForm.elements.costAmount.value);
+      preview.textContent = income === '' || cost === '' ? '净收益 = 收入 − 成本。无成本请填 0，未填金额暂不计入汇总。' : `本单净收益 ${money.format(income - cost)}`;
+    } catch { preview.textContent = '请输入有效金额，最多保留两位小数。'; }
   }
 
   function stayState(order) {
@@ -253,6 +283,7 @@
         <div class="stay-details"><span class="room-type">${escapeHtml(order.roomType)}</span><span>${escapeHtml(order.guestCount)}</span><span>${order.mealIncluded === '是' ? '含餐' : '不含餐'}</span></div>
         <div class="order-location"><span class="hotel-order">${escapeHtml(order.hotelOrder || '未填写订单名称')}</span><span class="base-line">${escapeHtml(order.base || '未填写基地')}</span></div>
         ${order.feeDetails ? `<div class="fee-line"><span class="fee-label">费用</span><span class="fee-value">${escapeHtml(order.feeDetails)}</span></div>` : ''}
+        <div class="order-money">${anchorRevenue([order])}</div>
         <div class="record-footer">${order.phone ? `<a class="phone-link" data-call href="tel:${encodeURIComponent(order.phone.replace(/[\s-]/g, ''))}" aria-label="拨打 ${escapeHtml(order.customerName)} 的电话 ${escapeHtml(order.phone)}">${icon('phone')}${escapeHtml(order.phone)}</a>` : '<span class="fee-empty">未填写电话</span>'}<button class="record-open" type="button" aria-label="编辑 ${escapeHtml(order.customerName)} 的登记">编辑${icon('chevron')}</button></div>
       </article>`;
     }).join('');
@@ -302,6 +333,10 @@
     const activeCompanies = companies.filter(company => orders.some(order => order.companyId === company.id));
     const summary = document.querySelector('#home-summary');
     summary.hidden = !orders.length || directoryMode === 'anchors';
+    const homeRevenue = document.querySelector('#home-revenue');
+    homeRevenue.hidden = !orders.length || directoryMode !== 'companies';
+    const currentRevenue = money.summarize(orders.filter(order => window.InnStorage.registrationMonth(order) === today.slice(0, 7)));
+    document.querySelector('#home-revenue-copy').textContent = `本月收入 ${money.display(currentRevenue, 'income')} · 净收益 ${money.display(currentRevenue, 'net')}`;
     const anchorGroups = directoryMode === 'anchors' ? window.InnStorage.groupByAnchor(orders, anchorMonth).filter(group => group.orders.length) : [];
     summary.textContent = directoryMode === 'anchors' ? `${anchorGroups.length} 个主播分类 · ${anchorMonth ? '所选月份' : '累计'} ${anchorGroups.reduce((sum, group) => sum + group.orders.length, 0)} 单` : `${activeCompanies.length} 家公司 · ${orders.length} 条入住登记`;
     document.querySelector('#home-title').textContent = directoryMode === 'anchors' ? '主播订单' : '旅居公司';
@@ -350,7 +385,7 @@
     document.querySelector('#company-list').innerHTML = visible.map(company => {
       const summary = counts(company.orders);
       const total = anchors ? `${summary.all} 单` : `${summary.all} 条登记`;
-      return `<button class="company-row${anchors ? ' anchor-order-row' : ''}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${anchors ? escapeHtml(monthLabel(anchorMonth)) + " " : ""}${total}，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已离店 ${summary.finished}，查看订单"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${total}</span></span>${anchors ? `<span class="anchor-total">${escapeHtml(monthLabel(anchorMonth))} · 累计 ${company.total} 单</span>${packageBreakdown(company.orders, true)}` : ''}<span class="company-statistics">${companyStates(summary)}</span>${anchors ? '' : nextArrival(company.orders)}</span>${icon('chevron', 'chevron')}</button>`;
+      return `<button class="company-row${anchors ? ' anchor-order-row' : ''}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${anchors ? escapeHtml(monthLabel(anchorMonth)) + " " : ""}${total}${anchors ? "，收入 " + escapeHtml(money.display(money.summarize(company.orders), "income")) + "，净收益 " + escapeHtml(money.display(money.summarize(company.orders), "net")) : ""}，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已离店 ${summary.finished}，查看订单"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${total}</span></span>${anchors ? `<span class="anchor-total">${escapeHtml(monthLabel(anchorMonth))} · 累计 ${company.total} 单</span>${anchorRevenue(company.orders)}${packageBreakdown(company.orders, true)}` : ''}<span class="company-statistics">${companyStates(summary)}</span>${anchors ? '' : nextArrival(company.orders)}</span>${icon('chevron', 'chevron')}</button>`;
     }).join('') || (orders.length
       ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>${anchors ? '这个月份暂无符合条件的订单' : '没有符合条件的公司'}</h3><p>${anchors ? '换个登记月份，或查看全部月份。' : '换个关键词，或查看全部公司。'}</p><button class="empty-reset" type="button" data-company-reset>${anchors ? '查看全部主播订单' : '查看全部公司'}</button></div>`
       : '');
@@ -459,6 +494,8 @@
       for (const [key, value] of Object.entries(normalized)) {
         if (orderForm.elements.namedItem(key)) orderForm.elements[key].value = value ?? '';
       }
+      orderForm.elements.incomeAmount.value = money.input(normalized.incomeCents);
+      orderForm.elements.costAmount.value = money.input(normalized.costCents);
       document.querySelector('#form-title').textContent = '修改登记';
       document.querySelector('#save-order span').textContent = '保存修改';
       document.querySelector('#save-order-top').setAttribute('aria-label', '保存修改');
@@ -470,6 +507,7 @@
       document.querySelector('#delete-order').hidden = true;
     }
     updateFeeCount();
+    updateRevenuePreview();
     renderAnchorPicker();
     updateAnchorRecognition();
     synchronizeStayDates('departureDate');
@@ -504,6 +542,7 @@
       roomType: values.roomType.trim(),
       mealIncluded: values.mealIncluded,
       feeDetails: values.feeDetails.trim(),
+      incomeCents: money.parse(values.incomeAmount), costCents: money.parse(values.costAmount),
       createdAt: old ? old.createdAt : now,
       updatedAt: now
     });
@@ -553,6 +592,10 @@
   });
   document.querySelector('#anchor-all-months').addEventListener('click', () => { anchorMonth = ''; renderOverview(); renderCompanies(); });
   document.querySelector('#anchor-current-month').addEventListener('click', () => { anchorMonth = today.slice(0, 7); renderOverview(); renderCompanies(); });
+  document.querySelector('#home-revenue').addEventListener('click', () => {
+    directoryMode = 'anchors'; anchorMonth = today.slice(0, 7); homeFilter = 'all';
+    document.querySelector('#company-query').value = ''; renderOverview(); renderCompanies();
+  });
   document.querySelector('#company-query').addEventListener('input', renderCompanies);
   document.querySelector('#clear-company-query').addEventListener('click', () => { document.querySelector('#company-query').value = ''; renderCompanies(); document.querySelector('#company-query').focus(); });
   document.querySelectorAll('[data-home-filter]').forEach(button => button.addEventListener('click', () => { homeFilter = button.dataset.homeFilter; renderOverview(); renderCompanies(); }));
@@ -706,6 +749,7 @@
     if (orderForm.classList.contains('submitted')) ['arrivalDate', 'departureDate', 'nights'].forEach(name => validateField(orderForm.elements[name]));
   }));
   orderForm.addEventListener('input', event => {
+    if (['incomeAmount', 'costAmount'].includes(event.target.name)) updateRevenuePreview();
     if (['arrivalDate', 'departureDate', 'nights'].includes(event.target.name)) {
       synchronizeStayDates(event.target.name);
       if (orderForm.classList.contains('submitted')) ['arrivalDate', 'departureDate', 'nights'].forEach(name => validateField(orderForm.elements[name]));

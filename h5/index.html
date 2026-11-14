@@ -9,17 +9,18 @@
   <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=month-20">
+  <link rel="stylesheet" href="./styles.css?v=revenue-21">
   <script src="./arrivals.js?v=month-20" defer></script>
-  <script src="./storage.js?v=anchor-18" defer></script>
+  <script src="./money.js?v=revenue-21" defer></script>
+  <script src="./storage.js?v=revenue-21" defer></script>
   <script src="./sync-config.js?v=home-14" defer></script>
-  <script src="./sync-core.js?v=orders-17" defer></script>
+  <script src="./sync-core.js?v=revenue-21" defer></script>
   <script src="./sync-client.js?v=shared-19" defer></script>
   <script src="./motion.js?v=save-15" defer></script>
-  <script src="./app.js?v=month-20" defer></script>
-  <script src="./sync-ui.js?v=shared-19" defer></script>
+  <script src="./app.js?v=revenue-21" defer></script>
+  <script src="./sync-ui.js?v=revenue-21" defer></script>
 </head>
-<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20">
+<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -49,6 +50,7 @@
     </header>
     <main id="main-content" class="content">
       <div class="page-heading"><p id="today-label" class="date-label" hidden></p><h1 id="home-title">旅居公司</h1><p id="home-summary" class="hierarchy-caption" hidden></p></div>
+      <button id="home-revenue" class="home-revenue" type="button" hidden><span id="home-revenue-copy"></span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></button>
       <p id="shared-data-summary" class="shared-data-summary" role="status" aria-live="polite" hidden></p>
       <section id="company-module" aria-labelledby="home-title">
         <div id="directory-modes" class="directory-modes" role="group" aria-label="订单分类方式" hidden><button type="button" data-directory-mode="companies" aria-pressed="true">旅居公司</button><button type="button" data-directory-mode="anchors" aria-pressed="false">主播订单</button></div>
@@ -130,6 +132,7 @@
             <label class="field"><span>入住房型 <b>*</b></span><input name="roomType" required maxlength="30" placeholder="如：亲子房" autocomplete="off" enterkeyhint="next"></label>
             <label class="field"><span>是否含餐</span><span class="select-wrap"><select name="mealIncluded"><option value="否">不含餐</option><option value="是">含餐</option></select><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></span></label>
           </div><p class="field-note">离店日期与晚数自动联动。到离店日期当天，自动显示“已离店”。</p></fieldset>
+          <fieldset><legend>收入与成本 <span class="optional">选填</span></legend><div class="field-group"><label class="field"><span>订单收入</span><input name="incomeAmount" type="text" inputmode="decimal" maxlength="12" autocomplete="off" aria-label="订单收入金额（元）" placeholder="金额（元）"></label><label class="field"><span>成本支出</span><input name="costAmount" type="text" inputmode="decimal" maxlength="12" autocomplete="off" aria-label="成本支出金额（元）" placeholder="无成本请填 0"></label></div><p id="revenue-preview" class="field-note" aria-live="polite"></p></fieldset>
           <fieldset><legend>费用明细 <span class="optional">选填</span></legend><div class="field-group fee-group"><textarea name="feeDetails" rows="3" maxlength="200" aria-label="费用明细" placeholder="房费、餐费或其他费用说明"></textarea><div class="textarea-footer"><span>最多 200 字</span><span id="fee-count">0 / 200</span></div></div></fieldset>
           <p id="form-error" class="form-error" role="alert" hidden></p>
           <button id="delete-order" class="delete-button" type="button" hidden>删除这条登记</button>

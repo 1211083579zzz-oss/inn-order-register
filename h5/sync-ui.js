@@ -34,7 +34,7 @@
           const select = document.createElement('select'); select.dataset.index = String(index); select.setAttribute('aria-label', title.textContent);
           conflict.choices.forEach(choice => {
             const option = document.createElement('option'); option.value = choice.dot;
-            option.textContent = conflict.field === '$deleted' ? choice.value ? '删除这条记录' : '保留这条记录' : String(choice.value || '（空白）');
+            option.textContent = ['incomeCents', 'costCents'].includes(conflict.field) ? choice.value === '' ? '未填写' : window.InnMoney.format(choice.value) : conflict.field === '$deleted' ? choice.value ? '删除这条记录' : '保留这条记录' : String(choice.value || '（空白）');
             select.append(option);
           });
           label.append(title, select); element('sync-conflict-fields').append(label);
