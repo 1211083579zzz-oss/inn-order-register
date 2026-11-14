@@ -9,7 +9,7 @@
   <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=revenue-21b">
+  <link rel="stylesheet" href="./styles.css?v=dates-22">
   <script src="./arrivals.js?v=month-20" defer></script>
   <script src="./money.js?v=revenue-21b" defer></script>
   <script src="./storage.js?v=revenue-21b" defer></script>
@@ -17,10 +17,10 @@
   <script src="./sync-core.js?v=revenue-21b" defer></script>
   <script src="./sync-client.js?v=shared-19" defer></script>
   <script src="./motion.js?v=save-15" defer></script>
-  <script src="./app.js?v=revenue-21b" defer></script>
+  <script src="./app.js?v=dates-22" defer></script>
   <script src="./sync-ui.js?v=revenue-21b" defer></script>
 </head>
-<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21">
+<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -123,7 +123,6 @@
             <label class="field"><span>客户电话 <b>*</b></span><input name="phone" type="tel" inputmode="tel" required pattern="[0-9+\-\s]{6,20}" maxlength="20" placeholder="联系电话" autocomplete="off" enterkeyhint="next"></label>
           </div></fieldset>
           <fieldset><legend>入住安排</legend><div class="field-group">
-            <div class="stay-package-field"><span id="stay-packages-label">入住时长</span><div id="stay-packages" class="stay-packages" role="group" aria-labelledby="stay-packages-label" aria-describedby="stay-package-note"><button type="button" data-stay-package="7" aria-pressed="true">7 天</button><button type="button" data-stay-package="14" aria-pressed="false">14 天</button><button type="button" data-stay-package="month" aria-pressed="false">一个月</button></div><p id="stay-package-note" class="stay-package-note" aria-live="polite"></p></div>
             <label class="field date-field"><span>入住时间 <b>*</b></span><input name="arrivalDate" type="date" required aria-label="入住时间"></label>
             <label class="field date-field"><span>离店日期 <b>*</b></span><input name="departureDate" type="date" required aria-label="离店日期"></label>
             <div class="field"><label for="nights">实际天数 <b>*</b></label><div class="stepper"><button type="button" data-step="-1" aria-label="减少一晚">−</button><input id="nights" name="nights" type="number" inputmode="numeric" min="1" step="1" required value="1" aria-label="入住天数"><span class="unit">晚</span><button type="button" data-step="1" aria-label="增加一晚">＋</button></div></div>

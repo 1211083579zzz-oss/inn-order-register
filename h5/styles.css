@@ -465,15 +465,6 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 .anchor-package-line b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .anchor-custom-line { color: var(--secondary); font-size: var(--caption); }
 .anchor-detail-month-summary { margin: 0 0 24px; }
-.stay-package-field { padding: 16px 0; border-bottom: 1px solid var(--line); }
-.stay-package-field > span { color: var(--label); font-size: var(--caption); }
-.stay-packages { display: flex; gap: 4px; margin-top: 10px; padding: 4px; border-radius: 10px; background: var(--control); }
-.stay-packages button { flex: 1; min-width: 0; min-height: 44px; padding: 8px 4px; border-radius: 7px; color: var(--secondary); background: transparent; font-size: 1rem; }
-.stay-packages button[aria-pressed="true"] { color: var(--blue); background: var(--surface); font-weight: 600; }
-.stay-packages button:active { background: var(--blue-soft); }
-.stay-packages button:focus-visible { outline-offset: -2px; }
-.stay-package-note { margin-top: 10px; color: var(--secondary); font-size: var(--caption); line-height: 1.7; overflow-wrap: anywhere; }
-@media (hover: hover) and (pointer: fine) { .stay-packages button:hover { color: var(--blue); background: var(--blue-soft); } }
 @media (max-width: 359px) { .anchor-month-summary { padding: 16px 12px; } .anchor-month-overview { align-items: flex-start; flex-direction: column; gap: 8px; } .anchor-month-context { max-width: 100%; text-align: left; } }
 .departure-line { display: flex; align-items: baseline; gap: 6px; margin: 6px 0 0 25px; color: var(--secondary); font-size: var(--caption); }
 .departure-line time { font-variant-numeric: tabular-nums; }

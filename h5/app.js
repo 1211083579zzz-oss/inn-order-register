@@ -12,7 +12,6 @@
   let directoryMode = 'companies';
   let selectedAnchorKey = null;
   let anchorMonth = today.slice(0, 7);
-  let selectedStayPackage = '7';
   const filterLabels = { all: '全部登记', upcoming: '待入住', staying: '入住中', finished: '已离店' };
   const icon = (name, extra = '') => `<svg class="icon ${extra}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
@@ -143,22 +142,11 @@
     const calendar = window.InnArrivals;
     const start = calendar.calendarDay(arrivalDate.value);
     const end = calendar.calendarDay(departureDate.value);
-    if (['arrivalDate', 'stayPackage'].includes(source) && selectedStayPackage && start !== null) {
-      departureDate.value = calendar.packageDeparture(arrivalDate.value, selectedStayPackage);
-      const checkout = calendar.calendarDay(departureDate.value);
-      if (checkout !== null) nights.value = String(checkout - start);
-    }
-    else if (source === 'departureDate' && start !== null && end !== null && end > start) nights.value = String(end - start);
+    if (source === 'departureDate' && start !== null && end !== null && end > start) nights.value = String(end - start);
     else if (['arrivalDate', 'nights'].includes(source) && start !== null && Number.isInteger(Number(nights.value)) && Number(nights.value) > 0) departureDate.value = calendar.dateAfter(arrivalDate.value, Number(nights.value));
     departureDate.min = calendar.dateAfter(arrivalDate.value, 1);
     const checkout = calendar.calendarDay(departureDate.value);
     departureDate.setCustomValidity(start !== null && checkout !== null && checkout <= start ? requiredMessages.departureDate : '');
-    if (start !== null && checkout !== null && checkout > start) selectedStayPackage = calendar.stayPackage({ arrivalDate: arrivalDate.value, departureDate: departureDate.value });
-    document.querySelectorAll('[data-stay-package]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.stayPackage === selectedStayPackage)));
-    const label = selectedStayPackage === 'month' ? '一个月' : selectedStayPackage ? `${selectedStayPackage} 天` : '按实际日期';
-    document.querySelector('#stay-package-note').textContent = start !== null && checkout !== null && checkout > start
-      ? `${label} · ${departureDate.value.replace(/-/g, '.')} 离店，共 ${checkout - start} 晚${selectedStayPackage === 'month' ? '。按入住日顺延一个月，遇月末取下月最后一天。' : ''}`
-      : '选择入住日期后，自动计算离店日期与实际晚数。';
     syncNightsStepper();
   }
 
@@ -475,9 +463,8 @@
     Array.from(orderForm.elements).filter(control => control.name).forEach(control => setFieldError(control, ''));
     document.querySelector('#form-error').hidden = true;
     orderForm.elements.arrivalDate.value = localDate(new Date());
-    selectedStayPackage = '7';
-    orderForm.elements.nights.value = '7';
-    orderForm.elements.departureDate.value = window.InnArrivals.dateAfter(orderForm.elements.arrivalDate.value, 7);
+    orderForm.elements.nights.value = '1';
+    orderForm.elements.departureDate.value = window.InnArrivals.dateAfter(orderForm.elements.arrivalDate.value, 1);
     orderForm.elements.anchorName.value = selectedAnchorKey !== null ? window.InnStorage.groupByAnchor(readOrders()).find(group => group.id === selectedAnchorKey)?.orders[0]?.anchorName || '' : store.preferredAnchor();
     orderForm.elements.mealIncluded.value = '否';
     orderForm.dataset.id = order ? order.id : '';
@@ -744,11 +731,6 @@
   });
 
   orderForm.elements.feeDetails.addEventListener('input', updateFeeCount);
-  document.querySelectorAll('[data-stay-package]').forEach(button => button.addEventListener('click', () => {
-    selectedStayPackage = button.dataset.stayPackage;
-    synchronizeStayDates('stayPackage');
-    if (orderForm.classList.contains('submitted')) ['arrivalDate', 'departureDate', 'nights'].forEach(name => validateField(orderForm.elements[name]));
-  }));
   orderForm.addEventListener('input', event => {
     if (['incomeAmount', 'costAmount'].includes(event.target.name)) updateRevenuePreview();
     if (['arrivalDate', 'departureDate', 'nights'].includes(event.target.name)) {
