@@ -23,6 +23,37 @@
     return calendarDay(result) === null ? '' : result;
   }
 
+  function dateAfterMonth(value) {
+    if (calendarDay(value) === null) return '';
+    const [year, month, day] = value.split('-').map(Number);
+    const last = new Date(0);
+    last.setUTCHours(0, 0, 0, 0);
+    last.setUTCFullYear(year, month + 1, 0);
+    const end = new Date(0);
+    end.setUTCHours(0, 0, 0, 0);
+    end.setUTCFullYear(year, month, Math.min(day, last.getUTCDate()));
+    const result = end.toISOString().slice(0, 10);
+    return calendarDay(result) === null ? '' : result;
+  }
+
+  function packageDeparture(value, key) {
+    return key === 'month' ? dateAfterMonth(value) : ['7', '14'].includes(key) ? dateAfter(value, Number(key)) : '';
+  }
+
+  function stayPackage(order) {
+    const end = departureDate(order), startDay = calendarDay(order.arrivalDate), endDay = calendarDay(end);
+    if (startDay === null || endDay === null || endDay <= startDay) return '';
+    const days = endDay - startDay;
+    if (days === 7 || days === 14) return String(days);
+    return dateAfterMonth(order.arrivalDate) === end ? 'month' : '';
+  }
+
+  function packageSummary(orders) {
+    const result = { '7': 0, '14': 0, month: 0, other: 0 };
+    orders.forEach(order => { result[stayPackage(order) || 'other']++; });
+    return result;
+  }
+
   function departureDate(order) {
     if (order.departureDate) return String(order.departureDate);
     const nights = Number(order.nights);
@@ -59,7 +90,7 @@
     return { date, arrivals, staying, todayCount, upcomingCount: arrivals.length - todayCount };
   }
 
-  const api = { calendarDay, dateAfter, departureDate, stayState, summarize };
+  const api = { calendarDay, dateAfter, dateAfterMonth, packageDeparture, stayPackage, packageSummary, departureDate, stayState, summarize };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.InnArrivals = api;
 }(typeof window === 'undefined' ? globalThis : window));
