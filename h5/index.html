@@ -9,16 +9,16 @@
   <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=revenue-21">
+  <link rel="stylesheet" href="./styles.css?v=revenue-21b">
   <script src="./arrivals.js?v=month-20" defer></script>
-  <script src="./money.js?v=revenue-21" defer></script>
-  <script src="./storage.js?v=revenue-21" defer></script>
+  <script src="./money.js?v=revenue-21b" defer></script>
+  <script src="./storage.js?v=revenue-21b" defer></script>
   <script src="./sync-config.js?v=home-14" defer></script>
-  <script src="./sync-core.js?v=revenue-21" defer></script>
+  <script src="./sync-core.js?v=revenue-21b" defer></script>
   <script src="./sync-client.js?v=shared-19" defer></script>
   <script src="./motion.js?v=save-15" defer></script>
-  <script src="./app.js?v=revenue-21" defer></script>
-  <script src="./sync-ui.js?v=revenue-21" defer></script>
+  <script src="./app.js?v=revenue-21b" defer></script>
+  <script src="./sync-ui.js?v=revenue-21b" defer></script>
 </head>
 <body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -49,8 +49,7 @@
       <div class="top-actions"><span class="local-badge"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span id="device-storage-label">本机保存</span></span><button id="open-backup" class="backup-button" type="button" aria-label="数据、同步与备份"><svg class="icon" aria-hidden="true"><use href="#i-backup"/></svg><span>数据</span></button></div>
     </header>
     <main id="main-content" class="content">
-      <div class="page-heading"><p id="today-label" class="date-label" hidden></p><h1 id="home-title">旅居公司</h1><p id="home-summary" class="hierarchy-caption" hidden></p></div>
-      <button id="home-revenue" class="home-revenue" type="button" hidden><span id="home-revenue-copy"></span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+      <div class="page-heading"><p id="today-label" class="date-label" hidden></p><h1 id="home-title">旅居公司</h1><div id="home-heading-detail" class="home-heading-detail" hidden><p id="home-summary" class="hierarchy-caption" hidden></p><button id="home-revenue" class="home-revenue" type="button" hidden><span id="home-revenue-copy"></span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></button></div></div>
       <p id="shared-data-summary" class="shared-data-summary" role="status" aria-live="polite" hidden></p>
       <section id="company-module" aria-labelledby="home-title">
         <div id="directory-modes" class="directory-modes" role="group" aria-label="订单分类方式" hidden><button type="button" data-directory-mode="companies" aria-pressed="true">旅居公司</button><button type="button" data-directory-mode="anchors" aria-pressed="false">主播订单</button></div>

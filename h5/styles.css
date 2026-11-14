@@ -436,7 +436,9 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 .anchor-month-number strong { font-size: 2rem; font-weight: 650; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .anchor-month-context { max-width: 50%; color: var(--secondary); font-size: var(--caption); line-height: 1.7; text-align: right; overflow-wrap: anywhere; }
 .anchor-month-context > span { display: block; }
-.home-revenue { display: flex; width: 100%; justify-content: space-between; gap: 12px; margin: -4px 0 20px; padding: 10px 12px; border-radius: 10px; color: var(--blue); background: var(--blue-soft); text-align: left; font-size: var(--caption); line-height: 1.7; }
+.home-heading-detail { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.home-heading-detail .hierarchy-caption { flex: 1; min-width: 0; margin: 0; line-height: 1.4; }
+.home-revenue { display: flex; flex: 1.5; min-width: 0; min-height: 44px; align-items: center; justify-content: flex-end; gap: 6px; padding: 0; border-radius: 6px; color: var(--blue); background: transparent; text-align: right; font-size: var(--caption); line-height: 1.4; }
 .home-revenue > span { min-width: 0; overflow-wrap: anywhere; }
 .home-revenue .chevron { flex: none; width: 14px; height: 14px; }
 .revenue-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0 0; }

@@ -333,6 +333,7 @@
     const activeCompanies = companies.filter(company => orders.some(order => order.companyId === company.id));
     const summary = document.querySelector('#home-summary');
     summary.hidden = !orders.length || directoryMode === 'anchors';
+    document.querySelector('#home-heading-detail').hidden = summary.hidden;
     const homeRevenue = document.querySelector('#home-revenue');
     homeRevenue.hidden = !orders.length || directoryMode !== 'companies';
     const currentRevenue = money.summarize(orders.filter(order => window.InnStorage.registrationMonth(order) === today.slice(0, 7)));
