@@ -123,12 +123,16 @@
   }
 
   function validateField(control) {
-    if (['incomeAmount', 'costAmount'].includes(control.name)) {
-      try { money.parse(control.value); control.setCustomValidity(''); }
+    if (['incomeAmount', 'commissionRate'].includes(control.name)) {
+      try {
+        const value = control.name === 'commissionRate' ? money.parseRate(control.value) : money.parse(control.value);
+        if (control.name === 'commissionRate' && value === '' && orderForm.elements.incomeAmount.value.trim() && orderForm.dataset.legacyCostCents === '') throw new Error('请填写提点比例，无提点请填 0');
+        control.setCustomValidity('');
+      }
       catch (error) { control.setCustomValidity(error.message); }
     }
     const invalid = !control.validity.valid || (control.required && !control.value.trim());
-    const message = ['incomeAmount', 'costAmount'].includes(control.name) ? control.validationMessage : control.name === 'phone' && control.value.trim() ? '请输入有效联系电话（6–20 位）' : requiredMessages[control.name];
+    const message = ['incomeAmount', 'commissionRate'].includes(control.name) ? control.validationMessage : control.name === 'phone' && control.value.trim() ? '请输入有效联系电话（6–20 位）' : requiredMessages[control.name];
     setFieldError(control, invalid ? message : '');
     return !invalid;
   }
@@ -170,9 +174,9 @@
 
   function revenueSummary(orders) {
     const summary = money.summarize(orders);
-    const labels = { income: '订单收入', cost: '成本支出', net: '净收益' };
+    const labels = { income: '收款金额', cost: '提点金额', net: '净收益' };
     const entries = Object.entries(labels).map(([key, label]) => `<div><dt>${label}</dt><dd data-revenue="${key}" data-cents="${summary[key]}" class="${key === 'net' && summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, key))}</dd></div>`).join('');
-    return `<dl class="revenue-totals" aria-label="月度金额汇总">${entries}</dl><p class="revenue-note">${summary.pendingCount ? `${summary.pendingCount} 单待补金额，未填项暂不计入。` : ''}净收益 = 收入 − 成本。</p>`;
+    return `<dl class="revenue-totals" aria-label="月度金额汇总">${entries}</dl><p class="revenue-note">${summary.pendingCount ? `${summary.pendingCount} 单待补金额，未填项暂不计入。` : ''}净收益 = 收款 − 提点。${summary.legacyCount ? `含 ${summary.legacyCount} 单历史支出，按原金额扣除。` : ''}</p>`;
   }
 
   function packageRevenue(orders, key) {
@@ -182,15 +186,20 @@
 
   function anchorRevenue(orders) {
     const summary = money.summarize(orders);
-    return `<span class="anchor-revenue-line"><span>收入 <b data-anchor-income data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</b></span><span>净收益 <b data-anchor-net data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</b></span></span>${summary.pendingCount ? `<span class="anchor-custom-line">${summary.pendingCount} 单待补金额</span>` : ''}`;
+    return `<span class="anchor-revenue-line"><span>收款 <b data-anchor-income data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</b></span><span>提点 <b data-anchor-commission data-cents="${summary.cost}">${escapeHtml(money.display(summary, 'cost'))}</b></span><span>净收益 <b data-anchor-net data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</b></span></span>${summary.pendingCount ? `<span class="anchor-custom-line">${summary.pendingCount} 单待补金额</span>` : ''}`;
   }
 
   function updateRevenuePreview() {
     const preview = document.querySelector('#revenue-preview');
+    const output = document.querySelector('#commission-amount');
     try {
-      const income = money.parse(orderForm.elements.incomeAmount.value), cost = money.parse(orderForm.elements.costAmount.value);
-      preview.textContent = income === '' || cost === '' ? '净收益 = 收入 − 成本。无成本请填 0，未填金额暂不计入汇总。' : `本单净收益 ${money.format(income - cost)}`;
-    } catch { preview.textContent = '请输入有效金额，最多保留两位小数。'; }
+      const income = money.parse(orderForm.elements.incomeAmount.value), rate = money.parseRate(orderForm.elements.commissionRate.value);
+      const legacy = orderForm.dataset.legacyCostCents === '' ? '' : Number(orderForm.dataset.legacyCostCents);
+      const amount = rate === '' ? legacy : money.commission(income, rate);
+      output.dataset.cents = String(amount);
+      output.textContent = amount !== '' ? money.format(amount) : income === '' ? '待填收款' : '待填比例';
+      preview.textContent = rate === '' && legacy !== '' ? `保留历史支出 ${money.format(legacy)}；填写提点比例后，按收款重新计算。` : income === '' ? '输入收款金额，按提点比例自动计算。' : rate === '' ? '请填写提点比例，无提点请填 0。' : `${money.input(income)} × ${money.rateInput(rate)}% = ${money.input(amount)} 元提点 · 净收益 ${money.format(income - amount)}`;
+    } catch (error) { output.dataset.cents = ''; output.textContent = '请检查输入'; preview.textContent = error.message; }
   }
 
   function stayState(order) {
@@ -459,6 +468,7 @@
     const companies = store.read().companies;
     const company = companies.find(item => item.id === (order ? order.companyId : selectedCompanyId));
     orderForm.reset();
+    orderForm.dataset.legacyCostCents = '';
     orderForm.classList.remove('submitted');
     Array.from(orderForm.elements).filter(control => control.name).forEach(control => setFieldError(control, ''));
     document.querySelector('#form-error').hidden = true;
@@ -483,7 +493,8 @@
         if (orderForm.elements.namedItem(key)) orderForm.elements[key].value = value ?? '';
       }
       orderForm.elements.incomeAmount.value = money.input(normalized.incomeCents);
-      orderForm.elements.costAmount.value = money.input(normalized.costCents);
+      orderForm.elements.commissionRate.value = money.rateInput(normalized.commissionRateBps);
+      orderForm.dataset.legacyCostCents = String(normalized.costCents);
       document.querySelector('#form-title').textContent = '修改登记';
       document.querySelector('#save-order span').textContent = '保存修改';
       document.querySelector('#save-order-top').setAttribute('aria-label', '保存修改');
@@ -530,7 +541,7 @@
       roomType: values.roomType.trim(),
       mealIncluded: values.mealIncluded,
       feeDetails: values.feeDetails.trim(),
-      incomeCents: money.parse(values.incomeAmount), costCents: money.parse(values.costAmount),
+      incomeCents: money.parse(values.incomeAmount), costCents: money.cents(old?.costCents), commissionRateBps: money.parseRate(values.commissionRate),
       createdAt: old ? old.createdAt : now,
       updatedAt: now
     });
@@ -732,7 +743,7 @@
 
   orderForm.elements.feeDetails.addEventListener('input', updateFeeCount);
   orderForm.addEventListener('input', event => {
-    if (['incomeAmount', 'costAmount'].includes(event.target.name)) updateRevenuePreview();
+    if (['incomeAmount', 'commissionRate'].includes(event.target.name)) updateRevenuePreview();
     if (['arrivalDate', 'departureDate', 'nights'].includes(event.target.name)) {
       synchronizeStayDates(event.target.name);
       if (orderForm.classList.contains('submitted')) ['arrivalDate', 'departureDate', 'nights'].forEach(name => validateField(orderForm.elements[name]));

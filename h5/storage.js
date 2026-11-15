@@ -52,6 +52,7 @@
       roomType: text(order.roomType), mealIncluded: order.mealIncluded === '是' ? '是' : '否',
       feeDetails: text(order.feeDetails),
       incomeCents: money.cents(order.incomeCents), costCents: money.cents(order.costCents),
+      commissionRateBps: money.basisPoints(order.commissionRateBps),
       createdAt: order.createdAt || new Date().toISOString(),
       updatedAt: order.updatedAt || order.createdAt || new Date().toISOString()
     };
@@ -163,6 +164,7 @@
       if (text(input.anchorName).length > 30) throw new Error('登记主播最多 30 字');
       if (text(input.feeDetails).length > 200) throw new Error('费用明细最多 200 字');
       money.cents(input.incomeCents); money.cents(input.costCents);
+      money.basisPoints(input.commissionRateBps);
       const company = data.companies.find(item => nameKey(item.name) === nameKey(name)) || normalizeCompany({ name });
       const existing = data.orders.find(item => item.id === input.id);
       const anchorName = data.orders.find(item => nameKey(item.anchorName) && nameKey(item.anchorName) === nameKey(input.anchorName))?.anchorName || text(input.anchorName).normalize('NFKC');

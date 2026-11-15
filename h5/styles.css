@@ -446,6 +446,10 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 .revenue-totals dd { margin: 6px 0 0; color: var(--ink); font-size: 1rem; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .revenue-totals > div:last-child dd { color: var(--blue); }
 .revenue-note { margin: 12px 0 0; color: var(--secondary); font-size: var(--caption); line-height: 1.7; }
+.commission-rate-control { display: flex; flex: 1; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
+.commission-rate-control > input { min-width: 0; width: 100%; }
+.commission-rate-control > span { flex: none; color: var(--secondary); }
+.commission-result output { min-width: 0; margin-left: auto; color: var(--blue); font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; }
 .package-counts .package-money { display: flex; flex-direction: column; gap: 3px; margin-top: 10px; font-size: var(--caption); line-height: 1.6; }
 .package-money > span { color: var(--secondary); }
 .package-money > strong { font-size: var(--caption); font-weight: 600; overflow-wrap: anywhere; }

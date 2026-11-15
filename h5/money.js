@@ -22,13 +22,35 @@
     const absolute = Math.abs(value);
     return `${value < 0 ? '−' : ''}¥${Math.floor(absolute / 100).toLocaleString('zh-CN')}.${String(absolute % 100).padStart(2, '0')}`;
   }
+  function basisPoints(value) {
+    if (value === undefined || value === null || value === '') return '';
+    if (!Number.isSafeInteger(value) || value < 0 || value > 10000) throw new Error('提点比例须在 0%–100% 之间，最多两位小数');
+    return value;
+  }
+  function parseRate(value) {
+    try { return basisPoints(parse(value)); }
+    catch { throw new Error('提点比例须在 0%–100% 之间，最多两位小数'); }
+  }
+  function rateInput(value) {
+    const rate = basisPoints(value);
+    return rate === '' ? '' : input(rate).replace(/\.?0+$/, '');
+  }
+  function commission(incomeCents, rateBps) {
+    const income = cents(incomeCents), rate = basisPoints(rateBps);
+    // Integer arithmetic rounds each order to cents before totals are added.
+    return income === '' || rate === '' ? '' : Math.floor((income * rate + 5000) / 10000);
+  }
+  function deduction(order) {
+    return basisPoints(order.commissionRateBps) === '' ? cents(order.costCents) : commission(order.incomeCents, order.commissionRateBps);
+  }
   function summarize(orders) {
-    const result = { income: 0, cost: 0, net: 0, incomeCount: 0, costCount: 0, pendingCount: 0, count: orders.length };
+    const result = { income: 0, cost: 0, net: 0, incomeCount: 0, costCount: 0, pendingCount: 0, count: orders.length, legacyCount: 0 };
     orders.forEach(order => {
-      const income = cents(order.incomeCents), cost = cents(order.costCents);
+      const income = cents(order.incomeCents), cost = deduction(order);
       if (income !== '') { result.income += income; result.incomeCount++; }
       if (cost !== '') { result.cost += cost; result.costCount++; }
       if (income === '' || cost === '') result.pendingCount++;
+      if (basisPoints(order.commissionRateBps) === '' && cost !== '') result.legacyCount++;
     });
     result.net = result.income - result.cost;
     return result;
@@ -37,7 +59,7 @@
     const known = !summary.count || (key === 'net' ? summary.incomeCount + summary.costCount : summary[key + 'Count']);
     return known ? format(summary[key]) : '待补金额';
   }
-  const api = { MAX_CENTS, cents, parse, input, format, summarize, display };
+  const api = { MAX_CENTS, cents, parse, input, format, basisPoints, parseRate, rateInput, commission, deduction, summarize, display };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.InnMoney = api;
 }(typeof window === 'undefined' ? globalThis : window));

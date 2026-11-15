@@ -3,10 +3,10 @@
   const money = typeof module === 'object' && module.exports ? require('./money.js') : root.InnMoney;
   const fields = {
     companies: ['name', 'category', 'contact', 'phone', 'notes', 'createdAt', 'updatedAt'],
-    orders: ['companyId', 'hotelOrder', 'base', 'anchorName', 'customerName', 'phone', 'arrivalDate', 'departureDate', 'nights', 'guestCount', 'roomType', 'mealIncluded', 'feeDetails', 'incomeCents', 'costCents', 'createdAt', 'updatedAt']
+    orders: ['companyId', 'hotelOrder', 'base', 'anchorName', 'customerName', 'phone', 'arrivalDate', 'departureDate', 'nights', 'guestCount', 'roomType', 'mealIncluded', 'feeDetails', 'incomeCents', 'costCents', 'commissionRateBps', 'createdAt', 'updatedAt']
   };
   const labels = { name: '公司名称', category: '分类', contact: '联系人', phone: '电话', notes: '备注', companyId: '所属公司', hotelOrder: '旅店/订单', base: '入住基地', anchorName: '登记主播', customerName: '姓名', arrivalDate: '入住日期', departureDate: '离店日期', nights: '入住天数', guestCount: '入住人数', roomType: '房型', mealIncluded: '含餐', feeDetails: '费用明细', $deleted: '删除状态' };
-  labels.incomeCents = '订单收入'; labels.costCents = '成本支出';
+  labels.incomeCents = '收款金额'; labels.costCents = '历史支出'; labels.commissionRateBps = '提点比例';
   const clone = value => JSON.parse(JSON.stringify(value));
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   const nameKey = value => String(value || '').normalize('NFKC').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
@@ -53,6 +53,7 @@
             const [actor, count] = dotParts(dot);
             if ((cell.seen[actor] || 0) < count || !['string', 'number', 'boolean'].includes(typeof value) || (typeof value === 'string' && value.length > 10000)) throw new Error('同步字段内容不正确');
             if (kind === 'orders' && ['incomeCents', 'costCents'].includes(field)) money.cents(value);
+            if (kind === 'orders' && field === 'commissionRateBps') money.basisPoints(value);
           }
         }
       }
