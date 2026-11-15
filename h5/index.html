@@ -20,11 +20,11 @@
   <script src="./sync-client.js?v=shared-19" defer></script>
   <script src="./motion.js?v=motion-polish-31" defer></script>
   <script src="./feedback.js?v=motion-polish-31" defer></script>
-  <script src="./app.js?v=nav-actions-32" defer></script>
+  <script src="./app.js?v=anchor-workflow-33" defer></script>
   <script src="./sync-ui.js?v=general-polish-30" defer></script>
   <script src="./bills-owner.js?v=general-polish-30" defer></script>
 </head>
-<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22" data-commission="23" data-anchor-commission="24" data-company-bills="25" data-own-anchors="26" data-compact-bills="27" data-guest-status="28" data-own-company="29" data-general-polish="30" data-motion-polish="31" data-nav-actions="32">
+<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22" data-commission="23" data-anchor-commission="24" data-company-bills="25" data-own-anchors="26" data-compact-bills="27" data-guest-status="28" data-own-company="29" data-general-polish="30" data-motion-polish="31" data-nav-actions="32" data-anchor-workflow="33">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -62,7 +62,7 @@
             <summary><span class="own-company-label">我司名称</span><strong id="own-company-summary">未设置</strong><span class="own-company-edit">设置</span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
             <form id="own-company-form" novalidate><label class="visually-hidden" for="own-company-name">我司名称</label><div class="own-company-input-row"><input id="own-company-name" type="text" maxlength="80" autocomplete="organization" placeholder="填写我司完整名称" aria-describedby="own-company-help own-company-error"><button id="save-own-company" type="submit">保存名称</button></div><p id="own-company-help">订单公司名称与此一致，自动计入我司主播；其他公司分别计入各自账单。</p><p id="own-company-error" role="alert" hidden></p></form>
           </details>
-          <p id="own-anchor-note" class="own-anchor-note" hidden>仅统计我司订单，按主播姓名自动分类。</p>
+          <p id="own-anchor-note" class="own-anchor-note" hidden>订单从“旅居公司”统一登记，这里按我司主播自动汇总订单和提点。</p>
           <div id="anchor-period" class="anchor-period" hidden><label for="anchor-month">登记月份</label><input id="anchor-month" type="month" aria-label="我司主播订单登记月份" aria-describedby="anchor-period-note"><button id="anchor-current-month" type="button" aria-pressed="true">本月</button><button id="anchor-all-months" type="button" aria-pressed="false">全部月份</button><p id="anchor-period-note" class="visually-hidden">按登记时间统计，仅统计公司名称与我司名称一致的订单，按登记时间和主播姓名汇总。</p></div>
           <div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="company-query" type="search" aria-label="搜索旅居公司或住客" placeholder="搜索公司或住客" autocomplete="off" enterkeyhint="search"><button id="clear-company-query" class="clear-search" type="button" aria-label="清空公司搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
           <div class="filters" role="group" aria-label="按住客入住状态筛选"><span id="directory-filter-selection" class="filter-selection" aria-hidden="true"></span><button class="filter active" type="button" data-home-filter="all" aria-pressed="true">全部</button><button class="filter" type="button" data-home-filter="upcoming" aria-pressed="false">待入住</button><button class="filter" type="button" data-home-filter="staying" aria-pressed="false">入住中</button><button class="filter" type="button" data-home-filter="finished" aria-pressed="false">已离店</button></div>
@@ -134,7 +134,7 @@
       <header class="view-nav"><button class="text-button back-button" type="button" data-close="form-overlay"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg>返回</button><h2 id="form-title" tabindex="-1">新增登记</h2><button id="delete-order" class="text-button nav-delete" type="button" aria-label="删除这条登记" hidden>删除</button></header>
       <div class="view-scroll">
         <form id="order-form" novalidate>
-          <fieldset><legend>旅居公司</legend><div class="field-group"><label class="field"><span>公司名称 <b>*</b></span><input id="order-company" name="companyName" list="company-suggestions" required maxlength="80" placeholder="填写或选择旅居公司" autocomplete="off" enterkeyhint="next"></label></div><datalist id="company-suggestions"></datalist><div id="company-shortcuts" class="company-shortcuts" role="group" aria-label="快速选择已有旅居公司" hidden></div><p class="field-note">填写新公司名称，保存后自动分类。</p></fieldset>
+          <fieldset><legend>旅居公司</legend><div class="field-group"><label class="field"><span>公司名称 <b>*</b></span><input id="order-company" name="companyName" list="company-suggestions" required maxlength="80" placeholder="填写或选择旅居公司" autocomplete="off" enterkeyhint="next"></label></div><datalist id="company-suggestions"></datalist><div id="company-shortcuts" class="company-shortcuts" role="group" aria-label="快速选择旅居公司" hidden></div><p class="field-note">填写新公司名称，保存后自动分类。</p></fieldset>
           <fieldset><legend>订单信息</legend><div class="field-group">
             <div class="field"><label id="anchor-name-label" for="anchor-name">登记主播</label><span class="anchor-control"><input id="anchor-name" name="anchorName" list="anchor-suggestions" maxlength="30" placeholder="填写登记主播姓名" autocomplete="off" enterkeyhint="next"><span id="anchor-picker-wrap" class="anchor-picker-wrap" hidden><span aria-hidden="true">选择<svg class="icon"><use href="#i-chevron"/></svg></span><select id="anchor-picker" aria-label="选择该公司的主播"><option value="">暂不填写</option></select></span></span></div>
             <label class="field"><span>旅店/订单 <b>*</b></span><input name="hotelOrder" required maxlength="80" placeholder="旅店或订单名称" autocomplete="off" enterkeyhint="next"></label>

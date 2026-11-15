@@ -286,7 +286,7 @@
     }
     if (!visible.length) {
       const filtered = Boolean(query) || filterValue !== 'all';
-      target.innerHTML = `<div class="empty-state"><span class="empty-icon">${icon(query ? 'search' : 'book')}</span><h3>${filtered ? '没有符合条件的登记' : '还没有入住登记'}</h3><p>${filtered ? '换个关键词，或查看全部登记。' : '轻点下方“新增入住登记”，填写住客和旅居公司。'}</p>${filtered && inGroup.length ? '<button class="empty-reset" type="button" data-reset>查看全部登记</button>' : ''}</div>`;
+      target.innerHTML = `<div class="empty-state"><span class="empty-icon">${icon(query ? 'search' : 'book')}</span><h3>${filtered ? '没有符合条件的登记' : '还没有入住登记'}</h3><p>${filtered ? '换个关键词，或查看全部登记。' : selectedAnchorKey !== null ? '在“旅居公司”登记我司订单后，自动汇总到对应主播。' : '轻点下方“新增入住登记”，填写住客和旅居公司。'}</p>${filtered && inGroup.length ? '<button class="empty-reset" type="button" data-reset>查看全部登记</button>' : ''}</div>`;
       return;
     }
     target.innerHTML = visible.map((order) => {
@@ -349,8 +349,31 @@
   }
 
   function updateCompanyShortcuts() {
-    const name = orderForm.elements.companyName.value.trim();
-    document.querySelectorAll('[data-company-shortcut]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.companyShortcut === name)));
+    const key = window.InnStorage.nameKey(orderForm.elements.companyName.value);
+    document.querySelectorAll('[data-company-shortcut]').forEach(button => button.setAttribute('aria-pressed', String(window.InnStorage.nameKey(button.dataset.companyShortcut) === key)));
+  }
+
+  function renderRegistrationCompanies() {
+    const { companies, orders } = store.read();
+    const uniqueNames = values => {
+      const seen = new Set();
+      return values.filter(name => {
+        const key = window.InnStorage.nameKey(name);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    };
+    const own = store.ownCompanyName();
+    const suggestions = uniqueNames([own, ...companies.map(company => company.name)]);
+    document.querySelector('#company-suggestions').innerHTML = suggestions.map(name => `<option value="${escapeHtml(name)}"></option>`).join('');
+    const current = companies.find(company => window.InnStorage.nameKey(company.name) === window.InnStorage.nameKey(orderForm.elements.companyName.value));
+    const recent = [...new Set(orders.map(order => order.companyId))].map(id => companies.find(company => company.id === id)?.name);
+    const names = uniqueNames([own, current?.name, ...recent]).slice(0, 4);
+    const shortcuts = document.querySelector('#company-shortcuts');
+    shortcuts.hidden = !names.length;
+    shortcuts.innerHTML = names.map(name => `<button type="button" data-company-shortcut="${escapeHtml(name)}" aria-pressed="false" aria-label="使用旅居公司：${escapeHtml(name)}">${escapeHtml(name)}</button>`).join('');
+    updateCompanyShortcuts();
   }
 
   function renderOwnCompanySetting() {
@@ -463,7 +486,7 @@
     const guestView = homeFilter !== 'all';
     document.querySelector('#home-view').dataset.empty = String(empty);
     document.querySelector('#home-onboarding').hidden = !empty;
-    document.querySelector('.home-toolbar').hidden = empty;
+    document.querySelector('.home-toolbar').hidden = empty || anchors;
     document.querySelector('#company-list').hidden = empty || guestView;
     document.querySelector('#home-guest-list').hidden = empty || !guestView;
     document.querySelector('#home-directory-heading').hidden = empty || (!anchors && homeFilter === 'all' && !query);
@@ -487,7 +510,8 @@
       const financialLabel = `，本月收入 ${money.display(financial, 'income')}，净收益 ${money.display(financial, 'net')}${financial.pendingCount ? `，${financial.pendingCount} 单金额待补` : ''}`;
       const identity = `<span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${total}</span></span>${anchors ? anchorRevenue(company.orders) : `<span class="company-statistics">${companyStates(summary)}</span>${nextArrival(company.orders)}`}</span>${icon('chevron', 'chevron')}`;
       return `<button class="company-row${anchors ? ' anchor-order-row' : ' company-financial-row'}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${anchors ? escapeHtml(monthLabel(anchorMonth)) + " " : ""}${total}${anchors ? "，提点合计 " + escapeHtml(money.commissionDisplay(money.summarizeCommission(company.orders))) + "，收入 " + escapeHtml(money.display(money.summarize(company.orders), "income")) + "，净收益 " + escapeHtml(money.display(money.summarize(company.orders), "net")) : escapeHtml(financialLabel)}，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已离店 ${summary.finished}，查看订单">${anchors ? identity : `<span class="company-row-main">${identity}</span>${companyMonthlyRevenue(company.orders)}`}</button>`;
-    }).join('') || (anchors && !store.ownCompanyName() ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('company')}</span><h3>先设置我司名称</h3><p>填写上方我司名称后，已有订单会自动按公司识别并归入旗下主播。</p><button class="empty-reset" type="button" data-own-company-setup>设置我司名称</button></div>` : orders.length
+    }).join('') || (anchors && !store.ownCompanyName() ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('company')}</span><h3>先设置我司名称</h3><p>填写上方我司名称后，已有订单会自动按公司识别并归入旗下主播。</p><button class="empty-reset" type="button" data-own-company-setup>设置我司名称</button></div>` : anchors && !store.ownOrders().length
+      ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('book')}</span><h3>暂无我司主播订单</h3><p>在“旅居公司”选择我司名称并登记主播，订单和提点会自动汇总到这里。</p><button class="empty-reset" type="button" data-directory-companies>查看旅居公司</button></div>` : orders.length
       ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>${anchors ? '暂无符合条件的我司主播订单' : '没有符合条件的公司'}</h3><p>${anchors ? '仅展示公司名称与我司一致的订单，可更换月份或补填主播。' : '换个关键词，或查看全部公司。'}</p><button class="empty-reset" type="button" data-company-reset>${anchors ? '查看全部月份' : '查看全部公司'}</button></div>`
       : '');
   }
@@ -504,6 +528,7 @@
     const orders = selectedAnchorKey !== null ? anchor?.orders || [] : readOrders().filter(order => selectedCompanyId ? order.companyId === selectedCompanyId : !companies.some(company => company.id === order.companyId));
     document.querySelector('#company-detail-summary').textContent = selectedAnchorKey === '' ? `${monthLabel(anchorMonth)} · ${orders.length} 单未填写我司主播` : selectedAnchorKey !== null ? `${monthLabel(anchorMonth)} · ${orders.length} 单 · 累计 ${anchor?.total || 0} 单` : `共 ${orders.length} 条入住登记`;
     document.querySelector('#company-detail-states').innerHTML = companyStates(counts(orders));
+    document.querySelector('.company-toolbar').hidden = selectedAnchorKey !== null;
     window.InnBillOwner?.show(selectedAnchorKey === null ? selectedCompanyId : null);
     document.querySelector('#anchor-detail-month-summary').hidden = !selectedAnchorKey;
     if (selectedAnchorKey) renderMonthlySummary(document.querySelector('#anchor-detail-month-summary'), orders, `我司主播 · 累计 ${anchor?.total || 0} 单`, name);
@@ -520,6 +545,7 @@
     const data = store.read();
     document.querySelector('#backup-count').textContent = `${data.companies.length} 家公司 · ${data.orders.length} 条客人登记`;
     if (!formOverlay.hidden && !formOverlay.inert) {
+      renderRegistrationCompanies();
       renderAnchorPicker();
       updateAnchorRecognition();
     }
@@ -566,6 +592,7 @@
   }
 
   function openForm(order) {
+    if (!order && (selectedAnchorKey !== null || (selectedCompanyId === null && directoryMode === 'anchors'))) return;
     registrationAttempt++;
     registrationAnchorDrafts.clear();
     setRegistrationSaving(false);
@@ -584,13 +611,6 @@
     orderForm.dataset.id = order ? order.id : '';
     orderForm.elements.companyName.value = company?.name || (directoryMode === 'anchors' ? store.ownCompanyName() : '');
     orderForm.dataset.anchorScope = window.InnStorage.nameKey(orderForm.elements.companyName.value);
-    document.querySelector('#company-suggestions').innerHTML = companies.map(item => `<option value="${escapeHtml(item.name)}"></option>`).join('');
-    const usedIds = [...new Set([company?.id, ...readOrders().map(item => item.companyId)].filter(Boolean))];
-    const recentCompanies = usedIds.map(id => companies.find(item => item.id === id)).filter(Boolean).slice(0, 4);
-    const shortcuts = document.querySelector('#company-shortcuts');
-    shortcuts.hidden = !recentCompanies.length;
-    shortcuts.innerHTML = recentCompanies.map(item => `<button type="button" data-company-shortcut="${escapeHtml(item.name)}" aria-pressed="false" aria-label="使用旅居公司：${escapeHtml(item.name)}">${escapeHtml(item.name)}</button>`).join('');
-    updateCompanyShortcuts();
 
     if (order) {
       const normalized = normalizeOrder(order);
@@ -608,6 +628,7 @@
       document.querySelector('#save-order span').textContent = '保存登记';
       document.querySelector('#delete-order').hidden = true;
     }
+    renderRegistrationCompanies();
     updateFeeCount();
     updateRevenuePreview();
     renderAnchorPicker();
@@ -726,6 +747,7 @@
     else if (action === 'join' || action === 'restore') openBackup(action);
   });
   document.querySelector('#company-list').addEventListener('click', event => {
+    if (event.target.closest('[data-directory-companies]')) { document.querySelector('[data-directory-mode="companies"]').click(); return; }
     if (event.target.closest('[data-company-reset]')) { homeFilter = 'all'; if (directoryMode === 'anchors') anchorMonth = ''; document.querySelector('#company-query').value = ''; renderOverview(); renderCompanies(); return; }
     if (event.target.closest('[data-own-company-setup]')) { document.querySelector('#own-company-settings').open = true; document.querySelector('#own-company-name').focus(); return; }
     const anchor = event.target.closest('[data-anchor-key]');
