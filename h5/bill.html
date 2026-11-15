@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f6fa">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>旅居公司对账单</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css?v=company-bills-25">
+  <link rel="stylesheet" href="./bills.css?v=company-bills-25">
+  <script src="./money.js?v=company-bills-25" defer></script>
+  <script src="./bills-core.js?v=company-bills-25" defer></script>
+  <script src="./sync-config.js?v=home-14" defer></script>
+  <script src="./bill-viewer.js?v=company-bills-25" defer></script>
+</head>
+<body class="bill-viewer">
+  <header class="bill-header"><span>公司对账单</span><span class="bill-readonly">仅供查看</span></header>
+  <main class="bill-content">
+    <div class="bill-heading"><p id="bill-period">公司月度账单</p><h1 id="bill-company">正在读取账单</h1><p id="bill-timestamp"></p></div>
+    <p id="bill-view-status" class="bill-view-status" role="status" aria-live="polite">正在安全读取，请稍候…</p>
+    <section id="bill-figures" class="bill-figures" aria-label="账单金额汇总" hidden></section>
+    <section id="bill-details" hidden>
+      <div class="bill-orders-heading"><h2>入住与款项明细</h2><span id="bill-order-count"></span></div>
+      <label class="bill-search"><span class="visually-hidden">搜索账单明细</span><input id="bill-search" type="search" placeholder="搜索住客、主播或订单" autocomplete="off" aria-label="搜索账单明细"></label>
+      <div id="bill-orders" class="bill-orders"></div>
+    </section>
+    <button id="bill-refresh" class="bill-refresh" type="button">刷新账单</button>
+    <p class="bill-view-note">账单按登记月份汇总。如有金额或入住信息疑问，请联系账单发送方。</p>
+  </main>
+</body>
+</html>

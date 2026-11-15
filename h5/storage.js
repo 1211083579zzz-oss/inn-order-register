@@ -62,6 +62,7 @@
     return {
       id: text(company.id) || identifier('co'), name: text(company.name), category: text(company.category),
       contact: text(company.contact), phone: text(company.phone), notes: text(company.notes),
+      ...(text(company.billingShares) ? { billingShares: text(company.billingShares) } : {}),
       createdAt: company.createdAt || new Date().toISOString(),
       updatedAt: company.updatedAt || company.createdAt || new Date().toISOString()
     };
@@ -121,6 +122,7 @@
       const company = normalizeCompany(input);
       if (!company.name || company.name.length > 80) throw new Error('请填写 1–80 字的公司名称');
       if (company.category.length > 30 || company.contact.length > 30 || company.notes.length > 200) throw new Error('公司信息超过长度限制');
+      if (company.billingShares && company.billingShares.length > 9000) throw new Error('账单分享数量超出限制');
       if (company.phone && !/^[0-9+\-\s]{6,20}$/.test(company.phone)) throw new Error('请输入有效的公司联系电话');
       if (data.companies.some(item => item.id !== company.id && nameKey(item.name) === nameKey(company.name))) throw new Error('这家公司已经登记，请修改已有档案');
       const existing = data.companies.find(item => item.id === company.id);

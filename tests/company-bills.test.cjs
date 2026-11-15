@@ -1,0 +1,23 @@
+const assert=require('node:assert/strict');
+const bills=require('../h5/bills-core.js'),storeModule=require('../h5/storage.js'),sync=require('../h5/sync-core.js');
+const make=(id,companyId,createdAt='2026-11-15T04:00:00Z')=>({id,companyId,createdAt,hotelOrder:'海燕酒店',base:'安吉',anchorName:'依依',customerName:id,phone:'13800138000',arrivalDate:'2027-01-31',departureDate:'2027-02-07',nights:7,guestCount:'2人',roomType:'双床房',incomeCents:149000,commissionRateBps:2000,costCents:'',feeDetails:'私有备注'});
+(async()=>{
+ const source={version:2,companies:[{id:'a',name:'海燕旅居'},{id:'b',name:'别家公司'}],orders:[make('a1','a'),make('a2','a','2026-10-15T04:00:00Z'),make('b1','b')]},original=structuredClone(source);
+ const bill=bills.project(source,'a','2026-11');assert.equal(bill.orders.length,1);assert.equal(bill.companyName,'海燕旅居');assert.deepEqual(bills.totals(bill),{income:149000,commission:29800,legacy:0,net:119200,pending:0,count:1});
+ for(const value of ['phone','私有备注','别家公司','b1','a2','billingShares','writeToken'])assert.ok(!JSON.stringify(bill).includes(value),value);
+ assert.deepEqual(source,original);assert.throws(()=>bills.project(source,'x','2026-11'));assert.throws(()=>bills.project(source,'a','2026-13'));
+ const seed=bills.random(),keys=await bills.derive(seed),other=await bills.derive(bills.random());assert.notEqual(keys.readToken,seed);assert.notEqual(keys.id,seed);
+ const envelope=await bills.encrypt({...bill,updatedAt:'2026-11-15T04:00:00Z'},keys);assert.ok(!JSON.stringify(envelope).includes('海燕'));
+ assert.equal((await bills.decrypt(envelope,keys)).orders[0].commissionCents,29800);await assert.rejects(()=>bills.decrypt(envelope,other));
+ const tampered={...envelope,ciphertext:(envelope.ciphertext[0]==='A'?'B':'A')+envelope.ciphertext.slice(1)};await assert.rejects(()=>bills.decrypt(tampered,keys));
+ const memory=()=>{const m=new Map();return{getItem:k=>m.get(k)??null,setItem:(k,v)=>m.set(k,v)}};
+ const store=storeModule.createStore(memory());store.saveRegistration({...make('owner',''),companyId:''},'海燕旅居');
+ let company=store.read().companies[0];const grant={month:'2026-11',seed,writeToken:bills.random()};store.saveCompany({...company,billingShares:JSON.stringify([grant])});
+ company=store.read().companies[0];assert.deepEqual(bills.grants(company),[grant]);
+ const doc=sync.capture(sync.empty(),sync.emptyData(),store.read(),'aaaaaaaaaaaaaaaa');
+ assert.equal(bills.grants(sync.project(doc).data.companies[0])[0].writeToken,grant.writeToken);
+ const syncKeys=await sync.derive(sync.code());const synced=await sync.encrypt(doc,syncKeys);assert.ok(!JSON.stringify(synced).includes(grant.writeToken));assert.equal(bills.grants(sync.project(await sync.decrypt(synced,syncKeys)).data.companies[0])[0].seed,seed);
+ const backup=store.backup(),restored=storeModule.createStore(memory());restored.mergeBackup(restored.parseBackup(backup));assert.equal(bills.grants(restored.read().companies[0])[0].seed,seed);
+ assert.equal((await bills.fingerprint(bill)).length,43);
+ console.log('PASS_COMPANY_BILLS: exact company/month scope and amounts; no phones, notes or other company; independent encryption/read keys; tamper and wrong-key failure; private share management metadata survives encrypted admin sync and backup');
+})().catch(error=>{console.error(error);process.exitCode=1});

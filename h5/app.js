@@ -410,6 +410,7 @@
     const orders = selectedAnchorKey !== null ? anchor?.orders || [] : readOrders().filter(order => selectedCompanyId ? order.companyId === selectedCompanyId : !companies.some(company => company.id === order.companyId));
     document.querySelector('#company-detail-summary').textContent = selectedAnchorKey !== null ? `${anchorMonth ? anchorMonth.replace('-', '年') + '月' : '全部月份'} · ${orders.length} 单 · 累计 ${anchor?.total || 0} 单` : `共 ${orders.length} 条入住登记`;
     document.querySelector('#company-detail-states').innerHTML = companyStates(counts(orders));
+    window.InnBillOwner?.show(selectedAnchorKey === null ? selectedCompanyId : null);
     document.querySelector('#anchor-detail-month-summary').hidden = selectedAnchorKey === null;
     if (selectedAnchorKey !== null) renderMonthlySummary(document.querySelector('#anchor-detail-month-summary'), orders, `${name} · 累计 ${anchor?.total || 0} 单`);
     renderOrders(document.querySelector('#company-guest-list'), document.querySelector('#company-guest-search').value, companyFilter, selectedCompanyId);
