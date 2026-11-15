@@ -15,8 +15,12 @@
     if (!company) return;
     try {
       const grant = core.grants(company).find(item => item.month === element('month').value);
+      const month = element('month').value;
+      const state = busy ? '正在处理' : element('status').classList.contains('bill-error') ? '待处理' : grant?.publishedAt ? '已分享' : '未分享';
+      element('entry-summary').textContent = core.monthValid(month) ? `${Number(month.slice(5))}月 · ${state}` : '选择月份 · 对方只读';
+      panel.setAttribute('aria-busy', String(busy));
       element('link-wrap').hidden = !grant?.publishedAt;
-      element('publish').textContent = grant?.publishedAt ? '更新账单' : '生成只读链接';
+      element('publish').textContent = busy ? '处理中…' : grant?.publishedAt ? '更新账单' : '生成链接';
       element('publish').disabled = busy || !endpoint;
       element('copy').disabled = busy; element('stop').disabled = busy;
       if (grant?.publishedAt) { element('link').value = link(grant); element('updated').textContent = '已更新于 ' + new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(grant.publishedAt)); }
@@ -114,6 +118,7 @@
   for (const event of ['innrecordschange', 'innsyncdata']) window.addEventListener(event, () => { show(); schedule(); });
   window.addEventListener('online', schedule);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule(); });
-  window.InnBillOwner = { show(companyId) { if (selectedCompany !== companyId) { selectedCompany = companyId; element('month').value = nowMonth(); message(''); } show(); }, refresh: publishAll };
+  window.addEventListener('innviewchange', event => { if (!event.detail.id) panel.open = false; });
+  window.InnBillOwner = { show(companyId) { if (selectedCompany !== companyId) { selectedCompany = companyId; panel.open = false; element('month').value = nowMonth(); message(''); } show(); }, refresh: publishAll };
   schedule();
 }());

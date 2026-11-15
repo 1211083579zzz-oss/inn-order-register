@@ -9,21 +9,21 @@
   <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=own-anchors-26">
+  <link rel="stylesheet" href="./styles.css?v=compact-bills-27">
   <script src="./arrivals.js?v=month-20" defer></script>
-  <script src="./money.js?v=own-anchors-26" defer></script>
-  <link rel="stylesheet" href="./bills.css?v=own-anchors-26">
-  <script src="./bills-core.js?v=own-anchors-26" defer></script>
-  <script src="./storage.js?v=own-anchors-26" defer></script>
+  <script src="./money.js?v=compact-bills-27" defer></script>
+  <link rel="stylesheet" href="./bills.css?v=compact-bills-27">
+  <script src="./bills-core.js?v=compact-bills-27" defer></script>
+  <script src="./storage.js?v=compact-bills-27" defer></script>
   <script src="./sync-config.js?v=home-14" defer></script>
-  <script src="./sync-core.js?v=own-anchors-26" defer></script>
+  <script src="./sync-core.js?v=compact-bills-27" defer></script>
   <script src="./sync-client.js?v=shared-19" defer></script>
   <script src="./motion.js?v=save-15" defer></script>
-  <script src="./app.js?v=own-anchors-26" defer></script>
-  <script src="./sync-ui.js?v=own-anchors-26" defer></script>
-  <script src="./bills-owner.js?v=own-anchors-26" defer></script>
+  <script src="./app.js?v=compact-bills-27" defer></script>
+  <script src="./sync-ui.js?v=compact-bills-27" defer></script>
+  <script src="./bills-owner.js?v=compact-bills-27" defer></script>
 </head>
-<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22" data-commission="23" data-anchor-commission="24" data-company-bills="25" data-own-anchors="26">
+<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22" data-commission="23" data-anchor-commission="24" data-company-bills="25" data-own-anchors="26" data-compact-bills="27">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -102,13 +102,15 @@
       <div class="view-scroll company-content">
         <div class="company-profile"><div class="company-profile-row"><span id="company-detail-symbol" class="company-symbol" aria-hidden="true"></span><div class="company-profile-copy"><h3 id="company-name"></h3><p id="company-detail-summary" class="company-contact"></p></div></div><div id="company-detail-states" class="company-statistics company-detail-states" aria-label="公司入住情况"></div></div>
         <section id="anchor-detail-month-summary" class="anchor-month-summary anchor-detail-month-summary" aria-label="该主播月度订单汇总" aria-live="polite" hidden></section>
-        <section id="company-billing" class="company-billing" aria-labelledby="company-billing-title" hidden>
-          <h3 id="company-billing-title">公司对账单</h3><p>生成这家公司所选月份的账单链接，对方只能查看。已发布账单会随登记内容更新。</p>
-          <div class="bill-month-control"><label for="bill-month">登记月份</label><input id="bill-month" type="month" aria-label="公司账单月份"></div>
-          <button id="bill-publish" type="button" class="primary-button">生成只读链接</button>
-          <div id="bill-link-wrap" class="bill-link-wrap" hidden><label for="bill-link">发给旅居公司的只读链接</label><input id="bill-link" type="text" readonly aria-label="公司只读账单链接"><div class="bill-link-actions"><button id="bill-copy" type="button">复制链接</button><button id="bill-stop" class="bill-stop" type="button">停用链接</button></div><p id="bill-updated" class="bill-updated"></p></div>
-          <p id="bill-status" class="bill-status" role="status" aria-live="polite"></p>
-        </section>
+        <details id="company-billing" class="company-billing" aria-labelledby="company-billing-title" hidden>
+          <summary><span class="bill-entry-copy"><strong id="company-billing-title">公司对账单</strong><span id="bill-entry-summary">按月分享 · 对方只读</span></span><span class="bill-entry-action" aria-hidden="true">管理<svg class="icon chevron"><use href="#i-chevron"/></svg></span></summary>
+          <div class="bill-management">
+            <p class="bill-description">只分享本公司所选月份，对方仅可查看。登记变动后账单会自动更新。</p>
+            <label class="bill-month-label" for="bill-month">账单月份</label><div class="bill-month-control"><input id="bill-month" type="month" aria-label="公司账单月份"><button id="bill-publish" type="button" class="bill-publish-button" aria-label="生成或更新公司只读账单链接">生成链接</button></div>
+            <div id="bill-link-wrap" class="bill-link-wrap" hidden><label for="bill-link">发给旅居公司的只读链接</label><input id="bill-link" type="text" readonly aria-label="公司只读账单链接"><div class="bill-link-actions"><button id="bill-copy" type="button">复制链接</button><button id="bill-stop" class="bill-stop" type="button">停用链接</button></div><p id="bill-updated" class="bill-updated"></p></div>
+            <p id="bill-status" class="bill-status" role="status" aria-live="polite"></p>
+          </div>
+        </details>
         <div class="guest-tools"><div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="company-guest-search" type="search" aria-label="搜索公司客人" placeholder="搜索住客、电话或订单" autocomplete="off" enterkeyhint="search"><button id="clear-company-guest-search" class="clear-search" type="button" aria-label="清空客人搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
         <div class="filters" role="group" aria-label="筛选公司客人入住状态"><span id="company-filter-selection" class="filter-selection" aria-hidden="true"></span><button class="filter active" data-company-filter="all" aria-pressed="true" type="button">全部</button><button class="filter" data-company-filter="upcoming" aria-pressed="false" type="button">待入住</button><button class="filter" data-company-filter="staying" aria-pressed="false" type="button">入住中</button><button class="filter" data-company-filter="finished" aria-pressed="false" type="button">已离店</button></div></div>
         <div class="list-heading"><h3 id="company-list-title">客人入住</h3><span id="company-guest-count">0 条记录</span></div>

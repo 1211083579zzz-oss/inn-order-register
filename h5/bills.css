@@ -1,10 +1,22 @@
-.company-billing { margin: 0 0 24px; padding: 18px 16px; border-radius: var(--radius-group); background: var(--surface); }
-.company-billing h3 { font-size: var(--type-section); font-weight: 600; }
-.company-billing > p { margin: 6px 0 12px; color: var(--secondary); font-size: var(--caption); line-height: 1.7; }
-.bill-month-control { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 12px 0; }
-.bill-month-control input { flex: 1; min-height: 44px; color: var(--ink); }
-.bill-month-control label { font-size: var(--caption); color: var(--secondary); }
-.company-billing .primary-button { width: 100%; }
+.company-billing { margin: 0 0 16px; border-radius: var(--radius-group); background: var(--surface); }
+.company-billing > summary { display: flex; align-items: center; gap: 12px; min-height: 68px; padding: 12px 16px; cursor: pointer; list-style: none; border-radius: var(--radius-group); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.company-billing > summary::-webkit-details-marker { display: none; }
+.company-billing > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.company-billing > summary:active { background: var(--control-soft); }
+.bill-entry-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
+.bill-entry-copy strong { color: var(--ink); font-size: 1rem; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.bill-entry-copy > span { color: var(--secondary); font-size: var(--caption); line-height: 1.5; overflow-wrap: anywhere; }
+.bill-entry-action { display: flex; flex: none; align-items: center; gap: 4px; color: var(--blue); font-size: var(--caption); }
+.bill-entry-action .chevron { width: 16px; height: 16px; color: var(--secondary); transition: transform 180ms ease-out; }
+.company-billing[open] .bill-entry-action .chevron { transform: rotate(90deg); }
+.bill-management { padding: 0 16px 16px; }
+.bill-description { margin: 0 0 12px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--secondary); font-size: var(--caption); line-height: 1.7; }
+.bill-month-label { display: block; margin-bottom: 6px; color: var(--secondary); font-size: var(--caption); }
+.bill-month-control { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.bill-month-control input { flex: 1 1 144px; min-width: min(100%, 10em); width: 144px; min-height: 44px; padding: 8px 10px; border-radius: var(--radius-control); background: var(--inset); color: var(--ink); font-size: 1rem; }
+.bill-publish-button { flex: none; min-height: 44px; padding: 8px 12px; border-radius: var(--radius-control); background: var(--blue-soft); color: var(--blue); font-size: var(--caption); font-weight: 600; }
+.bill-publish-button:active { background: var(--control); }
+.company-billing[aria-busy="true"] .bill-entry-copy > span { color: var(--blue); }
 .bill-link-wrap { margin-top: 14px; }
 .bill-link-wrap > label { display: block; margin-bottom: 6px; font-size: var(--caption); font-weight: 600; }
 .bill-link-wrap input { width: 100%; min-height: 44px; padding: 10px; border-radius: var(--radius-control); background: var(--inset); box-sizing: border-box; }
@@ -14,6 +26,8 @@
 .bill-updated, .bill-status { margin-top: 8px; color: var(--secondary); font-size: var(--caption); line-height: 1.7; overflow-wrap: anywhere; }
 .bill-status:empty { display: none; }
 .bill-error { color: var(--danger); }
+@media (hover: hover) and (pointer: fine) { .company-billing > summary:hover { background: var(--control-soft); } .bill-publish-button:hover { background: var(--control); } }
+@media (prefers-reduced-motion: reduce) { .bill-entry-action .chevron { transition: none; } }
 .bill-viewer { min-width: 320px; }
 .bill-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 680px; box-sizing: border-box; margin: 0 auto; padding: calc(14px + env(safe-area-inset-top)) 20px 14px; font-weight: 600; background: var(--surface); border-bottom: 1px solid var(--line); }
 .bill-readonly { border-radius: 7px; padding: 4px 9px; color: var(--blue); background: var(--blue-soft); font-size: var(--caption); font-weight: 500; }
