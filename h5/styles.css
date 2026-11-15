@@ -549,3 +549,31 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
   .resume-icon { width: 32px; height: 32px; }
   .resume-action + .resume-action::before { left: 54px; }
 }
+
+.own-company-settings { margin: 0 0 16px; border-radius: 12px; background: var(--surface); }
+.own-company-settings > summary { display: flex; align-items: center; gap: 8px; min-height: 54px; padding: 10px 14px; cursor: pointer; list-style: none; font-size: var(--caption); }
+.own-company-settings > summary::-webkit-details-marker { display: none; }
+.own-company-label { flex: none; color: var(--secondary); }
+#own-company-summary { flex: 1; min-width: 0; color: var(--ink); font-size: .9375rem; font-weight: 600; overflow-wrap: anywhere; }
+.own-company-edit { color: var(--blue); }
+.own-company-settings .chevron { flex: none; width: 14px; height: 14px; color: var(--secondary); }
+.own-company-settings[open] .chevron { transform: rotate(90deg); }
+.own-company-settings > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 12px; }
+#own-company-form { padding: 0 14px 14px; }
+.own-company-input-row { display: flex; align-items: stretch; gap: 8px; }
+#own-company-name { width: 100%; flex: 1; min-width: 0; min-height: 44px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--canvas); color: var(--ink); font-size: 1rem; }
+#own-company-name::placeholder { color: var(--secondary); }
+#own-company-name:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+#save-own-company { flex: none; min-height: 44px; padding: 8px 12px; border-radius: 8px; background: var(--blue); color: #fff; font-size: var(--caption); font-weight: 600; }
+#save-own-company:active { opacity: .8; }
+#save-own-company:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+#own-company-help, #own-company-error { margin: 10px 0 0; color: var(--secondary); font-size: var(--caption); line-height: 1.7; overflow-wrap: anywhere; }
+#own-company-error { color: var(--danger); }
+#own-company-name[aria-invalid="true"] { border-color: var(--danger); }
+@media (hover: hover) and (pointer: fine) { .own-company-settings > summary:hover { background: var(--control-soft); } #save-own-company:hover { filter: brightness(.96); } }
+@media (max-width: 359px) { .own-company-input-row { flex-direction: column; } #save-own-company { align-self: flex-end; } }
+
+.company-month-revenue { display: flex; flex-wrap: wrap; gap: 3px 14px; margin-top: 8px; color: var(--secondary); font-size: var(--caption); line-height: 1.7; overflow-wrap: anywhere; }
+.company-month-revenue > span { min-width: 0; }
+.company-month-revenue b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.company-month-revenue .amount-negative { color: var(--danger); }

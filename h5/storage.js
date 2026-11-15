@@ -3,6 +3,7 @@
 
   const DATA_KEY = 'inn-order-data-v2';
   const ANCHOR_KEY = 'inn-order-last-anchor-v1';
+  const COMPANY_ANCHORS_KEY = 'inn-order-company-anchors-v1';
   const LEGACY_KEY = 'inn-order-records-v1';
   const APP = 'wechat-inn-orders';
   const text = value => String(value ?? '').trim();
@@ -28,6 +29,22 @@
       if (!month || registrationMonth(order) === month) group.orders.push(order);
     });
     return [...groups.values()].sort((a, b) => a.id === '' ? 1 : b.id === '' ? -1 : a.name.localeCompare(b.name, 'zh-CN'));
+  }
+
+  function ownCompanyName(data) { return text(data.settings?.ownCompanyName); }
+
+  function ownOrders(data) {
+    const key = nameKey(ownCompanyName(data));
+    if (!key) return [];
+    const ids = new Set(data.companies.filter(company => nameKey(company.name) === key).map(company => company.id));
+    return data.orders.filter(order => ids.has(order.companyId));
+  }
+
+  function normalizeSettings(settings) {
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings) || typeof settings.ownCompanyName !== 'string') throw new Error('我司名称设置格式不正确');
+    const name = text(settings.ownCompanyName).normalize('NFKC');
+    if (name.length > 80) throw new Error('我司名称最多 80 字');
+    return { ownCompanyName: name };
   }
 
   function findDuplicates(input, orders) {
@@ -69,16 +86,32 @@
   }
 
   function createStore(storage) {
-    function preferredAnchor() {
+    function preferredAnchor(companyName) {
+      if (arguments.length) {
+        const key = nameKey(companyName);
+        if (!key) return '';
+        const scoped = JSON.parse(storage.getItem(COMPANY_ANCHORS_KEY) || '{}');
+        if (Object.prototype.hasOwnProperty.call(scoped, key)) return text(scoped[key]).slice(0, 30);
+        const data = read(), ids = new Set(data.companies.filter(company => nameKey(company.name) === key).map(company => company.id));
+        const orders = data.orders.filter(order => ids.has(order.companyId));
+        const saved = storage.getItem(ANCHOR_KEY);
+        if (saved !== null && orders.some(order => nameKey(order.anchorName) === nameKey(saved))) return text(saved).slice(0, 30);
+        return text(orders.slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).find(order => text(order.anchorName))?.anchorName);
+      }
       const saved = storage.getItem(ANCHOR_KEY);
       if (saved !== null) return text(saved).slice(0, 30);
       const latest = read().orders.slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))[0];
       return text(latest?.anchorName);
     }
 
-    function rememberAnchor(name) {
+    function rememberAnchor(name, companyName) {
       const value = text(name).normalize('NFKC');
       if (value.length > 30) throw new Error('登记主播最多 30 字');
+      if (arguments.length > 1 && nameKey(companyName)) {
+        const scoped = JSON.parse(storage.getItem(COMPANY_ANCHORS_KEY) || '{}');
+        storage.setItem(COMPANY_ANCHORS_KEY, JSON.stringify({ ...scoped, [nameKey(companyName)]: value }));
+        if (ownCompanyName(read()) && nameKey(companyName) !== nameKey(ownCompanyName(read()))) return value;
+      }
       storage.setItem(ANCHOR_KEY, value);
       return value;
     }
@@ -115,6 +148,13 @@
       const data = { version: 2, companies, orders: migrated };
       // One write commits company membership with the stay; the original legacy key remains untouched.
       return commit(data);
+    }
+
+    function setOwnCompanyName(value) {
+      if (typeof value !== 'string' || !text(value) || text(value).normalize('NFKC').length > 80) throw new Error('请填写 1–80 字的我司名称');
+      const data = read(), settings = normalizeSettings({ ownCompanyName: value });
+      commit({ ...data, settings });
+      return settings.ownCompanyName;
     }
 
     function saveCompany(input) {
@@ -169,7 +209,7 @@
       money.basisPoints(input.commissionRateBps);
       const company = data.companies.find(item => nameKey(item.name) === nameKey(name)) || normalizeCompany({ name });
       const existing = data.orders.find(item => item.id === input.id);
-      const anchorName = data.orders.find(item => nameKey(item.anchorName) && nameKey(item.anchorName) === nameKey(input.anchorName))?.anchorName || text(input.anchorName).normalize('NFKC');
+      const anchorName = data.orders.find(item => item.companyId === company.id && nameKey(item.anchorName) && nameKey(item.anchorName) === nameKey(input.anchorName))?.anchorName || text(input.anchorName).normalize('NFKC');
       const order = normalizeOrder({ ...existing, ...input, anchorName, companyId: company.id, createdAt: existing?.createdAt || input.createdAt, updatedAt: new Date().toISOString() });
       const companies = data.companies.some(item => item.id === company.id) ? data.companies : [...data.companies, company];
       const orders = existing ? data.orders.map(item => item.id === order.id ? order : item) : [order, ...data.orders];
@@ -185,7 +225,7 @@
 
     function backup() {
       const data = read();
-      return { app: APP, version: 2, exportedAt: new Date().toISOString(), companies: data.companies, orders: data.orders };
+      return { app: APP, version: 2, exportedAt: new Date().toISOString(), companies: data.companies, orders: data.orders, ...(data.settings ? { settings: normalizeSettings(data.settings) } : {}) };
     }
 
     function parseBackup(raw) {
@@ -197,7 +237,7 @@
       if (value.companies !== undefined && (!Array.isArray(value.companies) || value.companies.some(company => !company || typeof company !== 'object' || typeof company.id !== 'string' || !company.id || typeof company.name !== 'string' || !company.name.trim()))) throw new Error('公司备份格式不正确');
       const companies = (value.companies || []).map(normalizeCompany);
       if (new Set(companies.map(company => company.id)).size !== companies.length || new Set(value.orders.map(order => order.id)).size !== value.orders.length) throw new Error('备份含有重复编号');
-      return { companies, orders: value.orders.map(normalizeOrder), version: value.version || 1 };
+      return { companies, orders: value.orders.map(normalizeOrder), version: value.version || 1, ...(value.settings !== undefined ? { settings: normalizeSettings(value.settings) } : {}) };
     }
 
     function mergeBackup(parsed) {
@@ -217,13 +257,13 @@
         if (order.companyId && !companies.has(order.companyId)) order.companyId = '';
         orders.set(order.id, order);
       });
-      return commit({ version: 2, companies: [...companies.values()], orders: [...orders.values()] });
+      return commit({ ...data, version: 2, companies: [...companies.values()], orders: [...orders.values()], ...(parsed.settings ? { settings: normalizeSettings(parsed.settings) } : {}) });
     }
 
-    return { read, saveCompany, saveOrder, saveOrders, saveRegistration, removeCompany, backup, parseBackup, mergeBackup, preferredAnchor, rememberAnchor };
+    return { read, saveCompany, saveOrder, saveOrders, saveRegistration, removeCompany, backup, parseBackup, mergeBackup, preferredAnchor, rememberAnchor, setOwnCompanyName, ownCompanyName: () => ownCompanyName(read()), ownOrders: () => ownOrders(read()) };
   }
 
-  const api = { DATA_KEY, LEGACY_KEY, ANCHOR_KEY, APP, createStore, normalizeOrder, nameKey, findDuplicates, registrationMonth, groupByAnchor };
+  const api = { DATA_KEY, LEGACY_KEY, ANCHOR_KEY, APP, createStore, normalizeOrder, nameKey, findDuplicates, registrationMonth, groupByAnchor, ownCompanyName, ownOrders, normalizeSettings };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.InnStorage = api;
 }(typeof window !== 'undefined' ? window : globalThis));

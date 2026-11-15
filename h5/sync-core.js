@@ -2,12 +2,14 @@
   'use strict';
   const money = typeof module === 'object' && module.exports ? require('./money.js') : root.InnMoney;
   const fields = {
+    settings: ['ownCompanyName'],
     companies: ['name', 'category', 'contact', 'phone', 'notes', 'billingShares', 'createdAt', 'updatedAt'],
     orders: ['companyId', 'hotelOrder', 'base', 'anchorName', 'customerName', 'phone', 'arrivalDate', 'departureDate', 'nights', 'guestCount', 'roomType', 'mealIncluded', 'feeDetails', 'incomeCents', 'costCents', 'commissionRateBps', 'createdAt', 'updatedAt']
   };
   const labels = { name: '公司名称', category: '分类', contact: '联系人', phone: '电话', notes: '备注', companyId: '所属公司', hotelOrder: '旅店/订单', base: '入住基地', anchorName: '登记主播', customerName: '姓名', arrivalDate: '入住日期', departureDate: '离店日期', nights: '入住天数', guestCount: '入住人数', roomType: '房型', mealIncluded: '含餐', feeDetails: '费用明细', $deleted: '删除状态' };
   labels.incomeCents = '收款金额'; labels.costCents = '历史支出'; labels.commissionRateBps = '提点比例';
   labels.billingShares = '公司账单分享设置';
+  labels.ownCompanyName = '我司名称';
   const clone = value => JSON.parse(JSON.stringify(value));
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   const nameKey = value => String(value || '').normalize('NFKC').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
@@ -15,6 +17,10 @@
   const empty = () => ({ version: 1, clock: {}, companies: {}, orders: {} });
   const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
   const safeId = value => typeof value === 'string' && value.length > 0 && value.length <= 250 && !['__proto__', 'constructor', 'prototype'].includes(value);
+
+  function records(data, kind) {
+    return kind === 'settings' ? data.settings ? [{ id: 'workspace', ownCompanyName: data.settings.ownCompanyName }] : [] : data[kind];
+  }
 
   function dotParts(dot) {
     const match = /^([A-Za-z0-9_-]{16})\.([1-9]\d*)$/.exec(dot);
@@ -44,15 +50,16 @@
     if (!state || state.version !== 1 || !state.clock || !state.companies || !state.orders) throw new Error('同步数据格式不正确');
     for (const [actor, counter] of Object.entries(state.clock)) if (!/^[A-Za-z0-9_-]{16}$/.test(actor) || !Number.isSafeInteger(counter) || counter < 0) throw new Error('同步计数格式不正确');
     for (const kind of Object.keys(fields)) {
-      if (Object.keys(state[kind]).length > 10000) throw new Error('同步记录数量超出限制');
-      for (const [id, record] of Object.entries(state[kind])) {
-        if (!safeId(id) || !record?.fields) throw new Error('同步记录编号不正确');
+      if (Object.keys(state[kind] || {}).length > 10000) throw new Error('同步记录数量超出限制');
+      for (const [id, record] of Object.entries(state[kind] || {})) {
+        if (!safeId(id) || (kind === 'settings' && id !== 'workspace') || !record?.fields) throw new Error('同步记录编号不正确');
         for (const [field, cell] of Object.entries(record.fields)) {
           if (![...fields[kind], '$deleted'].includes(field) || !cell?.values || !cell.seen) throw new Error('同步字段不正确');
           for (const [actor, count] of Object.entries(cell.seen)) if (!/^[A-Za-z0-9_-]{16}$/.test(actor) || !Number.isSafeInteger(count) || count < 0 || count > (state.clock[actor] || 0)) throw new Error('同步字段版本不正确');
           for (const [dot, value] of Object.entries(cell.values)) {
             const [actor, count] = dotParts(dot);
             if ((cell.seen[actor] || 0) < count || !['string', 'number', 'boolean'].includes(typeof value) || (typeof value === 'string' && value.length > 10000)) throw new Error('同步字段内容不正确');
+            if (kind === 'settings' && field === 'ownCompanyName' && (typeof value !== 'string' || value.length > 80)) throw new Error('我司名称同步格式不正确');
             if (kind === 'orders' && ['incomeCents', 'costCents'].includes(field)) money.cents(value);
             if (kind === 'orders' && field === 'commissionRateBps') money.basisPoints(value);
           }
@@ -65,9 +72,10 @@
   function merge(a, b) {
     validate(a); validate(b);
     const state = empty(); state.clock = maxClock(a.clock, b.clock);
-    for (const kind of Object.keys(fields)) for (const id of new Set([...Object.keys(a[kind]), ...Object.keys(b[kind])])) {
-      const left = a[kind][id]?.fields || {}, right = b[kind][id]?.fields || {}, record = { fields: {} };
+    for (const kind of Object.keys(fields)) for (const id of new Set([...Object.keys(a[kind] || {}), ...Object.keys(b[kind] || {})])) {
+      const left = a[kind]?.[id]?.fields || {}, right = b[kind]?.[id]?.fields || {}, record = { fields: {} };
       for (const field of new Set([...Object.keys(left), ...Object.keys(right)])) record.fields[field] = mergeCell(left[field], right[field]);
+      if (!state[kind]) state[kind] = {};
       state[kind][id] = record;
     }
     return state;
@@ -101,6 +109,11 @@
         if (choices.length > 1) conflicts.push({ kind, id, field, targets, title, label: labels[field] || field, choices: choices.map(([dot, value]) => ({ dot, value })) });
       }
     }
+    const setting = state.settings?.workspace;
+    if (setting && !deleted(setting)) {
+      data.settings = { ownCompanyName: valueOf(setting.fields.ownCompanyName) };
+      addConflicts('settings', 'workspace', setting, ['workspace'], '登记设置');
+    }
     for (const ids of groups.values()) {
       const id = ids[0], combined = { fields: {} };
       for (const member of ids) {
@@ -120,6 +133,7 @@
 
   function write(state, actor, kind, ids, field, value) {
     const number = (state.clock[actor] || 0) + 1; state.clock[actor] = number;
+    if (!state[kind]) state[kind] = {};
     let previous = { values: {}, seen: {} };
     for (const id of ids) previous = mergeCell(previous, state[kind][id]?.fields[field]);
     const cell = { values: { [actor + '.' + number]: value }, seen: { ...previous.seen, [actor]: number } };
@@ -133,7 +147,7 @@
     if (!/^[A-Za-z0-9_-]{16}$/.test(actor)) throw new Error('设备编号不正确');
     const state = clone(validate(input));
     for (const kind of Object.keys(fields)) {
-      const oldMap = new Map(before[kind].map(value => [value.id, value])), newMap = new Map(after[kind].map(value => [value.id, value]));
+      const oldMap = new Map(records(before, kind).map(value => [value.id, value])), newMap = new Map(records(after, kind).map(value => [value.id, value]));
       for (const id of new Set([...oldMap.keys(), ...newMap.keys()])) {
         if (!safeId(id)) throw new Error('登记编号不正确');
         const previous = oldMap.get(id), next = newMap.get(id);
