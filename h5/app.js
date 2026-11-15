@@ -378,7 +378,7 @@
         ${order.anchorName || selectedAnchorKey !== null ? `<div class="order-attribution">${order.anchorName ? `<span>主播 · ${escapeHtml(order.anchorName)}</span>` : ''}${selectedAnchorKey !== null ? `<span>${escapeHtml(companies.find(company => company.id === order.companyId)?.name || '未分类')}</span>` : ''}</div>` : ''}
         <div class="stay-details"><span class="room-type">${escapeHtml(order.roomType)}</span><span>${escapeHtml(order.guestCount)}</span><span>${order.mealIncluded === '是' ? '含餐' : '不含餐'}</span></div>
         <div class="order-location"><span class="hotel-order">${escapeHtml(order.hotelOrder || '未填写订单名称')}</span><span class="base-line">${escapeHtml(order.base || '未填写基地')}</span></div>
-        ${order.feeDetails ? `<div class="fee-line"><span class="fee-label">费用</span><span class="fee-value">${escapeHtml(order.feeDetails)}</span></div>` : ''}
+        ${order.feeDetails ? `<div class="fee-line"><span class="fee-label">备注</span><span class="fee-value">${escapeHtml(order.feeDetails)}</span></div>` : ''}
         <div class="order-money">${anchorRevenue([order])}</div>
         <div class="record-footer">${order.phone ? `<a class="phone-link" data-call href="tel:${encodeURIComponent(order.phone.replace(/[\s-]/g, ''))}" aria-label="拨打 ${escapeHtml(order.customerName)} 的电话 ${escapeHtml(order.phone)}">${icon('phone')}${escapeHtml(order.phone)}</a>` : '<span class="fee-empty">未填写电话</span>'}<button class="record-open" type="button" aria-label="编辑 ${escapeHtml(order.customerName)} 的登记">编辑${icon('chevron')}</button></div>
       </article>`;

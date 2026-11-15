@@ -15,17 +15,17 @@
   <script src="./funds.js?v=flexible-funds-35" defer></script>
   <link rel="stylesheet" href="./bills.css?v=general-polish-30">
   <script src="./bills-core.js?v=general-polish-30" defer></script>
-  <script src="./storage.js?v=general-polish-30" defer></script>
+  <script src="./storage.js?v=remarks-36" defer></script>
   <script src="./sync-config.js?v=home-14" defer></script>
-  <script src="./sync-core.js?v=general-polish-30" defer></script>
+  <script src="./sync-core.js?v=remarks-36" defer></script>
   <script src="./sync-client.js?v=shared-19" defer></script>
   <script src="./motion.js?v=motion-polish-31" defer></script>
   <script src="./feedback.js?v=motion-polish-31" defer></script>
-  <script src="./app.js?v=flexible-funds-35" defer></script>
+  <script src="./app.js?v=remarks-36" defer></script>
   <script src="./sync-ui.js?v=general-polish-30" defer></script>
   <script src="./bills-owner.js?v=general-polish-30" defer></script>
 </head>
-<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22" data-commission="23" data-anchor-commission="24" data-company-bills="25" data-own-anchors="26" data-compact-bills="27" data-guest-status="28" data-own-company="29" data-general-polish="30" data-motion-polish="31" data-nav-actions="32" data-anchor-workflow="33" data-home-funds="34" data-flexible-funds="35">
+<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22" data-commission="23" data-anchor-commission="24" data-company-bills="25" data-own-anchors="26" data-compact-bills="27" data-guest-status="28" data-own-company="29" data-general-polish="30" data-motion-polish="31" data-nav-actions="32" data-anchor-workflow="33" data-home-funds="34" data-flexible-funds="35" data-remarks="36">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -178,7 +178,7 @@
             <label class="field"><span>是否含餐</span><span class="select-wrap"><select name="mealIncluded"><option value="否">不含餐</option><option value="是">含餐</option></select><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></span></label>
           </div><p class="field-note">日期与晚数自动联动，离店当天自动标记已离店。</p></fieldset>
           <fieldset><legend>收款与提点 <span class="optional">选填</span></legend><div class="field-group"><label class="field"><span>收款金额</span><input name="incomeAmount" type="text" inputmode="decimal" maxlength="12" autocomplete="off" aria-label="收款金额（元）" placeholder="输入收款金额（元）"></label><div class="field"><label for="commission-rate">提点比例</label><span class="commission-rate-control"><input id="commission-rate" name="commissionRate" type="text" inputmode="decimal" maxlength="6" autocomplete="off" aria-label="提点比例（百分比）" placeholder="填写比例" value="20"><span aria-hidden="true">%</span></span></div><div class="field commission-result"><span>提点金额</span><output id="commission-amount" for="commission-rate" data-cents="" aria-live="polite">待填收款</output></div></div><p id="revenue-preview" class="field-note" aria-live="polite"></p></fieldset>
-          <fieldset><legend>费用明细 <span class="optional">选填</span></legend><div class="field-group fee-group"><textarea name="feeDetails" rows="3" maxlength="200" aria-label="费用明细" placeholder="房费、餐费或其他费用说明"></textarea><div class="textarea-footer"><span>最多 200 字</span><span id="fee-count">0 / 200</span></div></div></fieldset>
+          <fieldset><legend>备注 <span class="optional">选填</span></legend><div class="field-group fee-group"><textarea name="feeDetails" rows="3" maxlength="200" aria-label="备注" placeholder="如：需要阳光充足的房间、到店安排等"></textarea><div class="textarea-footer"><span>最多 200 字</span><span id="fee-count">0 / 200</span></div></div></fieldset>
           <p id="form-error" class="form-error" role="alert" hidden></p>
         </form>
       </div>

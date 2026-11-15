@@ -16,7 +16,7 @@ assert.doesNotMatch(script, /\bfetch\s*\(|XMLHttpRequest|\bwx\.request\s*\(/);
 assert.match(storage, /storage\.getItem\(LEGACY_KEY\)/);
 assert.match(storage, /storage\.setItem\(DATA_KEY/);
 
-for (const label of ['旅店/订单', '入住基地', '客户姓名', '客户电话', '入住时间', '入住天数', '入住人数', '入住房型', '是否含餐', '费用明细']) {
+for (const label of ['旅店/订单', '入住基地', '客户姓名', '客户电话', '入住时间', '入住天数', '入住人数', '入住房型', '是否含餐', '备注']) {
   assert.ok(html.includes(label), `H5 contains ${label}`);
 }
 const formMarkup = html.match(/<form\b(?=[^>]*\bid="order-form")[^>]*>([\s\S]*?)<\/form>/)[1];

@@ -212,7 +212,7 @@
       const end = calendar.calendarDay(calendar.departureDate(input));
       if (end === null || end <= calendar.calendarDay(input.arrivalDate)) throw new Error('离店日期必须晚于入住日期');
       if (text(input.anchorName).length > 30) throw new Error('登记主播最多 30 字');
-      if (text(input.feeDetails).length > 200) throw new Error('费用明细最多 200 字');
+      if (text(input.feeDetails).length > 200) throw new Error('备注最多 200 字');
       money.cents(input.incomeCents); money.cents(input.costCents);
       money.basisPoints(input.commissionRateBps);
       const company = data.companies.find(item => nameKey(item.name) === nameKey(name)) || normalizeCompany({ name });
