@@ -222,7 +222,7 @@ h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; letter-spacing: -.025e
 .view-nav { display: grid; grid-template-columns: 64px 1fr 64px; align-items: center; flex: none; gap: 8px; min-height: 56px; padding: calc(4px + env(safe-area-inset-top)) 16px 4px; border-bottom: 1px solid var(--line); background: var(--surface); }
 .view-nav h2 { overflow: hidden; font-size: 1.0625rem; font-weight: 650; text-align: center; text-overflow: ellipsis; white-space: nowrap; outline: none; }
 .text-button { justify-content: flex-start; padding: 0; color: var(--blue); background: transparent; font-size: 1rem; }
-.nav-save { justify-content: flex-end; min-width: 44px; font-weight: 600; }
+.nav-delete { justify-content: flex-end; min-width: 44px; color: var(--danger); font-weight: 500; }
 .back-button { gap: 1px; }
 .back-button .icon { width: 18px; height: 18px; }
 .view-scroll { flex: 1; min-height: 0; overflow: auto; padding: 0 20px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y pinch-zoom; }
@@ -264,7 +264,6 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 .form-actions { flex: none; padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: #fff; }
 .primary-button { width: 100%; min-height: 50px; gap: 8px; padding: 0 16px; border-radius: var(--radius-control); color: #fff; background: var(--blue); font-size: 1rem; font-weight: 600; }
 .primary-button .icon { width: 20px; height: 20px; }
-.delete-button { width: 100%; padding: 0 16px; border-radius: 12px; color: var(--danger); background: #fff; font-size: .875rem; }
 .form-error { margin-bottom: 16px; color: var(--danger); font-size: var(--caption); }
 .field[data-invalid] { flex-wrap: wrap; row-gap: 0; padding-bottom: 8px; border-bottom-color: var(--danger); }
 .field[data-invalid] > span:first-child, .field[data-invalid] > label { color: var(--danger); }
@@ -331,6 +330,7 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
   .order-card:hover, .company-row:hover { background: var(--control-soft); }
   .add-button:hover, .primary-button:hover { background: var(--blue-pressed); }
   .backup-button:hover, .text-button:hover { color: #0845a4; }
+  .nav-delete:hover { color: var(--danger); background: var(--danger-soft); }
   .filter:not(.active):hover { color: var(--ink); }
 }
 @media (min-width: 700px) {

@@ -562,7 +562,7 @@
   function setRegistrationSaving(saving) {
     registrationSaving = saving;
     orderForm.setAttribute('aria-busy', String(saving));
-    document.querySelectorAll('#save-order, #save-order-top').forEach(button => { button.disabled = saving; });
+    document.querySelectorAll('#save-order, #delete-order').forEach(button => { button.disabled = saving; });
   }
 
   function openForm(order) {
@@ -602,12 +602,10 @@
       orderForm.dataset.legacyCostCents = String(normalized.costCents);
       document.querySelector('#form-title').textContent = '修改登记';
       document.querySelector('#save-order span').textContent = '保存修改';
-      document.querySelector('#save-order-top').setAttribute('aria-label', '保存修改');
       document.querySelector('#delete-order').hidden = false;
     } else {
       document.querySelector('#form-title').textContent = '新增登记';
       document.querySelector('#save-order span').textContent = '保存登记';
-      document.querySelector('#save-order-top').setAttribute('aria-label', '保存登记');
       document.querySelector('#delete-order').hidden = true;
     }
     updateFeeCount();
@@ -830,7 +828,7 @@
       const reviewed = new Set();
       let duplicates = window.InnStorage.findDuplicates(order, readOrders());
       while (duplicates.some(match => !reviewed.has(match.order.id))) {
-        const accepted = await confirmAction({ title: '发现相同姓名或电话', message: `有 ${duplicates.length} 条已有登记与本次相同，请核对订单。确认是新订单后再继续保存。`, accept: '确认，继续下单', records: duplicates, opener: event.submitter || document.querySelector('#save-order-top') });
+        const accepted = await confirmAction({ title: '发现相同姓名或电话', message: `有 ${duplicates.length} 条已有登记与本次相同，请核对订单。确认是新订单后再继续保存。`, accept: '确认，继续下单', records: duplicates, opener: event.submitter || document.querySelector('#save-order') });
         if (attempt !== registrationAttempt) return;
         if (!accepted || formOverlay.hidden || formOverlay.inert) { setRegistrationSaving(false); return; }
         duplicates.forEach(match => reviewed.add(match.order.id));
@@ -863,14 +861,27 @@
   });
 
   document.querySelector('#delete-order').addEventListener('click', async event => {
-    if (!await confirmAction({ title: '删除这条登记？', message: '删除后无法恢复。', accept: '删除登记', destructive: true, opener: event.currentTarget })) return;
+    if (registrationSaving || formOverlay.hidden || formOverlay.inert || !orderForm.dataset.id) return;
+    const id = orderForm.dataset.id;
+    const attempt = registrationAttempt;
+    const button = event.currentTarget;
+    let canceled = false;
+    setRegistrationSaving(true);
     try {
-      writeOrders(readOrders().filter((order) => order.id !== orderForm.dataset.id));
+      const accepted = await confirmAction({ title: '删除这条登记？', message: '删除后无法恢复。', accept: '删除登记', destructive: true, opener: button });
+      if (!accepted) { canceled = true; return; }
+      if (attempt !== registrationAttempt || orderForm.dataset.id !== id || formOverlay.hidden || formOverlay.inert) return;
+      writeOrders(readOrders().filter((order) => order.id !== id));
       closeOverlay('form-overlay');
       render();
       showToast('已删除');
     } catch {
       showToast('删除失败，请检查本机存储空间');
+    } finally {
+      if (attempt === registrationAttempt && !formOverlay.hidden && !formOverlay.inert) {
+        setRegistrationSaving(false);
+        if (canceled) button.focus({ preventScroll: true });
+      }
     }
   });
 
