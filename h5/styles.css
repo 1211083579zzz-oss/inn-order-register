@@ -473,6 +473,28 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 .package-counts dd span { font-size: var(--caption); font-weight: 400; }
 .package-other { margin-top: 12px; color: var(--secondary); font-size: var(--caption); line-height: 1.6; }
 .anchor-order-row .company-total { color: var(--blue); font-size: 1.25rem; font-weight: 600; }
+.own-anchor-note { margin: -4px 0 16px; color: var(--secondary); font-size: var(--caption); line-height: 1.7; }
+.anchor-order-row .company-row-heading { flex-wrap: wrap; }
+.anchor-order-row .company-row-heading > strong { font-size: 1.25rem; }
+.anchor-order-row .company-total { color: var(--secondary); font-size: var(--caption); font-weight: 500; }
+.anchor-order-row .anchor-commission-total { margin-top: 4px; }
+.anchor-summary-title { margin: 0 0 16px; font-size: 1.125rem; line-height: 1.6; overflow-wrap: anywhere; }
+.own-anchor-totals { margin-top: 20px; border-radius: var(--radius-group); background: var(--surface); }
+.own-anchor-totals > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; min-height: 60px; padding: 14px 16px; cursor: pointer; list-style: none; font-size: var(--caption); font-weight: 600; }
+.own-anchor-totals > summary::-webkit-details-marker { display: none; }
+.own-anchor-totals > summary > span:first-child { flex: 1; min-width: 100px; }
+#own-anchor-totals-copy { color: var(--secondary); font-weight: 400; overflow-wrap: anywhere; }
+.own-anchor-totals > summary .chevron { flex: none; width: 16px; height: 16px; color: var(--secondary); }
+.own-anchor-totals[open] > summary .chevron { transform: rotate(90deg); }
+.own-anchor-totals > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: var(--radius-group); }
+.own-anchor-totals .anchor-month-summary { margin: 0; padding-top: 4px; }
+.unassigned-anchor { margin-top: 16px; }
+.unassigned-anchor > button { display: flex; width: 100%; gap: 12px; padding: 14px 16px; text-align: left; border-radius: var(--radius-group); background: var(--surface); color: var(--ink); }
+.unassigned-anchor > button > span:first-child { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
+.unassigned-anchor strong { font-size: .9375rem; font-weight: 600; }
+.unassigned-anchor > button > span:first-child > span { color: var(--secondary); font-size: var(--caption); overflow-wrap: anywhere; }
+#unassigned-anchor-count { flex: none; color: var(--secondary); font-size: var(--caption); }
+.unassigned-anchor .chevron { flex: none; width: 16px; height: 16px; color: var(--secondary); }
 .anchor-package-line { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--secondary); font-size: var(--caption); line-height: 1.7; }
 .anchor-package-line b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .anchor-custom-line { color: var(--secondary); font-size: var(--caption); }

@@ -168,8 +168,8 @@
       : `<dl class="package-counts" aria-label="按入住时长统计">${list}</dl>${summary.other ? `<p class="package-other">另有 ${summary.other} 单为其他天数，已计入总单量</p>` : ''}`;
   }
 
-  function renderMonthlySummary(element, orders, subtitle) {
-    element.innerHTML = `<div class="anchor-month-overview"><div><p class="anchor-month-caption">${escapeHtml(monthLabel(anchorMonth))}登记</p><p class="anchor-month-number"><strong data-month-order-count>${orders.length}</strong><span>单</span></p></div><p class="anchor-month-context">${subtitle.split(' · ').map(line => `<span>${escapeHtml(line)}</span>`).join('')}</p></div>${commissionSummary(orders, element.id === 'anchor-detail-month-summary' ? '该主播提点合计' : '全部主播提点合计')}${revenueSummary(orders)}${packageBreakdown(orders)}`;
+  function renderMonthlySummary(element, orders, subtitle, name = '') {
+    element.innerHTML = `${name ? `<h3 class="anchor-summary-title">${escapeHtml(name)}的订单</h3>` : ''}<div class="anchor-month-overview"><div><p class="anchor-month-caption">${escapeHtml(monthLabel(anchorMonth))}登记</p><p class="anchor-month-number"><strong data-month-order-count>${orders.length}</strong><span>单</span></p></div><p class="anchor-month-context">${subtitle.split(' · ').map(line => `<span>${escapeHtml(line)}</span>`).join('')}</p></div>${commissionSummary(orders, name ? `${name}的提点合计` : '我司主播提点合计')}${revenueSummary(orders)}${packageBreakdown(orders)}`;
   }
 
   function commissionSummary(orders, title) {
@@ -177,7 +177,7 @@
     const notes = ['按每单实际比例相加'];
     if (summary.pendingCount) notes.push(`${summary.pendingCount} 单待补收款或比例`);
     if (summary.legacyCount) notes.push(`${summary.legacyCount} 单历史支出 ${money.format(summary.legacyCost)} 单独扣除，未计入提点`);
-    return `<div class="commission-summary"><h3>${title}</h3><strong data-commission-total data-cents="${summary.amount}">${escapeHtml(money.commissionDisplay(summary))}</strong><span class="commission-summary-count" data-commission-count="${summary.knownCount}">${summary.knownCount} 单已计提点</span></div><p class="commission-summary-note">${escapeHtml(notes.join('；'))}。</p>`;
+    return `<div class="commission-summary"><h3>${escapeHtml(title)}</h3><strong data-commission-total data-cents="${summary.amount}">${escapeHtml(money.commissionDisplay(summary))}</strong><span class="commission-summary-count" data-commission-count="${summary.knownCount}">${summary.knownCount} 单已计提点</span></div><p class="commission-summary-note">${escapeHtml(notes.join('；'))}。</p>`;
   }
 
   function revenueSummary(orders) {
@@ -319,7 +319,7 @@
   function updateAnchorRecognition() {
     const name = orderForm.elements.anchorName.value.trim();
     const group = window.InnStorage.groupByAnchor(readOrders(), localDate(new Date()).slice(0, 7)).find(item => item.id === window.InnStorage.nameKey(name));
-    document.querySelector('#anchor-recognition').textContent = name ? `自动归入「${group?.name || name}」 · 本月 ${group?.orders.length || 0} 单。保存后下次默认沿用。` : '输入主播姓名或选择已有主播，保存后下次默认沿用。';
+    document.querySelector('#anchor-recognition').textContent = name ? `归入我司主播「${group?.name || name}」 · 本月 ${group?.orders.length || 0} 单。保存后下次默认沿用。` : '只填我司旗下主播；暂不填写的订单列入待归属，可稍后补填。';
     const picker = document.querySelector('#anchor-picker');
     picker.value = Array.from(picker.options).find(option => window.InnStorage.nameKey(option.value) === window.InnStorage.nameKey(name))?.value || '';
   }
@@ -330,7 +330,7 @@
     if (remembered && !names.some(name => window.InnStorage.nameKey(name) === window.InnStorage.nameKey(remembered))) names.push(remembered);
     names.sort((a, b) => a.localeCompare(b, 'zh-CN'));
     document.querySelector('#anchor-suggestions').innerHTML = names.map(name => `<option value="${escapeHtml(name)}"></option>`).join('');
-    document.querySelector('#anchor-picker').innerHTML = '<option value="">不填写主播</option>' + names.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+    document.querySelector('#anchor-picker').innerHTML = '<option value="">暂不填写</option>' + names.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
     document.querySelector('#anchor-picker-wrap').hidden = !names.length;
   }
 
@@ -344,14 +344,19 @@
     homeRevenue.hidden = !orders.length || directoryMode !== 'companies';
     const currentRevenue = money.summarize(orders.filter(order => window.InnStorage.registrationMonth(order) === today.slice(0, 7)));
     document.querySelector('#home-revenue-copy').textContent = `本月收入 ${money.display(currentRevenue, 'income')} · 净收益 ${money.display(currentRevenue, 'net')}`;
-    const anchorGroups = directoryMode === 'anchors' ? window.InnStorage.groupByAnchor(orders, anchorMonth).filter(group => group.orders.length) : [];
+    const anchorGroups = directoryMode === 'anchors' ? window.InnStorage.groupByAnchor(orders, anchorMonth).filter(group => group.id && group.orders.length) : [];
     summary.textContent = directoryMode === 'anchors' ? `${anchorGroups.length} 个主播分类 · ${anchorMonth ? '所选月份' : '累计'} ${anchorGroups.reduce((sum, group) => sum + group.orders.length, 0)} 单` : `${activeCompanies.length} 家公司 · ${orders.length} 条入住登记`;
-    document.querySelector('#home-title').textContent = directoryMode === 'anchors' ? '主播订单' : '旅居公司';
+    document.querySelector('#home-title').textContent = directoryMode === 'anchors' ? '我司主播' : '旅居公司';
     document.querySelector('#directory-modes').hidden = !orders.length;
     document.querySelectorAll('[data-directory-mode]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.directoryMode === directoryMode)));
     document.querySelector('#anchor-period').hidden = directoryMode !== 'anchors';
-    document.querySelector('#anchor-month-summary').hidden = directoryMode !== 'anchors' || !orders.length;
-    if (directoryMode === 'anchors') renderMonthlySummary(document.querySelector('#anchor-month-summary'), anchorGroups.flatMap(group => group.orders), `${anchorGroups.filter(group => group.id).length} 位主播${anchorGroups.some(group => !group.id) ? '，含未填写主播记录' : ''} · 按登记时间统计`);
+    document.querySelector('#own-anchor-note').hidden = directoryMode !== 'anchors';
+    document.querySelector('#own-anchor-totals').hidden = directoryMode !== 'anchors' || !orders.length;
+    if (directoryMode === 'anchors') {
+      const ownOrders = anchorGroups.flatMap(group => group.orders);
+      renderMonthlySummary(document.querySelector('#anchor-month-summary'), ownOrders, `${anchorGroups.length} 位我司主播 · 按登记时间统计`);
+      document.querySelector('#own-anchor-totals-copy').textContent = `${anchorGroups.length} 位 · 提点 ${money.commissionDisplay(money.summarizeCommission(ownOrders))}`;
+    }
     document.querySelector('#anchor-month').value = anchorMonth;
     document.querySelector('#anchor-all-months').setAttribute('aria-pressed', String(!anchorMonth));
     document.querySelector('#anchor-current-month').setAttribute('aria-pressed', String(anchorMonth === today.slice(0, 7)));
@@ -368,33 +373,38 @@
   function renderCompanies() {
     const { companies, orders } = store.read();
     const anchors = directoryMode === 'anchors';
-    const groups = anchors ? window.InnStorage.groupByAnchor(orders, anchorMonth) : companies.map(company => ({ ...company, orders: orders.filter(order => order.companyId === company.id) })).filter(company => company.orders.length).sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+    const anchorGroups = anchors ? window.InnStorage.groupByAnchor(orders, anchorMonth) : [];
+    const groups = anchors ? anchorGroups.filter(group => group.id) : companies.map(company => ({ ...company, orders: orders.filter(order => order.companyId === company.id) })).filter(company => company.orders.length).sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
     const unassigned = orders.filter(order => !companies.some(company => company.id === order.companyId));
     if (!anchors && unassigned.length) groups.push({ id: '', name: '未分类', orders: unassigned });
     const search = document.querySelector('#company-query');
     const query = search.value.trim().toLocaleLowerCase();
-    const visible = groups.filter(company => {
+    const matchesGroup = company => {
       const candidates = company.orders.filter(order => homeFilter === 'all' || stayState(order).key === homeFilter);
       return candidates.length && (!query || company.name.toLocaleLowerCase().includes(query) || candidates.some(order => [order.customerName, order.phone, order.anchorName, order.hotelOrder, order.base, order.roomType, order.arrivalDate].join(' ').toLocaleLowerCase().includes(query)));
-    });
+    };
+    const visible = groups.filter(matchesGroup);
+    const pending = anchorGroups.find(group => !group.id);
+    document.querySelector('#unassigned-anchor').hidden = !anchors || !pending || !matchesGroup({ ...pending, name: '待归属订单' });
+    document.querySelector('#unassigned-anchor-count').textContent = `${pending?.orders.length || 0} 单`;
     const empty = !orders.length;
     document.querySelector('#home-view').dataset.empty = String(empty);
     document.querySelector('#home-onboarding').hidden = !empty;
     document.querySelector('.home-toolbar').hidden = empty;
     document.querySelector('#company-list').hidden = empty;
-    document.querySelector('#home-directory-heading').hidden = empty || (homeFilter === 'all' && !query);
+    document.querySelector('#home-directory-heading').hidden = empty || (!anchors && homeFilter === 'all' && !query);
     document.querySelector('#company-directory-tools').hidden = empty;
     document.querySelector('#clear-company-query').hidden = !search.value;
-    document.querySelector('#company-count').textContent = `${visible.length} 个分类`;
-    document.querySelector('#company-statistics-title').textContent = query ? '搜索结果' : anchors ? (anchorMonth ? `${Number(anchorMonth.slice(5))}月登记订单` : '全部主播订单') : homeFilter === 'all' ? '公司分类' : `${filterLabels[homeFilter]}的公司`;
-    document.querySelector('#company-list').setAttribute('aria-label', anchors ? '主播订单分类' : '旅居公司分类');
+    document.querySelector('#company-count').textContent = anchors ? `${visible.length} 位主播` : `${visible.length} 个分类`;
+    document.querySelector('#company-statistics-title').textContent = query ? '搜索结果' : anchors ? '主播名单' : homeFilter === 'all' ? '公司分类' : `${filterLabels[homeFilter]}的公司`;
+    document.querySelector('#company-list').setAttribute('aria-label', anchors ? '我司主播分类' : '旅居公司分类');
     document.querySelector('#company-list').classList.toggle('directory-is-empty', !visible.length);
     document.querySelector('#company-list').innerHTML = visible.map(company => {
       const summary = counts(company.orders);
-      const total = anchors ? `${summary.all} 单` : `${summary.all} 条登记`;
-      return `<button class="company-row${anchors ? ' anchor-order-row' : ''}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${anchors ? escapeHtml(monthLabel(anchorMonth)) + " " : ""}${total}${anchors ? "，提点合计 " + escapeHtml(money.commissionDisplay(money.summarizeCommission(company.orders))) + "，收入 " + escapeHtml(money.display(money.summarize(company.orders), "income")) + "，净收益 " + escapeHtml(money.display(money.summarize(company.orders), "net")) : ""}，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已离店 ${summary.finished}，查看订单"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${total}</span></span>${anchors ? `<span class="anchor-total">${escapeHtml(monthLabel(anchorMonth))} · 累计 ${company.total} 单</span>${anchorRevenue(company.orders)}${packageBreakdown(company.orders, true)}` : ''}<span class="company-statistics">${companyStates(summary)}</span>${anchors ? '' : nextArrival(company.orders)}</span>${icon('chevron', 'chevron')}</button>`;
+      const total = anchors ? `${anchorMonth === today.slice(0, 7) ? '本月' : anchorMonth ? Number(anchorMonth.slice(5)) + '月' : '累计'} ${summary.all} 单` : `${summary.all} 条登记`;
+      return `<button class="company-row${anchors ? ' anchor-order-row' : ''}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${anchors ? escapeHtml(monthLabel(anchorMonth)) + " " : ""}${total}${anchors ? "，提点合计 " + escapeHtml(money.commissionDisplay(money.summarizeCommission(company.orders))) + "，收入 " + escapeHtml(money.display(money.summarize(company.orders), "income")) + "，净收益 " + escapeHtml(money.display(money.summarize(company.orders), "net")) : ""}，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已离店 ${summary.finished}，查看订单"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${total}</span></span>${anchors ? anchorRevenue(company.orders) : `<span class="company-statistics">${companyStates(summary)}</span>${nextArrival(company.orders)}`}</span>${icon('chevron', 'chevron')}</button>`;
     }).join('') || (orders.length
-      ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>${anchors ? '这个月份暂无符合条件的订单' : '没有符合条件的公司'}</h3><p>${anchors ? '换个登记月份，或查看全部月份。' : '换个关键词，或查看全部公司。'}</p><button class="empty-reset" type="button" data-company-reset>${anchors ? '查看全部主播订单' : '查看全部公司'}</button></div>`
+      ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>${anchors ? '暂无符合条件的我司主播订单' : '没有符合条件的公司'}</h3><p>${anchors ? '换个登记月份，或补填订单中的我司主播。' : '换个关键词，或查看全部公司。'}</p><button class="empty-reset" type="button" data-company-reset>${anchors ? '查看全部月份' : '查看全部公司'}</button></div>`
       : '');
   }
 
@@ -402,17 +412,17 @@
     if (selectedCompanyId === null && selectedAnchorKey === null) return;
     const anchor = selectedAnchorKey === null ? null : window.InnStorage.groupByAnchor(readOrders(), anchorMonth).find(group => group.id === selectedAnchorKey);
     const company = store.read().companies.find(item => item.id === selectedCompanyId);
-    const name = selectedAnchorKey !== null ? anchor?.name || '主播订单' : company?.name || (selectedCompanyId === '' ? '未分类' : '公司分类');
-    document.querySelector('#company-title').textContent = selectedAnchorKey !== null ? '主播订单' : '住客登记';
+    const name = selectedAnchorKey === '' ? '待归属订单' : selectedAnchorKey !== null ? anchor?.name || selectedAnchorKey : company?.name || (selectedCompanyId === '' ? '未分类' : '公司分类');
+    document.querySelector('#company-title').textContent = selectedAnchorKey === '' ? '待归属订单' : selectedAnchorKey !== null ? '我司主播订单' : '住客登记';
     document.querySelector('#company-detail-symbol').textContent = Array.from(name)[0] || '旅';
     document.querySelector('#company-name').textContent = name;
     const companies = store.read().companies;
     const orders = selectedAnchorKey !== null ? anchor?.orders || [] : readOrders().filter(order => selectedCompanyId ? order.companyId === selectedCompanyId : !companies.some(company => company.id === order.companyId));
-    document.querySelector('#company-detail-summary').textContent = selectedAnchorKey !== null ? `${anchorMonth ? anchorMonth.replace('-', '年') + '月' : '全部月份'} · ${orders.length} 单 · 累计 ${anchor?.total || 0} 单` : `共 ${orders.length} 条入住登记`;
+    document.querySelector('#company-detail-summary').textContent = selectedAnchorKey === '' ? `${monthLabel(anchorMonth)} · ${orders.length} 单未填写我司主播` : selectedAnchorKey !== null ? `${monthLabel(anchorMonth)} · ${orders.length} 单 · 累计 ${anchor?.total || 0} 单` : `共 ${orders.length} 条入住登记`;
     document.querySelector('#company-detail-states').innerHTML = companyStates(counts(orders));
     window.InnBillOwner?.show(selectedAnchorKey === null ? selectedCompanyId : null);
-    document.querySelector('#anchor-detail-month-summary').hidden = selectedAnchorKey === null;
-    if (selectedAnchorKey !== null) renderMonthlySummary(document.querySelector('#anchor-detail-month-summary'), orders, `${name} · 累计 ${anchor?.total || 0} 单`);
+    document.querySelector('#anchor-detail-month-summary').hidden = !selectedAnchorKey;
+    if (selectedAnchorKey) renderMonthlySummary(document.querySelector('#anchor-detail-month-summary'), orders, `我司主播 · 累计 ${anchor?.total || 0} 单`, name);
     renderOrders(document.querySelector('#company-guest-list'), document.querySelector('#company-guest-search').value, companyFilter, selectedCompanyId);
   }
 
@@ -623,6 +633,7 @@
     const company = event.target.closest('[data-company-id]');
     if (company) openCompany(company.dataset.companyId);
   });
+  document.querySelector('#unassigned-anchor-open').addEventListener('click', () => openAnchor(''));
   document.querySelector('#company-shortcuts').addEventListener('click', event => {
     const button = event.target.closest('[data-company-shortcut]');
     if (!button) return;

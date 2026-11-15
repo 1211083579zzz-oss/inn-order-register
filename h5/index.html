@@ -9,21 +9,21 @@
   <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=company-bills-25">
+  <link rel="stylesheet" href="./styles.css?v=own-anchors-26">
   <script src="./arrivals.js?v=month-20" defer></script>
-  <script src="./money.js?v=company-bills-25" defer></script>
-  <link rel="stylesheet" href="./bills.css?v=company-bills-25">
-  <script src="./bills-core.js?v=company-bills-25" defer></script>
-  <script src="./storage.js?v=company-bills-25" defer></script>
+  <script src="./money.js?v=own-anchors-26" defer></script>
+  <link rel="stylesheet" href="./bills.css?v=own-anchors-26">
+  <script src="./bills-core.js?v=own-anchors-26" defer></script>
+  <script src="./storage.js?v=own-anchors-26" defer></script>
   <script src="./sync-config.js?v=home-14" defer></script>
-  <script src="./sync-core.js?v=company-bills-25" defer></script>
+  <script src="./sync-core.js?v=own-anchors-26" defer></script>
   <script src="./sync-client.js?v=shared-19" defer></script>
   <script src="./motion.js?v=save-15" defer></script>
-  <script src="./app.js?v=company-bills-25" defer></script>
-  <script src="./sync-ui.js?v=company-bills-25" defer></script>
-  <script src="./bills-owner.js?v=company-bills-25" defer></script>
+  <script src="./app.js?v=own-anchors-26" defer></script>
+  <script src="./sync-ui.js?v=own-anchors-26" defer></script>
+  <script src="./bills-owner.js?v=own-anchors-26" defer></script>
 </head>
-<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22" data-commission="23" data-anchor-commission="24" data-company-bills="25">
+<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22" data-commission="23" data-anchor-commission="24" data-company-bills="25" data-own-anchors="26">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -55,10 +55,10 @@
       <div class="page-heading"><p id="today-label" class="date-label" hidden></p><h1 id="home-title">旅居公司</h1><div id="home-heading-detail" class="home-heading-detail" hidden><p id="home-summary" class="hierarchy-caption" hidden></p><button id="home-revenue" class="home-revenue" type="button" hidden><span id="home-revenue-copy"></span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></button></div></div>
       <p id="shared-data-summary" class="shared-data-summary" role="status" aria-live="polite" hidden></p>
       <section id="company-module" aria-labelledby="home-title">
-        <div id="directory-modes" class="directory-modes" role="group" aria-label="订单分类方式" hidden><button type="button" data-directory-mode="companies" aria-pressed="true">旅居公司</button><button type="button" data-directory-mode="anchors" aria-pressed="false">主播订单</button></div>
+        <div id="directory-modes" class="directory-modes" role="group" aria-label="订单分类方式" hidden><button type="button" data-directory-mode="companies" aria-pressed="true">旅居公司</button><button type="button" data-directory-mode="anchors" aria-pressed="false">我司主播</button></div>
         <div id="company-directory-tools" class="company-directory-tools" hidden>
-          <div id="anchor-period" class="anchor-period" hidden><label for="anchor-month">登记月份</label><input id="anchor-month" type="month" aria-label="主播订单登记月份" aria-describedby="anchor-period-note"><button id="anchor-current-month" type="button" aria-pressed="true">本月</button><button id="anchor-all-months" type="button" aria-pressed="false">全部月份</button><p id="anchor-period-note" class="visually-hidden">按登记时间统计，填写主播姓名后自动归类。</p></div>
-          <section id="anchor-month-summary" class="anchor-month-summary" aria-label="主播月度订单汇总" aria-live="polite" hidden></section>
+          <p id="own-anchor-note" class="own-anchor-note" hidden>按我司主播姓名分类，各旅居公司的订单统一汇总。</p>
+          <div id="anchor-period" class="anchor-period" hidden><label for="anchor-month">登记月份</label><input id="anchor-month" type="month" aria-label="我司主播订单登记月份" aria-describedby="anchor-period-note"><button id="anchor-current-month" type="button" aria-pressed="true">本月</button><button id="anchor-all-months" type="button" aria-pressed="false">全部月份</button><p id="anchor-period-note" class="visually-hidden">按登记时间统计，只填写我司旗下的主播姓名，保存后自动归类。</p></div>
           <div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="company-query" type="search" aria-label="搜索旅居公司或住客" placeholder="搜索公司或住客" autocomplete="off" enterkeyhint="search"><button id="clear-company-query" class="clear-search" type="button" aria-label="清空公司搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
           <div class="filters" role="group" aria-label="按住客状态筛选旅居公司"><span id="directory-filter-selection" class="filter-selection" aria-hidden="true"></span><button class="filter active" type="button" data-home-filter="all" aria-pressed="true">全部</button><button class="filter" type="button" data-home-filter="upcoming" aria-pressed="false">待入住</button><button class="filter" type="button" data-home-filter="staying" aria-pressed="false">入住中</button><button class="filter" type="button" data-home-filter="finished" aria-pressed="false">已离店</button></div>
         </div>
@@ -78,6 +78,8 @@
         </div>
         <div id="home-directory-heading" class="list-heading" hidden><h2 id="company-statistics-title">公司分类</h2><span id="company-count" role="status"></span></div>
         <div id="company-list" class="company-list" aria-label="旅居公司分类" aria-live="polite"></div>
+        <section id="unassigned-anchor" class="unassigned-anchor" aria-label="未填写我司主播的订单" hidden><button id="unassigned-anchor-open" type="button"><span><strong>待归属订单</strong><span>补填我司主播后自动归类</span></span><span id="unassigned-anchor-count"></span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></button></section>
+        <details id="own-anchor-totals" class="own-anchor-totals" hidden><summary><span>我司主播汇总</span><span id="own-anchor-totals-copy"></span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></summary><section id="anchor-month-summary" class="anchor-month-summary" aria-label="我司主播月度订单汇总" aria-live="polite"></section></details>
       </section>
       <section id="arrival-reminders" class="arrival-reminders" data-design="9" aria-labelledby="arrival-title" hidden>
         <div class="arrival-heading"><h2 id="arrival-title">入住提醒</h2><span id="arrival-overview" class="arrival-overview"></span><div class="arrival-switch" role="group" aria-label="查看入住提醒">
@@ -124,10 +126,10 @@
         <form id="order-form" novalidate>
           <fieldset><legend>旅居公司</legend><div class="field-group"><label class="field"><span>公司名称 <b>*</b></span><input id="order-company" name="companyName" list="company-suggestions" required maxlength="80" placeholder="填写或选择旅居公司" autocomplete="off" enterkeyhint="next"></label></div><datalist id="company-suggestions"></datalist><div id="company-shortcuts" class="company-shortcuts" role="group" aria-label="快速选择已有旅居公司" hidden></div><p class="field-note">填写新公司名称，保存后自动分类。</p></fieldset>
           <fieldset><legend>订单信息</legend><div class="field-group">
-            <div class="field"><label for="anchor-name">登记主播</label><span class="anchor-control"><input id="anchor-name" name="anchorName" list="anchor-suggestions" maxlength="30" placeholder="输入主播姓名" autocomplete="off" enterkeyhint="next"><span id="anchor-picker-wrap" class="anchor-picker-wrap" hidden><span aria-hidden="true">选择<svg class="icon"><use href="#i-chevron"/></svg></span><select id="anchor-picker" aria-label="选择已登记主播"><option value="">不填写主播</option></select></span></span></div>
+            <div class="field"><label for="anchor-name">我司主播</label><span class="anchor-control"><input id="anchor-name" name="anchorName" list="anchor-suggestions" maxlength="30" placeholder="输入我司主播姓名" autocomplete="off" enterkeyhint="next"><span id="anchor-picker-wrap" class="anchor-picker-wrap" hidden><span aria-hidden="true">选择<svg class="icon"><use href="#i-chevron"/></svg></span><select id="anchor-picker" aria-label="选择我司主播"><option value="">暂不填写</option></select></span></span></div>
             <label class="field"><span>旅店/订单 <b>*</b></span><input name="hotelOrder" required maxlength="80" placeholder="旅店或订单名称" autocomplete="off" enterkeyhint="next"></label>
             <label class="field"><span>入住基地 <b>*</b></span><input name="base" required maxlength="40" placeholder="基地名称" autocomplete="off" enterkeyhint="next"></label>
-          </div><datalist id="anchor-suggestions"></datalist><p id="anchor-recognition" class="field-note" aria-live="polite">输入主播姓名或选择已有主播，保存后下次默认沿用。</p></fieldset>
+          </div><datalist id="anchor-suggestions"></datalist><p id="anchor-recognition" class="field-note" aria-live="polite">只填我司旗下主播；暂不填写的订单列入待归属，可稍后补填。</p></fieldset>
           <fieldset><legend>客户信息</legend><div class="field-group">
             <label class="field"><span>客户姓名 <b>*</b></span><input name="customerName" required maxlength="30" placeholder="客人姓名" autocomplete="off" enterkeyhint="next"></label>
             <label class="field"><span>客户电话 <b>*</b></span><input name="phone" type="tel" inputmode="tel" required pattern="[0-9+\-\s]{6,20}" maxlength="20" placeholder="联系电话" autocomplete="off" enterkeyhint="next"></label>
