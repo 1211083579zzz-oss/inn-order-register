@@ -573,7 +573,18 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 @media (hover: hover) and (pointer: fine) { .own-company-settings > summary:hover { background: var(--control-soft); } #save-own-company:hover { filter: brightness(.96); } }
 @media (max-width: 359px) { .own-company-input-row { flex-direction: column; } #save-own-company { align-self: flex-end; } }
 
-.company-month-revenue { display: flex; flex-wrap: wrap; gap: 3px 14px; margin-top: 8px; color: var(--secondary); font-size: var(--caption); line-height: 1.7; overflow-wrap: anywhere; }
-.company-month-revenue > span { min-width: 0; }
-.company-month-revenue b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Company identity and money share one actionable row. */
+.company-financial-row { display: block; padding: 16px; }
+.company-row-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.company-row-main > .company-symbol { align-self: flex-start; margin-top: 2px; }
+.company-row-main > .chevron { flex: none; }
+.company-month-revenue { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+.company-month-revenue > span { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+.company-money-label { color: var(--secondary); font-size: var(--caption); line-height: 1.5; }
+.company-month-revenue b { color: var(--ink); font-size: 1.0625rem; line-height: 1.5; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.company-month-revenue [data-company-month-net] { color: var(--blue); }
 .company-month-revenue .amount-negative { color: var(--danger); }
+.company-money-pending { display: block; margin-top: 6px; color: var(--secondary); font-size: var(--caption); line-height: 1.6; overflow-wrap: anywhere; }
+.company-financial-row .company-row-heading { align-items: flex-start; }
+.company-financial-row .company-total { flex: none; padding-top: 3px; }
+@media (max-width: 359px) { .company-financial-row { padding: 14px 12px; } .company-row-main { gap: 10px; } .company-month-revenue { gap: 8px 12px; } }

@@ -86,11 +86,19 @@
   }
 
   function createStore(storage) {
+    function readAnchorPreferences() {
+      let value;
+      try { value = JSON.parse(storage.getItem(COMPANY_ANCHORS_KEY) || '{}'); }
+      catch { return {}; }
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+      return Object.fromEntries(Object.entries(value).filter(([, name]) => typeof name === 'string' && text(name).length <= 30));
+    }
+
     function preferredAnchor(companyName) {
       if (arguments.length) {
         const key = nameKey(companyName);
         if (!key) return '';
-        const scoped = JSON.parse(storage.getItem(COMPANY_ANCHORS_KEY) || '{}');
+        const scoped = readAnchorPreferences();
         if (Object.prototype.hasOwnProperty.call(scoped, key)) return text(scoped[key]).slice(0, 30);
         const data = read(), ids = new Set(data.companies.filter(company => nameKey(company.name) === key).map(company => company.id));
         const orders = data.orders.filter(order => ids.has(order.companyId));
@@ -108,7 +116,7 @@
       const value = text(name).normalize('NFKC');
       if (value.length > 30) throw new Error('登记主播最多 30 字');
       if (arguments.length > 1 && nameKey(companyName)) {
-        const scoped = JSON.parse(storage.getItem(COMPANY_ANCHORS_KEY) || '{}');
+        const scoped = readAnchorPreferences();
         storage.setItem(COMPANY_ANCHORS_KEY, JSON.stringify({ ...scoped, [nameKey(companyName)]: value }));
         if (ownCompanyName(read()) && nameKey(companyName) !== nameKey(ownCompanyName(read()))) return value;
       }

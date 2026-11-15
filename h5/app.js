@@ -9,6 +9,7 @@
   let highlightedOrderId = '';
   let registrationSaving = false;
   let registrationAttempt = 0;
+  const registrationAnchorDrafts = new Map();
   let directoryMode = 'companies';
   let selectedAnchorKey = null;
   let anchorMonth = today.slice(0, 7);
@@ -201,7 +202,7 @@
   function companyMonthlyRevenue(orders) {
     const monthOrders = orders.filter(order => window.InnStorage.registrationMonth(order) === today.slice(0, 7));
     const summary = money.summarize(monthOrders);
-    return `<span class="company-month-revenue"><span>本月收入 <b data-company-month-income data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</b></span><span>净收益 <b data-company-month-net data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</b></span></span>`;
+    return `<span class="company-month-revenue"><span><span class="company-money-label">本月收入</span><b data-company-month-income data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</b></span><span><span class="company-money-label">净收益</span><b data-company-month-net data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</b></span></span>${summary.pendingCount ? `<span class="company-money-pending">${summary.pendingCount} 单金额待补</span>` : ''}`;
   }
 
   function updateRevenuePreview() {
@@ -369,7 +370,8 @@
   function updateRegistrationCompany() {
     const key = window.InnStorage.nameKey(orderForm.elements.companyName.value);
     if (orderForm.dataset.anchorScope !== key) {
-      orderForm.elements.anchorName.value = store.preferredAnchor(orderForm.elements.companyName.value);
+      registrationAnchorDrafts.set(orderForm.dataset.anchorScope || '', orderForm.elements.anchorName.value);
+      orderForm.elements.anchorName.value = registrationAnchorDrafts.has(key) ? registrationAnchorDrafts.get(key) : store.preferredAnchor(orderForm.elements.companyName.value);
       orderForm.dataset.anchorScope = key;
     }
     updateCompanyShortcuts(); renderAnchorPicker(); updateAnchorRecognition();
@@ -477,7 +479,10 @@
     document.querySelector('#company-list').innerHTML = visible.map(company => {
       const summary = counts(company.orders);
       const total = anchors ? `${anchorMonth === today.slice(0, 7) ? '本月' : anchorMonth ? Number(anchorMonth.slice(5)) + '月' : '累计'} ${summary.all} 单` : `${summary.all} 条登记`;
-      return `<button class="company-row${anchors ? ' anchor-order-row' : ''}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${anchors ? escapeHtml(monthLabel(anchorMonth)) + " " : ""}${total}${anchors ? "，提点合计 " + escapeHtml(money.commissionDisplay(money.summarizeCommission(company.orders))) + "，收入 " + escapeHtml(money.display(money.summarize(company.orders), "income")) + "，净收益 " + escapeHtml(money.display(money.summarize(company.orders), "net")) : ""}，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已离店 ${summary.finished}，查看订单"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${total}</span></span>${anchors ? anchorRevenue(company.orders) : `<span class="company-statistics">${companyStates(summary)}</span>${nextArrival(company.orders)}${companyMonthlyRevenue(company.orders)}`}</span>${icon('chevron', 'chevron')}</button>`;
+      const financial = money.summarize(company.orders.filter(order => window.InnStorage.registrationMonth(order) === today.slice(0, 7)));
+      const financialLabel = `，本月收入 ${money.display(financial, 'income')}，净收益 ${money.display(financial, 'net')}${financial.pendingCount ? `，${financial.pendingCount} 单金额待补` : ''}`;
+      const identity = `<span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${total}</span></span>${anchors ? anchorRevenue(company.orders) : `<span class="company-statistics">${companyStates(summary)}</span>${nextArrival(company.orders)}`}</span>${icon('chevron', 'chevron')}`;
+      return `<button class="company-row${anchors ? ' anchor-order-row' : ' company-financial-row'}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${anchors ? escapeHtml(monthLabel(anchorMonth)) + " " : ""}${total}${anchors ? "，提点合计 " + escapeHtml(money.commissionDisplay(money.summarizeCommission(company.orders))) + "，收入 " + escapeHtml(money.display(money.summarize(company.orders), "income")) + "，净收益 " + escapeHtml(money.display(money.summarize(company.orders), "net")) : escapeHtml(financialLabel)}，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已离店 ${summary.finished}，查看订单">${anchors ? identity : `<span class="company-row-main">${identity}</span>${companyMonthlyRevenue(company.orders)}`}</button>`;
     }).join('') || (anchors && !store.ownCompanyName() ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('company')}</span><h3>先设置我司名称</h3><p>填写上方我司名称后，已有订单会自动按公司识别并归入旗下主播。</p><button class="empty-reset" type="button" data-own-company-setup>设置我司名称</button></div>` : orders.length
       ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>${anchors ? '暂无符合条件的我司主播订单' : '没有符合条件的公司'}</h3><p>${anchors ? '仅展示公司名称与我司一致的订单，可更换月份或补填主播。' : '换个关键词，或查看全部公司。'}</p><button class="empty-reset" type="button" data-company-reset>${anchors ? '查看全部月份' : '查看全部公司'}</button></div>`
       : '');
@@ -558,6 +563,7 @@
 
   function openForm(order) {
     registrationAttempt++;
+    registrationAnchorDrafts.clear();
     setRegistrationSaving(false);
     const companies = store.read().companies;
     const company = companies.find(item => item.id === (order ? order.companyId : selectedCompanyId));
@@ -830,7 +836,7 @@
         try { store.rememberAnchor(savedOrder.anchorName, orderForm.elements.companyName.value); }
         catch { remembered = false; }
       }
-      if (!orderForm.dataset.id) {
+      if (isNew) {
         homeFilter = 'all';
         document.querySelector('#company-query').value = '';
         companyFilter = 'all';
@@ -842,7 +848,7 @@
     } catch (error) {
       if (attempt !== registrationAttempt) return;
       setRegistrationSaving(false);
-      const message = error.message || '保存失败，请检查本机存储空间';
+      const message = error.name === 'QuotaExceededError' ? '本机空间不足，填写内容已保留。请先导出备份或清理空间后重试。' : error.message || '保存失败，请检查本机存储空间';
       document.querySelector('#form-error').textContent = message;
       document.querySelector('#form-error').hidden = false;
       showToast(message);
