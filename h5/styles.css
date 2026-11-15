@@ -446,6 +446,14 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 .revenue-totals dd { margin: 6px 0 0; color: var(--ink); font-size: 1rem; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .revenue-totals > div:last-child dd { color: var(--blue); }
 .revenue-note { margin: 12px 0 0; color: var(--secondary); font-size: var(--caption); line-height: 1.7; }
+.commission-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.commission-summary h3 { flex-basis: 100%; margin: 0; color: var(--ink); font-size: var(--caption); font-weight: 600; line-height: 1.6; }
+.commission-summary > strong { min-width: 0; color: var(--blue); font-size: 1.5rem; font-weight: 650; line-height: 1.4; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.commission-summary-count { color: var(--secondary); font-size: var(--caption); line-height: 1.6; }
+.commission-summary-note { margin-top: 6px; color: var(--secondary); font-size: var(--caption); line-height: 1.7; overflow-wrap: anywhere; }
+.anchor-commission-total { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-top: 3px; color: var(--secondary); font-size: var(--caption); line-height: 1.6; }
+.anchor-commission-total b { color: var(--blue); font-size: 1.125rem; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.package-money [data-package-commission] { color: var(--blue); }
 .commission-rate-control { display: flex; flex: 1; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
 .commission-rate-control > input { min-width: 0; width: 100%; }
 .commission-rate-control > span { flex: none; color: var(--secondary); }

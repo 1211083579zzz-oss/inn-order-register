@@ -59,7 +59,25 @@
     const known = !summary.count || (key === 'net' ? summary.incomeCount + summary.costCount : summary[key + 'Count']);
     return known ? format(summary[key]) : '待补金额';
   }
-  const api = { MAX_CENTS, cents, parse, input, format, basisPoints, parseRate, rateInput, commission, deduction, summarize, display };
+  function summarizeCommission(orders) {
+    const result = { amount: 0, knownCount: 0, pendingCount: 0, legacyCount: 0, legacyCost: 0, count: orders.length };
+    orders.forEach(order => {
+      const rate = basisPoints(order.commissionRateBps);
+      if (rate === '' && cents(order.costCents) !== '') {
+        result.legacyCount++;
+        result.legacyCost += cents(order.costCents);
+        return;
+      }
+      const amount = commission(order.incomeCents, rate);
+      if (amount === '') result.pendingCount++;
+      else { result.amount += amount; result.knownCount++; }
+    });
+    return result;
+  }
+  function commissionDisplay(summary) {
+    return !summary.count || summary.knownCount ? format(summary.amount) : '待补提点';
+  }
+  const api = { MAX_CENTS, cents, parse, input, format, basisPoints, parseRate, rateInput, commission, deduction, summarize, display, summarizeCommission, commissionDisplay };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.InnMoney = api;
 }(typeof window === 'undefined' ? globalThis : window));

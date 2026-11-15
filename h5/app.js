@@ -169,24 +169,33 @@
   }
 
   function renderMonthlySummary(element, orders, subtitle) {
-    element.innerHTML = `<div class="anchor-month-overview"><div><p class="anchor-month-caption">${escapeHtml(monthLabel(anchorMonth))}登记</p><p class="anchor-month-number"><strong data-month-order-count>${orders.length}</strong><span>单</span></p></div><p class="anchor-month-context">${subtitle.split(' · ').map(line => `<span>${escapeHtml(line)}</span>`).join('')}</p></div>${revenueSummary(orders)}${packageBreakdown(orders)}`;
+    element.innerHTML = `<div class="anchor-month-overview"><div><p class="anchor-month-caption">${escapeHtml(monthLabel(anchorMonth))}登记</p><p class="anchor-month-number"><strong data-month-order-count>${orders.length}</strong><span>单</span></p></div><p class="anchor-month-context">${subtitle.split(' · ').map(line => `<span>${escapeHtml(line)}</span>`).join('')}</p></div>${commissionSummary(orders, element.id === 'anchor-detail-month-summary' ? '该主播提点合计' : '全部主播提点合计')}${revenueSummary(orders)}${packageBreakdown(orders)}`;
+  }
+
+  function commissionSummary(orders, title) {
+    const summary = money.summarizeCommission(orders);
+    const notes = ['按每单实际比例相加'];
+    if (summary.pendingCount) notes.push(`${summary.pendingCount} 单待补收款或比例`);
+    if (summary.legacyCount) notes.push(`${summary.legacyCount} 单历史支出 ${money.format(summary.legacyCost)} 单独扣除，未计入提点`);
+    return `<div class="commission-summary"><h3>${title}</h3><strong data-commission-total data-cents="${summary.amount}">${escapeHtml(money.commissionDisplay(summary))}</strong><span class="commission-summary-count" data-commission-count="${summary.knownCount}">${summary.knownCount} 单已计提点</span></div><p class="commission-summary-note">${escapeHtml(notes.join('；'))}。</p>`;
   }
 
   function revenueSummary(orders) {
     const summary = money.summarize(orders);
-    const labels = { income: '收款金额', cost: '提点金额', net: '净收益' };
+    const labels = { income: '收款金额', cost: summary.legacyCount ? '提点及历史支出' : '提点金额', net: '净收益' };
     const entries = Object.entries(labels).map(([key, label]) => `<div><dt>${label}</dt><dd data-revenue="${key}" data-cents="${summary[key]}" class="${key === 'net' && summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, key))}</dd></div>`).join('');
-    return `<dl class="revenue-totals" aria-label="月度金额汇总">${entries}</dl><p class="revenue-note">${summary.pendingCount ? `${summary.pendingCount} 单待补金额，未填项暂不计入。` : ''}净收益 = 收款 − 提点。${summary.legacyCount ? `含 ${summary.legacyCount} 单历史支出，按原金额扣除。` : ''}</p>`;
+    return `<dl class="revenue-totals" aria-label="月度金额汇总">${entries}</dl><p class="revenue-note">${summary.pendingCount ? `${summary.pendingCount} 单待补金额，未填项暂不计入。` : ''}净收益 = 收款 − 提点${summary.legacyCount ? ' − 历史支出' : ''}。</p>`;
   }
 
   function packageRevenue(orders, key) {
-    const summary = money.summarize(orders.filter(order => window.InnArrivals.stayPackage(order) === key));
-    return `<dd class="package-money"><span>收入</span><strong data-package-income="${key}" data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</strong><span>净收益</span><strong data-package-net="${key}" data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</strong></dd>`;
+    const matching = orders.filter(order => window.InnArrivals.stayPackage(order) === key);
+    const summary = money.summarize(matching), commissions = money.summarizeCommission(matching);
+    return `<dd class="package-money"><span>收入</span><strong data-package-income="${key}" data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</strong><span>提点</span><strong data-package-commission="${key}" data-cents="${commissions.amount}">${escapeHtml(money.commissionDisplay(commissions))}</strong><span>净收益</span><strong data-package-net="${key}" data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</strong></dd>`;
   }
 
   function anchorRevenue(orders) {
-    const summary = money.summarize(orders);
-    return `<span class="anchor-revenue-line"><span>收款 <b data-anchor-income data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</b></span><span>提点 <b data-anchor-commission data-cents="${summary.cost}">${escapeHtml(money.display(summary, 'cost'))}</b></span><span>净收益 <b data-anchor-net data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</b></span></span>${summary.pendingCount ? `<span class="anchor-custom-line">${summary.pendingCount} 单待补金额</span>` : ''}`;
+    const summary = money.summarize(orders), commissions = money.summarizeCommission(orders);
+    return `<span class="anchor-commission-total"><span>提点合计</span><b data-anchor-commission data-cents="${commissions.amount}">${escapeHtml(money.commissionDisplay(commissions))}</b></span><span class="anchor-revenue-line"><span>收款 <b data-anchor-income data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</b></span><span>净收益 <b data-anchor-net data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</b></span></span>${commissions.pendingCount ? `<span class="anchor-custom-line">${commissions.pendingCount} 单待补提点</span>` : ''}${commissions.legacyCount ? `<span class="anchor-custom-line">${commissions.legacyCount} 单历史支出未计入提点</span>` : ''}`;
   }
 
   function updateRevenuePreview() {
@@ -383,7 +392,7 @@
     document.querySelector('#company-list').innerHTML = visible.map(company => {
       const summary = counts(company.orders);
       const total = anchors ? `${summary.all} 单` : `${summary.all} 条登记`;
-      return `<button class="company-row${anchors ? ' anchor-order-row' : ''}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${anchors ? escapeHtml(monthLabel(anchorMonth)) + " " : ""}${total}${anchors ? "，收入 " + escapeHtml(money.display(money.summarize(company.orders), "income")) + "，净收益 " + escapeHtml(money.display(money.summarize(company.orders), "net")) : ""}，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已离店 ${summary.finished}，查看订单"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${total}</span></span>${anchors ? `<span class="anchor-total">${escapeHtml(monthLabel(anchorMonth))} · 累计 ${company.total} 单</span>${anchorRevenue(company.orders)}${packageBreakdown(company.orders, true)}` : ''}<span class="company-statistics">${companyStates(summary)}</span>${anchors ? '' : nextArrival(company.orders)}</span>${icon('chevron', 'chevron')}</button>`;
+      return `<button class="company-row${anchors ? ' anchor-order-row' : ''}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${anchors ? escapeHtml(monthLabel(anchorMonth)) + " " : ""}${total}${anchors ? "，提点合计 " + escapeHtml(money.commissionDisplay(money.summarizeCommission(company.orders))) + "，收入 " + escapeHtml(money.display(money.summarize(company.orders), "income")) + "，净收益 " + escapeHtml(money.display(money.summarize(company.orders), "net")) : ""}，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已离店 ${summary.finished}，查看订单"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${total}</span></span>${anchors ? `<span class="anchor-total">${escapeHtml(monthLabel(anchorMonth))} · 累计 ${company.total} 单</span>${anchorRevenue(company.orders)}${packageBreakdown(company.orders, true)}` : ''}<span class="company-statistics">${companyStates(summary)}</span>${anchors ? '' : nextArrival(company.orders)}</span>${icon('chevron', 'chevron')}</button>`;
     }).join('') || (orders.length
       ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>${anchors ? '这个月份暂无符合条件的订单' : '没有符合条件的公司'}</h3><p>${anchors ? '换个登记月份，或查看全部月份。' : '换个关键词，或查看全部公司。'}</p><button class="empty-reset" type="button" data-company-reset>${anchors ? '查看全部主播订单' : '查看全部公司'}</button></div>`
       : '');
