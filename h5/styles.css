@@ -108,6 +108,26 @@ h1, h2, h3 { text-wrap: balance; }
 .unassigned-row { margin-top: 16px; border-radius: var(--radius-group); }
 .unassigned-row .company-symbol { color: var(--secondary); background: var(--canvas); }
 .company-list .empty-state { padding-right: 8px; padding-left: 8px; }
+.home-guest-list { display: flex; flex-direction: column; gap: 12px; }
+.home-guest-card { min-width: 0; padding: 16px; border-radius: var(--radius-group); background: var(--surface); }
+.home-guest-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.home-guest-heading h3 { min-width: 0; font-size: 1.125rem; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
+.home-guest-heading .status { flex: none; }
+.home-guest-company { display: flex; align-items: flex-start; gap: 6px; margin-top: 8px; color: var(--secondary); font-size: var(--caption); line-height: 1.6; }
+.home-guest-company .icon { flex: none; width: 16px; height: 16px; margin-top: 3px; }
+.home-guest-company > span { min-width: 0; overflow-wrap: anywhere; }
+.home-guest-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 12px 0; }
+.home-guest-dates dt { color: var(--secondary); font-size: var(--caption); line-height: 1.6; }
+.home-guest-dates dd { margin: 2px 0 0; color: var(--ink); font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.home-guest-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--caption); line-height: 1.7; }
+.home-guest-meta > span { overflow-wrap: anywhere; }
+.home-guest-anchor { margin-top: 6px; color: var(--blue); font-size: var(--caption); line-height: 1.6; overflow-wrap: anywhere; }
+.home-guest-location { margin-top: 4px; color: var(--secondary); font-size: var(--caption); line-height: 1.6; overflow-wrap: anywhere; }
+.home-guest-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+.home-guest-footer a { min-height: 44px; }
+.home-guest-footer button { min-height: 44px; padding: 0; background: transparent; color: var(--blue); font-size: var(--caption); }
+.home-guest-footer button .icon { width: 14px; height: 14px; margin-left: 4px; }
+.home-guest-no-phone { color: var(--secondary); font-size: var(--caption); }
 .company-page { max-width: 640px; }
 .company-profile { padding: 24px 0 20px; }
 .company-detail-states { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 16px 0 0; font-size: var(--caption); }
