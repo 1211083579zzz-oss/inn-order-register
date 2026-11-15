@@ -12,7 +12,13 @@
   const registrationAnchorDrafts = new Map();
   let directoryMode = 'companies';
   let selectedAnchorKey = null;
-  let anchorMonth = today.slice(0, 7);
+  const funds = window.InnFunds;
+  let fundsDay = funds.dateAt(new Date());
+  let fundsPeriod = funds.period('month', fundsDay);
+  let fundsPeriodDraft = 'month';
+  let ledgerMode = 'companies';
+  let ledgerView = 'orders';
+  let ledgerNights = null;
   const filterLabels = { all: '全部登记', upcoming: '待入住', staying: '入住中', finished: '已离店' };
   const icon = (name, extra = '') => `<svg class="icon ${extra}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
@@ -157,22 +163,8 @@
     syncNightsStepper();
   }
 
-  function monthLabel(month) {
-    return month ? `${month.slice(0, 4)}年${Number(month.slice(5))}月` : '全部月份';
-  }
-
-  function packageBreakdown(orders, compact = false) {
-    const summary = window.InnArrivals.packageSummary(orders);
-    const labels = { '7': '7 天', '14': '14 天', month: '一个月' };
-    const list = ['7', '14', 'month'].map(key => compact
-      ? `<span>${labels[key]} <b>${summary[key]}</b></span>`
-      : `<div><dt>${labels[key]}</dt><dd data-package-count="${key}">${summary[key]} <span>单</span></dd>${packageRevenue(orders, key)}</div>`).join('');
-    return compact ? `<span class="anchor-package-line">${list}</span>${summary.other ? `<span class="anchor-custom-line">其他天数 ${summary.other} 单</span>` : ''}`
-      : `<dl class="package-counts" aria-label="按入住时长统计">${list}</dl>${summary.other ? `<p class="package-other">另有 ${summary.other} 单为其他天数，已计入总单量</p>` : ''}`;
-  }
-
   function renderMonthlySummary(element, orders, subtitle, name = '') {
-    element.innerHTML = `${name ? `<h3 class="anchor-summary-title">${escapeHtml(name)}的订单</h3>` : ''}<div class="anchor-month-overview"><div><p class="anchor-month-caption">${escapeHtml(monthLabel(anchorMonth))}登记</p><p class="anchor-month-number"><strong data-month-order-count>${orders.length}</strong><span>单</span></p></div><p class="anchor-month-context">${subtitle.split(' · ').map(line => `<span>${escapeHtml(line)}</span>`).join('')}</p></div>${commissionSummary(orders, name ? `${name}的提点合计` : '我司主播提点合计')}${revenueSummary(orders)}${packageBreakdown(orders)}`;
+    element.innerHTML = `${name ? `<h3 class="anchor-summary-title">${escapeHtml(name)}的订单</h3>` : ''}<div class="anchor-month-overview"><div><p class="anchor-month-caption">${escapeHtml(periodLabel())}登记</p><p class="anchor-month-number"><strong data-month-order-count>${orders.length}</strong><span>单</span></p></div><p class="anchor-month-context">${subtitle.split(' · ').map(line => `<span>${escapeHtml(line)}</span>`).join('')}</p></div>${commissionSummary(orders, name ? `${name}的提点合计` : '我司主播提点合计')}${revenueSummary(orders)}${staySummary(orders)}`;
   }
 
   function commissionSummary(orders, title) {
@@ -190,19 +182,34 @@
     return `<dl class="revenue-totals" aria-label="月度金额汇总">${entries}</dl><p class="revenue-note">${summary.pendingCount ? `${summary.pendingCount} 单待补金额，未填项暂不计入。` : ''}净收益 = 收款 − 提点${summary.legacyCount ? ' − 历史支出' : ''}。</p>`;
   }
 
-  function packageRevenue(orders, key) {
-    const matching = orders.filter(order => window.InnArrivals.stayPackage(order) === key);
-    const summary = money.summarize(matching), commissions = money.summarizeCommission(matching);
-    return `<dd class="package-money"><span>收入</span><strong data-package-income="${key}" data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</strong><span>提点</span><strong data-package-commission="${key}" data-cents="${commissions.amount}">${escapeHtml(money.commissionDisplay(commissions))}</strong><span>净收益</span><strong data-package-net="${key}" data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</strong></dd>`;
-  }
-
   function anchorRevenue(orders) {
     const summary = money.summarize(orders), commissions = money.summarizeCommission(orders);
     return `<span class="anchor-commission-total"><span>提点合计</span><b data-anchor-commission data-cents="${commissions.amount}">${escapeHtml(money.commissionDisplay(commissions))}</b></span><span class="anchor-revenue-line"><span>收款 <b data-anchor-income data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</b></span><span>净收益 <b data-anchor-net data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</b></span></span>${commissions.pendingCount ? `<span class="anchor-custom-line">${commissions.pendingCount} 单待补提点</span>` : ''}${commissions.legacyCount ? `<span class="anchor-custom-line">${commissions.legacyCount} 单历史支出未计入提点</span>` : ''}`;
   }
 
   function periodOrders(orders) {
-    return anchorMonth ? orders.filter(order => window.InnStorage.registrationMonth(order) === anchorMonth) : orders;
+    return funds.filter(orders, fundsPeriod);
+  }
+
+  function periodLabel() {
+    const labels = { month: '本月', previous: '上月', last7: '近 7 天', last30: '近 30 天', all: '全部日期' };
+    return labels[fundsPeriod.key] || `${fundsPeriod.start.replace(/-/g, '.')} — ${fundsPeriod.end.replace(/-/g, '.')}`;
+  }
+
+  function periodCaption() {
+    return fundsPeriod.key === 'all' ? '全部日期 · 按登记日期统计' : `${fundsPeriod.start.replace(/-/g, '.')} — ${fundsPeriod.end.replace(/-/g, '.')} · 按登记日期`;
+  }
+
+  function periodAnchorGroups() {
+    return window.InnStorage.groupByAnchor(store.ownOrders()).map(group => ({ ...group, orders: periodOrders(group.orders) }));
+  }
+
+  function fundsScope(data, mode) {
+    return periodOrders(mode === 'anchors' ? window.InnStorage.ownOrders(data).filter(order => window.InnStorage.nameKey(order.anchorName)) : data.orders);
+  }
+
+  function staySummary(orders) {
+    return `<div class="stay-summary" aria-label="实际入住晚数">${funds.groupNights(orders).map(group => `<div><strong>${group.nights === null ? '晚数待确认' : `${group.nights} 晚`}</strong><span>${group.orders.length} 单${group.monthCount ? ` · ${group.monthCount} 单日历满月` : ''}</span>${directoryRevenue(group.orders, true)}</div>`).join('')}</div>`;
   }
 
   function directoryRevenue(orders, anchors) {
@@ -216,23 +223,69 @@
     const anchors = directoryMode === 'anchors';
     const ownOrders = anchors ? periodOrders(window.InnStorage.ownOrders(data)) : [];
     const pending = ownOrders.filter(order => !window.InnStorage.nameKey(order.anchorName));
-    const orders = anchors ? ownOrders.filter(order => window.InnStorage.nameKey(order.anchorName)) : periodOrders(data.orders);
+    const orders = fundsScope(data, directoryMode);
     const visible = data.orders.length > 0 || anchors && Boolean(store.ownCompanyName());
     document.querySelector('#home-funds').hidden = !visible;
     const summary = money.summarize(orders), commissions = money.summarizeCommission(orders);
     const amounts = [['income', '收款', summary.income, money.display(summary, 'income')], ['commission', '提点', commissions.amount, money.commissionDisplay(commissions)], ['net', '净收益', summary.net, money.display(summary, 'net')]];
     document.querySelector('[data-funds-order-count]').textContent = `${orders.length} 单`;
+    document.querySelector('#funds-known-count').textContent = `${commissions.knownCount} 单`;
+    document.querySelector('#funds-pending-count').textContent = `${summary.pendingCount} 单`;
     document.querySelector('#funds-amounts').innerHTML = amounts.map(([key, label, cents, value]) => `<div><dt>${label}</dt><dd data-funds-total="${key}" data-cents="${cents}" class="${key === 'net' && cents < 0 ? 'amount-negative' : ''}">${escapeHtml(value)}</dd></div>`).join('');
     document.querySelector('#funds-amounts').classList.toggle('funds-large-amounts', amounts.some(item => item[3].length > 10));
-    document.querySelector('#funds-scope').textContent = `${anchorMonth ? '按登记月份统计' : '全部登记月份合计'}${anchors ? ' · 仅我司主播' + (pending.length ? ` · ${pending.length} 单待归属另列` : '') : ' · 所有公司'}`;
+    document.querySelector('#funds-range-caption').textContent = periodCaption();
+    document.querySelector('#funds-scope').textContent = anchors ? `仅我司已归属主播${pending.length ? ` · ${pending.length} 单待归属另列` : ''}` : '全部旅居公司账目';
     const notes = [];
     if (summary.pendingCount) notes.push(`${summary.pendingCount} 单金额待补，合计暂不完整`);
     if (commissions.legacyCount) notes.push(`历史支出 ${money.format(commissions.legacyCost)} 已扣除，不计入提点`);
     document.querySelector('#funds-note').hidden = !notes.length;
     document.querySelector('#funds-note').textContent = notes.join('；');
-    document.querySelector('#own-anchor-totals').hidden = !visible || !orders.length;
-    document.querySelector('#own-anchor-totals-copy').textContent = '7天 · 14天 · 满月';
-    document.querySelector('#anchor-month-summary').innerHTML = `${packageBreakdown(orders)}<p class="funds-duration-note">满月按入住日至下月对应日计算，月末取下月最后一天。净收益为收款扣除提点及历史支出。</p>`;
+  }
+
+  function ledgerMoney(orders) {
+    const summary = money.summarize(orders), commissions = money.summarizeCommission(orders);
+    const large = [money.display(summary, 'income'), money.commissionDisplay(commissions), money.display(summary, 'net')].some(value => value.length > 10);
+    return `<dl class="ledger-money${large ? ' funds-large-amounts' : ''}"><div><dt>收款</dt><dd>${escapeHtml(money.display(summary, 'income'))}</dd></div><div><dt>提点</dt><dd>${escapeHtml(money.commissionDisplay(commissions))}</dd></div><div><dt>净收益</dt><dd class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</dd></div></dl>`;
+  }
+
+  function renderFundsLedger() {
+    if (document.querySelector('#funds-overlay').hidden) return;
+    const data = store.read(), anchors = ledgerMode === 'anchors';
+    const source = fundsScope(data, ledgerMode), selector = document.querySelector('#ledger-group');
+    const groups = anchors ? periodAnchorGroups().filter(group => group.id && group.orders.length) : data.companies.filter(company => source.some(order => order.companyId === company.id)).map(company => ({ id: company.id, name: company.name }));
+    if (!anchors && source.some(order => !data.companies.some(company => company.id === order.companyId))) groups.push({ id: '__unclassified__', name: '未分类' });
+    const selection = selector.value;
+    selector.innerHTML = `<option value="">${anchors ? '全部我司主播' : '全部旅居公司'}</option>` + groups.map(group => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.name)}</option>`).join('');
+    selector.value = groups.some(group => group.id === selection) ? selection : '';
+    document.querySelector('#ledger-group-label').textContent = anchors ? '选择我司主播' : '选择旅居公司';
+    const query = document.querySelector('#ledger-query').value.trim().toLocaleLowerCase();
+    const companyName = order => data.companies.find(company => company.id === order.companyId)?.name || '未分类';
+    const groupMatches = order => !selector.value || (anchors ? window.InnStorage.nameKey(order.anchorName) === selector.value : selector.value === '__unclassified__' ? !data.companies.some(company => company.id === order.companyId) : order.companyId === selector.value);
+    const orders = source.filter(order => groupMatches(order) && (ledgerNights === null || String(funds.nights(order) ?? 'unknown') === ledgerNights) && (!query || [companyName(order), order.anchorName, order.customerName, order.phone, order.hotelOrder, order.base, order.arrivalDate, window.InnArrivals.departureDate(order)].join(' ').toLocaleLowerCase().includes(query))).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)) || a.id.localeCompare(b.id));
+    document.querySelector('#ledger-period-caption').textContent = periodCaption();
+    document.querySelector('#ledger-summary').innerHTML = `<div class="ledger-summary-heading"><h3>${selector.value || query || ledgerNights !== null ? '筛选结果' : anchors ? '我司主播合计' : '全部公司合计'}</h3><span>${orders.length} 单</span></div>${ledgerMoney(orders)}`;
+    const summary = money.summarize(orders), commissions = money.summarizeCommission(orders), notes = [];
+    if (summary.pendingCount) notes.push(`${summary.pendingCount} 单金额待补，合计暂不完整`);
+    if (commissions.legacyCount) notes.push(`历史支出 ${money.format(commissions.legacyCost)} 已扣除，未计入提点`);
+    if (notes.length) document.querySelector('#ledger-summary').innerHTML += `<p class="funds-note">${escapeHtml(notes.join('；'))}</p>`;
+    const filters = [selector.value ? selector.selectedOptions[0].textContent : '', ledgerNights !== null ? ledgerNights === 'unknown' ? '晚数待确认' : `${ledgerNights} 晚` : '', query ? `“${document.querySelector('#ledger-query').value.trim()}”` : ''].filter(Boolean);
+    document.querySelector('#ledger-filter-caption').textContent = filters.length ? `${filters.join(' · ')} · ${orders.length} 单` : ledgerView === 'nights' ? '全部实际晚数 · 点选查看订单' : `${orders.length} 单登记 · 按登记日期倒序`;
+    document.querySelector('#clear-ledger-filters').hidden = !filters.length;
+    document.querySelectorAll('[data-ledger-view]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.ledgerView === ledgerView)));
+    document.querySelector('#ledger-tab-selection').style.setProperty('--ledger-index', ledgerView === 'nights' ? 1 : 0);
+    const target = document.querySelector('#ledger-list');
+    if (!orders.length) { target.innerHTML = '<div class="empty-state ledger-empty"><span class="empty-icon">' + icon('search') + '</span><h3>没有符合条件的账目</h3><p>可更改日期、分类或搜索条件。</p></div>'; return; }
+    if (ledgerView === 'nights') {
+      target.innerHTML = funds.groupNights(orders).map(group => `<button class="ledger-nights-row" type="button" data-ledger-nights="${group.nights ?? 'unknown'}"><span class="ledger-nights-heading"><strong>${group.nights === null ? '晚数待确认' : `${group.nights} 晚`}</strong><span>${group.orders.length} 单${group.monthCount ? ` · ${group.monthCount} 单日历满月` : ''}</span>${icon('chevron', 'chevron')}</span>${ledgerMoney(group.orders)}</button>`).join('');
+      return;
+    }
+    target.innerHTML = orders.map(order => {
+      const income = money.cents(order.incomeCents), rate = money.basisPoints(order.commissionRateBps), commission = money.commission(income, rate), deduction = money.deduction(order), total = money.summarize([order]);
+      const large = [money.display(total, 'income'), money.display(total, 'net'), commission === '' ? '' : money.format(commission)].some(value => value.length > 10);
+      const count = funds.nights(order), fullMonth = window.InnArrivals.stayPackage(order) === 'month';
+      const formula = rate === '' && deduction !== '' ? `历史支出 ${money.format(deduction)} · 未计入提点` : commission === '' ? `提点待补${income === '' ? '收款' : '比例'}` : `${money.input(income)} × ${money.rateInput(rate)}% = ${money.input(commission)} 元提点`;
+      return `<article class="ledger-order" data-ledger-order="${escapeHtml(order.id)}"><div class="ledger-order-heading"><h3>${escapeHtml(order.customerName || '未填写姓名')}</h3><span>登记 ${escapeHtml(funds.dateAt(order.createdAt).replace(/-/g, '.') || '日期待确认')}</span></div><p class="ledger-attribution">${escapeHtml(companyName(order))}${order.anchorName ? ` · 主播 ${escapeHtml(order.anchorName)}` : ' · 未填写主播'}</p><div class="ledger-stay"><span>${escapeHtml(order.arrivalDate)} 入住 → ${escapeHtml(window.InnArrivals.departureDate(order))} 离店</span><strong>${count === null ? '晚数待确认' : `${count} 晚`}${fullMonth ? ' · 日历满月' : ''}</strong></div><p class="ledger-order-context">${escapeHtml([order.hotelOrder, order.base, order.roomType].filter(Boolean).join(' · '))}</p><dl class="ledger-order-money${large ? ' funds-large-amounts' : ''}"><div><dt>收款</dt><dd>${income === '' ? '待补金额' : escapeHtml(money.format(income))}</dd></div><div><dt>提点${rate !== '' ? ` ${money.rateInput(rate)}%` : ''}</dt><dd>${commission === '' ? rate === '' && deduction !== '' ? '历史支出另列' : '待补提点' : escapeHtml(money.format(commission))}</dd></div><div><dt>净收益</dt><dd class="${total.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(total, 'net'))}${total.pendingCount && total.incomeCount + total.costCount ? '<span class="ledger-provisional">待补齐</span>' : ''}</dd></div></dl><p class="ledger-formula">${escapeHtml(formula)}</p></article>`;
+    }).join('');
   }
 
   function updateRevenuePreview() {
@@ -295,7 +348,7 @@
     const data = store.read(), { orders, companies } = data;
     const query = queryValue.trim().toLocaleLowerCase();
     const inGroup = selectedAnchorKey !== null
-      ? window.InnStorage.ownOrders(data).filter(order => window.InnStorage.nameKey(order.anchorName) === selectedAnchorKey && (!anchorMonth || window.InnStorage.registrationMonth(order) === anchorMonth))
+      ? periodOrders(window.InnStorage.ownOrders(data).filter(order => window.InnStorage.nameKey(order.anchorName) === selectedAnchorKey))
       : orders.filter(order => companyId ? order.companyId === companyId : !companies.some(company => company.id === order.companyId));
     const visible = inGroup.filter(order => (filterValue === 'all' || stayState(order).key === filterValue) && (!query || [
       order.hotelOrder, order.base, order.anchorName, order.customerName, order.phone, order.arrivalDate, window.InnArrivals.departureDate(order), order.roomType,
@@ -437,9 +490,8 @@
     document.querySelector('#directory-modes').style.setProperty('--directory-index', anchors ? 1 : 0);
     document.querySelectorAll('[data-directory-mode]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.directoryMode === directoryMode)));
     document.querySelector('#own-anchor-note').hidden = !anchors || Boolean(store.ownCompanyName());
-    document.querySelector('#anchor-month').value = anchorMonth;
-    document.querySelector('#anchor-all-months').setAttribute('aria-pressed', String(!anchorMonth));
-    document.querySelector('#anchor-current-month').setAttribute('aria-pressed', String(anchorMonth === today.slice(0, 7)));
+    document.querySelector('#funds-period').value = fundsPeriodDraft;
+    document.querySelector('#funds-custom-range').hidden = fundsPeriodDraft !== 'custom';
     const search = document.querySelector('#company-query');
     search.placeholder = anchors ? '搜索主播或住客' : '搜索公司或住客';
     search.setAttribute('aria-label', anchors ? '搜索我司主播或住客' : '搜索旅居公司或住客');
@@ -448,7 +500,7 @@
 
   function renderCompanies() {
     const data = store.read(), { companies, orders } = data, anchors = directoryMode === 'anchors';
-    const anchorGroups = anchors ? window.InnStorage.groupByAnchor(store.ownOrders(), anchorMonth) : [];
+    const anchorGroups = anchors ? periodAnchorGroups() : [];
     const groups = anchors ? anchorGroups.filter(group => group.id && group.orders.length) : companies.map(company => ({ ...company, orders: periodOrders(orders.filter(order => order.companyId === company.id)) })).filter(company => company.orders.length).sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
     const unassigned = periodOrders(orders.filter(order => !companies.some(company => company.id === order.companyId)));
     if (!anchors && unassigned.length) groups.push({ id: '', name: '未分类', orders: unassigned });
@@ -473,16 +525,16 @@
     target.classList.toggle('directory-is-empty', !visible.length);
     target.innerHTML = visible.map(group => {
       const summary = money.summarize(group.orders), commissions = money.summarizeCommission(group.orders);
-      const total = `${anchorMonth === today.slice(0, 7) ? '本月' : anchorMonth ? Number(anchorMonth.slice(5)) + '月' : '累计'} ${group.orders.length} 单`;
-      return `<button class="company-row directory-funds-row${anchors ? ' anchor-order-row' : ' company-financial-row'}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(group.id)}" aria-label="${escapeHtml(group.name)}，${escapeHtml(monthLabel(anchorMonth))} ${total}，收款 ${escapeHtml(money.display(summary, 'income'))}，提点 ${escapeHtml(money.commissionDisplay(commissions))}，净收益 ${escapeHtml(money.display(summary, 'net'))}，查看订单"><span class="company-row-main"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(group.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(group.name)}</strong><span class="company-total">${total}</span></span></span>${icon('chevron', 'chevron')}</span>${directoryRevenue(group.orders, anchors)}</button>`;
+      const total = `${fundsPeriod.key === 'custom' ? '所选期间' : periodLabel()} ${group.orders.length} 单`;
+      return `<button class="company-row directory-funds-row${anchors ? ' anchor-order-row' : ' company-financial-row'}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(group.id)}" aria-label="${escapeHtml(group.name)}，${escapeHtml(periodLabel())} ${total}，收款 ${escapeHtml(money.display(summary, 'income'))}，提点 ${escapeHtml(money.commissionDisplay(commissions))}，净收益 ${escapeHtml(money.display(summary, 'net'))}，查看订单"><span class="company-row-main"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(group.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(group.name)}</strong><span class="company-total">${total}</span></span></span>${icon('chevron', 'chevron')}</span>${directoryRevenue(group.orders, anchors)}</button>`;
     }).join('') || (anchors && !store.ownCompanyName() ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('company')}</span><h3>先设置我司名称</h3><p>保存上方名称后，我司订单会自动按主播汇总提点。</p><button class="empty-reset" type="button" data-own-company-setup>设置我司名称</button></div>` : anchors && !store.ownOrders().length
       ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('book')}</span><h3>暂无我司主播订单</h3><p>从“旅居公司”选择我司名称并登记主播，这里会自动统计。</p><button class="empty-reset" type="button" data-directory-companies>查看旅居公司</button></div>` : !empty
-      ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>${query ? '没有匹配的记录' : '这个月份暂无' + (anchors ? '主播订单' : '登记')}</h3><p>${query ? '试试其他关键词，资金合计仍按所选月份显示。' : anchors ? '其他公司不计入我司主播，未填主播的订单在下方单独列出。' : '可以切换月份，或查看累计登记。'}</p><button class="empty-reset" type="button" data-company-reset>${query ? '清空搜索' : '查看累计'}</button></div>` : '');
+      ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>${query ? '没有匹配的记录' : '这段日期暂无' + (anchors ? '主播订单' : '登记')}</h3><p>${query ? '试试其他关键词，资金合计仍按所选期间显示。' : anchors ? '其他公司不计入我司主播，未填主播的订单在下方单独列出。' : '可以更改日期，或查看全部登记。'}</p><button class="empty-reset" type="button" data-company-reset>${query ? '清空搜索' : '查看全部日期'}</button></div>` : '');
   }
 
   function renderCompanyDetail() {
     if (selectedCompanyId === null && selectedAnchorKey === null) return;
-    const anchor = selectedAnchorKey === null ? null : window.InnStorage.groupByAnchor(store.ownOrders(), anchorMonth).find(group => group.id === selectedAnchorKey);
+    const anchor = selectedAnchorKey === null ? null : periodAnchorGroups().find(group => group.id === selectedAnchorKey);
     const company = store.read().companies.find(item => item.id === selectedCompanyId);
     const name = selectedAnchorKey === '' ? '待归属订单' : selectedAnchorKey !== null ? anchor?.name || selectedAnchorKey : company?.name || (selectedCompanyId === '' ? '未分类' : '公司分类');
     document.querySelector('#company-title').textContent = selectedAnchorKey === '' ? '待归属订单' : selectedAnchorKey !== null ? '我司主播订单' : '住客登记';
@@ -490,7 +542,7 @@
     document.querySelector('#company-name').textContent = name;
     const companies = store.read().companies;
     const orders = selectedAnchorKey !== null ? anchor?.orders || [] : readOrders().filter(order => selectedCompanyId ? order.companyId === selectedCompanyId : !companies.some(company => company.id === order.companyId));
-    document.querySelector('#company-detail-summary').textContent = selectedAnchorKey === '' ? `${monthLabel(anchorMonth)} · ${orders.length} 单未填写我司主播` : selectedAnchorKey !== null ? `${monthLabel(anchorMonth)} · ${orders.length} 单 · 累计 ${anchor?.total || 0} 单` : `共 ${orders.length} 条入住登记`;
+    document.querySelector('#company-detail-summary').textContent = selectedAnchorKey === '' ? `${periodLabel()} · ${orders.length} 单未填写我司主播` : selectedAnchorKey !== null ? `${periodLabel()} · ${orders.length} 单 · 累计 ${anchor?.total || 0} 单` : `共 ${orders.length} 条入住登记`;
     document.querySelector('#company-detail-states').innerHTML = companyStates(counts(orders));
     document.querySelector('.company-toolbar').hidden = selectedAnchorKey !== null;
     window.InnBillOwner?.show(selectedAnchorKey === null ? selectedCompanyId : null);
@@ -501,11 +553,13 @@
 
   function render() {
     const date = localDate(new Date());
-    if (anchorMonth === today.slice(0, 7) && date.slice(0, 7) !== today.slice(0, 7)) anchorMonth = date.slice(0, 7);
+    fundsDay = funds.dateAt(new Date());
+    if (fundsPeriod.key !== 'custom') fundsPeriod = funds.period(fundsPeriod.key, fundsDay);
     today = date;
     renderOverview();
     renderCompanies();
     renderCompanyDetail();
+    renderFundsLedger();
     const data = store.read();
     document.querySelector('#backup-count').textContent = `${data.companies.length} 家公司 · ${data.orders.length} 条客人登记`;
     if (!formOverlay.hidden && !formOverlay.inert) {
@@ -538,7 +592,7 @@
     companyFilter = 'all';
     document.querySelector('#company-guest-search').value = '';
     renderCompanyDetail();
-    navigation.open('company-overlay', { anchorKey: key, month: anchorMonth });
+    navigation.open('company-overlay', { anchorKey: key });
   }
 
   function openOverlay(id) {
@@ -688,12 +742,70 @@
     document.querySelector('#company-query').value = '';
     feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); }, direction);
   }));
-  document.querySelector('#anchor-month').addEventListener('input', event => {
-    anchorMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(event.target.value) ? event.target.value : '';
-    feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); });
+  document.querySelector('#funds-period').addEventListener('change', event => {
+    fundsPeriodDraft = event.target.value;
+    document.querySelector('#funds-range-error').hidden = true;
+    for (const id of ['funds-start', 'funds-end']) document.getElementById(id).removeAttribute('aria-invalid');
+    if (fundsPeriodDraft === 'custom') {
+      if (!document.querySelector('#funds-start').value) document.querySelector('#funds-start').value = fundsPeriod.start || funds.dateAt(new Date()).slice(0, 7) + '-01';
+      if (!document.querySelector('#funds-end').value) document.querySelector('#funds-end').value = fundsPeriod.end || funds.dateAt(new Date());
+      renderOverview();
+      return;
+    }
+    fundsPeriod = funds.period(fundsPeriodDraft, funds.dateAt(new Date()));
+    feedback.change(['#funds-amounts', '#directory-results'], () => { renderOverview(); renderCompanies(); });
   });
-  document.querySelector('#anchor-all-months').addEventListener('click', () => { if (!anchorMonth) return; anchorMonth = ''; feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); }); });
-  document.querySelector('#anchor-current-month').addEventListener('click', () => { if (anchorMonth === today.slice(0, 7)) return; anchorMonth = today.slice(0, 7); feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); }); });
+  document.querySelector('#funds-custom-range').addEventListener('submit', event => {
+    event.preventDefault();
+    const start = document.querySelector('#funds-start'), end = document.querySelector('#funds-end'), error = document.querySelector('#funds-range-error');
+    start.removeAttribute('aria-invalid'); end.removeAttribute('aria-invalid');
+    try {
+      const next = funds.period('custom', funds.dateAt(new Date()), { start: start.value, end: end.value });
+      fundsPeriod = next;
+      fundsPeriodDraft = 'custom';
+      error.hidden = true;
+      feedback.change(['#funds-amounts', '#directory-results'], () => { renderOverview(); renderCompanies(); });
+    } catch (cause) {
+      error.textContent = cause.message; error.hidden = false;
+      (start.value ? end : start).setAttribute('aria-invalid', 'true');
+    }
+  });
+  document.querySelector('#open-funds-ledger').addEventListener('click', () => {
+    ledgerMode = directoryMode; ledgerView = 'orders'; ledgerNights = null;
+    document.querySelector('#ledger-group').value = '';
+    document.querySelector('#ledger-query').value = '';
+    navigation.open('funds-overlay', { mode: ledgerMode });
+    renderFundsLedger();
+  });
+  document.querySelector('#ledger-change-range').addEventListener('click', () => {
+    window.addEventListener('innviewchange', function focusRange(event) {
+      if (event.detail.id) return;
+      window.removeEventListener('innviewchange', focusRange);
+      document.querySelector('#funds-period').focus({ preventScroll: true });
+      document.querySelector('#home-funds').scrollIntoView({ block: 'nearest' });
+    });
+    closeOverlay('funds-overlay');
+  });
+  document.querySelector('#ledger-group').addEventListener('change', () => feedback.change('#ledger-list', renderFundsLedger));
+  document.querySelector('#ledger-query').addEventListener('input', renderFundsLedger);
+  document.querySelectorAll('[data-ledger-view]').forEach(button => button.addEventListener('click', () => {
+    if (ledgerView === button.dataset.ledgerView) return;
+    ledgerView = button.dataset.ledgerView;
+    feedback.change('#ledger-list', renderFundsLedger, ledgerView === 'nights' ? 1 : -1);
+  }));
+  document.querySelector('#ledger-list').addEventListener('click', event => {
+    const button = event.target.closest('[data-ledger-nights]');
+    if (!button) return;
+    ledgerNights = button.dataset.ledgerNights; ledgerView = 'orders';
+    feedback.change('#ledger-list', renderFundsLedger);
+    document.querySelector('[data-ledger-view="orders"]').focus({ preventScroll: true });
+  });
+  document.querySelector('#clear-ledger-filters').addEventListener('click', () => {
+    ledgerNights = null; ledgerView = 'orders';
+    document.querySelector('#ledger-group').value = '';
+    document.querySelector('#ledger-query').value = '';
+    feedback.change('#ledger-list', renderFundsLedger);
+  });
   document.querySelector('#company-query').addEventListener('input', renderCompanies);
   document.querySelector('#clear-company-query').addEventListener('click', () => { document.querySelector('#company-query').value = ''; renderCompanies(); document.querySelector('#company-query').focus(); });
   document.querySelector('#home-onboarding').addEventListener('click', event => {
@@ -706,7 +818,7 @@
   });
   document.querySelector('#company-list').addEventListener('click', event => {
     if (event.target.closest('[data-directory-companies]')) { document.querySelector('[data-directory-mode="companies"]').click(); return; }
-    if (event.target.closest('[data-company-reset]')) { if (!document.querySelector('#company-query').value) anchorMonth = ''; document.querySelector('#company-query').value = ''; renderOverview(); renderCompanies(); return; }
+    if (event.target.closest('[data-company-reset]')) { if (!document.querySelector('#company-query').value) { fundsPeriod = funds.period('all', funds.dateAt(new Date())); fundsPeriodDraft = 'all'; } document.querySelector('#company-query').value = ''; renderOverview(); renderCompanies(); return; }
     if (event.target.closest('[data-own-company-setup]')) { document.querySelector('#own-company-settings').open = true; document.querySelector('#own-company-name').focus(); return; }
     const anchor = event.target.closest('[data-anchor-key]');
     if (anchor) { openAnchor(anchor.dataset.anchorKey); return; }
@@ -728,10 +840,12 @@
     if (event.detail.id === 'company-overlay') {
       selectedAnchorKey = event.detail.context.anchorKey ?? null;
       selectedCompanyId = selectedAnchorKey !== null ? null : event.detail.context.companyId ?? '';
-      if (selectedAnchorKey !== null) anchorMonth = event.detail.context.month ?? anchorMonth;
       highlightedOrderId = event.detail.context.orderId || '';
       renderCompanyDetail();
       if (selectedCompanyId && !store.read().companies.some(company => company.id === selectedCompanyId) && document.querySelector('#company-overlay').dataset.state === 'open') closeOverlay('company-overlay');
+    } else if (event.detail.id === 'funds-overlay') {
+      ledgerMode = event.detail.context.mode || directoryMode;
+      renderFundsLedger();
     } else if (!event.detail.id) {
       selectedCompanyId = null;
       selectedAnchorKey = null;
@@ -814,7 +928,7 @@
         catch { remembered = false; }
       }
       if (isNew) {
-        if (anchorMonth) anchorMonth = today.slice(0, 7);
+        if (fundsPeriod.key !== 'all') { fundsPeriod = funds.period('month', funds.dateAt(new Date())); fundsPeriodDraft = 'month'; }
         document.querySelector('#company-query').value = '';
         companyFilter = 'all';
         document.querySelector('#company-guest-search').value = '';
@@ -945,13 +1059,15 @@
 
   function refreshCalendar() {
     const date = localDate(new Date());
-    if (date !== today) {
+    const businessDate = funds.dateAt(new Date());
+    if (date !== today || businessDate !== fundsDay) {
       try { render(); } catch (error) { showToast(error.message || '本机记录无法读取'); }
     }
     clearTimeout(calendarTimer);
     const next = new Date();
     next.setHours(24, 0, 0, 100);
-    calendarTimer = setTimeout(refreshCalendar, Math.max(1000, next.getTime() - Date.now()));
+    const businessMidnight = Date.parse(`${businessDate}T00:00:00+08:00`) + 86400100;
+    calendarTimer = setTimeout(refreshCalendar, Math.max(1000, Math.min(next.getTime(), businessMidnight) - Date.now()));
   }
 
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshCalendar(); });
