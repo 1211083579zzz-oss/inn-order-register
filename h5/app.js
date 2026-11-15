@@ -22,6 +22,7 @@
   const backupData = document.querySelector('#backup-data');
   const allViews = Array.from(document.querySelectorAll('.page-view'));
   const navigation = window.createInnNavigation(document.querySelector('#home-view'), allViews);
+  const feedback = window.InnFeedback;
   let selectedCompanyId = null;
   let companyFilter = 'all';
   let homeFilter = 'all';
@@ -71,6 +72,7 @@
     confirmation.dataset.destructive = String(destructive);
     confirmation.setAttribute('role', destructive ? 'alertdialog' : 'dialog');
     confirmation.inert = false;
+    delete confirmation.dataset.closing;
     confirmationOpener = opener;
     confirmationEntry = `confirm-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     history.pushState({ ...history.state, innConfirm: confirmationEntry }, '');
@@ -83,6 +85,7 @@
     const resolve = pendingConfirmation;
     pendingConfirmation = null;
     confirmation.inert = true;
+    confirmation.dataset.closing = 'true';
     let historyReady = Promise.resolve();
     if (!fromHistory && history.state?.innConfirm === confirmationEntry) {
       historyReady = new Promise(done => {
@@ -96,7 +99,7 @@
       if (confirmationOpener?.isConnected) confirmationOpener.focus({ preventScroll: true });
       resolve(accepted);
     };
-    const animationReady = matchMedia('(prefers-reduced-motion: reduce)').matches ? Promise.resolve() : confirmation.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 100, easing: 'ease-out' }).finished;
+    const animationReady = matchMedia('(prefers-reduced-motion: reduce)').matches ? Promise.resolve() : confirmation.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.98)' }], { duration: 140, easing: 'ease-out' }).finished.catch(() => {});
     Promise.all([historyReady, animationReady]).then(finish);
   }
 
@@ -416,6 +419,7 @@
     summary.textContent = directoryMode === 'anchors' ? `${anchorGroups.length} 个主播分类 · ${anchorMonth ? '所选月份' : '累计'} ${anchorGroups.reduce((sum, group) => sum + group.orders.length, 0)} 单` : `${activeCompanies.length} 家公司 · ${orders.length} 条入住登记`;
     document.querySelector('#home-title').textContent = directoryMode === 'anchors' ? '我司主播' : homeFilter === 'all' ? '旅居公司' : '住客入住';
     document.querySelector('#directory-modes').hidden = false;
+    document.querySelector('#directory-modes').style.setProperty('--directory-index', directoryMode === 'anchors' ? 1 : 0);
     document.querySelectorAll('[data-directory-mode]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.directoryMode === directoryMode)));
     document.querySelector('#anchor-period').hidden = directoryMode !== 'anchors' || !store.ownCompanyName();
     document.querySelector('#own-anchor-note').hidden = directoryMode !== 'anchors';
@@ -660,13 +664,14 @@
 
   document.querySelector('#today-label').textContent = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date());
   document.querySelectorAll('[data-arrival-view]').forEach(button => button.addEventListener('click', () => {
+    if (arrivalView === button.dataset.arrivalView && !arrivalsExpanded) return;
     arrivalView = button.dataset.arrivalView;
     arrivalsExpanded = false;
-    renderArrivalReminders();
+    feedback.change('#arrival-list', renderArrivalReminders);
   }));
   document.querySelector('#arrival-expand').addEventListener('click', () => {
     arrivalsExpanded = !arrivalsExpanded;
-    renderArrivalReminders();
+    feedback.change('#arrival-list', renderArrivalReminders);
   });
   document.querySelector('#arrival-list').addEventListener('click', event => {
     const button = event.target.closest('[data-arrival-id]');
@@ -694,24 +699,26 @@
     orderForm.elements.anchorName.dispatchEvent(new Event('input', { bubbles: true }));
   });
   document.querySelectorAll('[data-directory-mode]').forEach(button => button.addEventListener('click', () => {
+    if (directoryMode === button.dataset.directoryMode && homeFilter === 'all' && !document.querySelector('#company-query').value) return;
+    const direction = button.dataset.directoryMode === 'anchors' ? 1 : -1;
     directoryMode = button.dataset.directoryMode;
     homeFilter = 'all';
     document.querySelector('#company-query').value = '';
-    renderOverview(); renderCompanies();
+    feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); }, direction);
   }));
   document.querySelector('#anchor-month').addEventListener('input', event => {
     anchorMonth = /^\d{4}-\d{2}$/.test(event.target.value) ? event.target.value : '';
-    renderOverview(); renderCompanies();
+    feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); });
   });
-  document.querySelector('#anchor-all-months').addEventListener('click', () => { anchorMonth = ''; renderOverview(); renderCompanies(); });
-  document.querySelector('#anchor-current-month').addEventListener('click', () => { anchorMonth = today.slice(0, 7); renderOverview(); renderCompanies(); });
+  document.querySelector('#anchor-all-months').addEventListener('click', () => { if (!anchorMonth) return; anchorMonth = ''; feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); }); });
+  document.querySelector('#anchor-current-month').addEventListener('click', () => { if (anchorMonth === today.slice(0, 7)) return; anchorMonth = today.slice(0, 7); feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); }); });
   document.querySelector('#home-revenue').addEventListener('click', () => {
     directoryMode = 'anchors'; anchorMonth = today.slice(0, 7); homeFilter = 'all';
     document.querySelector('#company-query').value = ''; renderOverview(); renderCompanies();
   });
   document.querySelector('#company-query').addEventListener('input', renderCompanies);
   document.querySelector('#clear-company-query').addEventListener('click', () => { document.querySelector('#company-query').value = ''; renderCompanies(); document.querySelector('#company-query').focus(); });
-  document.querySelectorAll('[data-home-filter]').forEach(button => button.addEventListener('click', () => { homeFilter = button.dataset.homeFilter; renderOverview(); renderCompanies(); }));
+  document.querySelectorAll('[data-home-filter]').forEach(button => button.addEventListener('click', () => { if (homeFilter === button.dataset.homeFilter) return; const direction = Object.keys(filterLabels).indexOf(button.dataset.homeFilter) > Object.keys(filterLabels).indexOf(homeFilter) ? 1 : -1; homeFilter = button.dataset.homeFilter; feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); }, direction); }));
   document.querySelector('#home-onboarding').addEventListener('click', event => {
     const button = event.target.closest('[data-home-action]');
     if (!button) return;
@@ -746,7 +753,7 @@
   document.querySelector('#add-company-guest').addEventListener('click', () => openForm());
   document.querySelector('#company-guest-search').addEventListener('input', renderCompanyDetail);
   document.querySelector('#clear-company-guest-search').addEventListener('click', () => { document.querySelector('#company-guest-search').value = ''; renderCompanyDetail(); document.querySelector('#company-guest-search').focus(); });
-  document.querySelectorAll('[data-company-filter]').forEach(button => button.addEventListener('click', () => { companyFilter = button.dataset.companyFilter; renderCompanyDetail(); }));
+  document.querySelectorAll('[data-company-filter]').forEach(button => button.addEventListener('click', () => { if (companyFilter === button.dataset.companyFilter) return; companyFilter = button.dataset.companyFilter; feedback.change('#company-guest-list', renderCompanyDetail); }));
   window.addEventListener('innviewchange', event => {
     if (event.detail.id === 'company-overlay') {
       selectedAnchorKey = event.detail.context.anchorKey ?? null;

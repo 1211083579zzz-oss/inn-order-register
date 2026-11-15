@@ -9,7 +9,7 @@
   <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=general-polish-30">
+  <link rel="stylesheet" href="./styles.css?v=motion-polish-31">
   <script src="./arrivals.js?v=month-20" defer></script>
   <script src="./money.js?v=general-polish-30" defer></script>
   <link rel="stylesheet" href="./bills.css?v=general-polish-30">
@@ -18,12 +18,13 @@
   <script src="./sync-config.js?v=home-14" defer></script>
   <script src="./sync-core.js?v=general-polish-30" defer></script>
   <script src="./sync-client.js?v=shared-19" defer></script>
-  <script src="./motion.js?v=save-15" defer></script>
-  <script src="./app.js?v=general-polish-30" defer></script>
+  <script src="./motion.js?v=motion-polish-31" defer></script>
+  <script src="./feedback.js?v=motion-polish-31" defer></script>
+  <script src="./app.js?v=motion-polish-31" defer></script>
   <script src="./sync-ui.js?v=general-polish-30" defer></script>
   <script src="./bills-owner.js?v=general-polish-30" defer></script>
 </head>
-<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22" data-commission="23" data-anchor-commission="24" data-company-bills="25" data-own-anchors="26" data-compact-bills="27" data-guest-status="28" data-own-company="29" data-general-polish="30">
+<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22" data-commission="23" data-anchor-commission="24" data-company-bills="25" data-own-anchors="26" data-compact-bills="27" data-guest-status="28" data-own-company="29" data-general-polish="30" data-motion-polish="31">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -80,11 +81,13 @@
             </div>
           </section>
         </div>
+        <div id="directory-results" class="directory-results">
         <div id="home-directory-heading" class="list-heading" hidden><h2 id="company-statistics-title">公司分类</h2><span id="company-count" role="status"></span></div>
         <div id="company-list" class="company-list" aria-label="旅居公司分类" aria-live="polite"></div>
         <section id="home-guest-list" class="home-guest-list" aria-labelledby="company-statistics-title" aria-live="polite" hidden></section>
         <section id="unassigned-anchor" class="unassigned-anchor" aria-label="未填写我司主播的订单" hidden><button id="unassigned-anchor-open" type="button"><span><strong>待归属订单</strong><span>补填我司主播后自动归类</span></span><span id="unassigned-anchor-count"></span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></button></section>
         <details id="own-anchor-totals" class="own-anchor-totals" hidden><summary><span>我司主播汇总</span><span id="own-anchor-totals-copy"></span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></summary><section id="anchor-month-summary" class="anchor-month-summary" aria-label="我司主播月度订单汇总" aria-live="polite"></section></details>
+        </div>
       </section>
       <section id="arrival-reminders" class="arrival-reminders" data-design="9" aria-labelledby="arrival-title" hidden>
         <div class="arrival-heading"><h2 id="arrival-title">入住提醒</h2><span id="arrival-overview" class="arrival-overview"></span><div class="arrival-switch" role="group" aria-label="查看入住提醒">

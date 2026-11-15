@@ -29,6 +29,10 @@
   --layer-page: 20;
   --layer-toast: 30;
   --ease: cubic-bezier(.32, .72, 0, 1);
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --motion-feedback: 120ms;
+  --motion-content: 200ms;
+  --motion-selection: 240ms;
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -306,7 +310,9 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 .import-section > .import-note { margin-top: 12px; font-size: var(--caption); text-align: center; }
 .confirm-dialog { position: fixed; inset: 0; width: min(300px, calc(100vw - 48px)); max-height: calc(100dvh - 48px); overflow: auto; margin: auto; padding: 0; border: 0; border-radius: var(--radius-group); color: var(--ink); background: var(--surface); }
 .confirm-dialog::backdrop { background: #101a2b50; }
-.confirm-dialog[open] { animation: confirm-in 160ms var(--ease); }
+.confirm-dialog[open] { animation: confirm-in 200ms var(--ease-out); }
+.confirm-dialog::backdrop { animation: confirm-backdrop-in 180ms ease-out; }
+.confirm-dialog[data-closing="true"]::backdrop { animation: confirm-backdrop-out 140ms ease-out forwards; }
 .confirm-copy { padding: 24px 20px; text-align: center; }
 .confirm-copy h2 { font-size: 1.0625rem; font-weight: 600; }
 .confirm-copy p { margin-top: 8px; color: var(--secondary); font-size: var(--caption); line-height: 1.7; overflow-wrap: anywhere; }
@@ -315,7 +321,9 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 .confirm-actions button + button { border-left: 1px solid var(--line); font-weight: 600; }
 .confirm-dialog[data-destructive="true"] #confirm-accept { color: var(--danger); }
 .confirm-actions button:active { background: var(--control); }
-@keyframes confirm-in { from { opacity: 0; transform: scale(1.035); } to { opacity: 1; transform: scale(1); } }
+@keyframes confirm-in { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes confirm-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes confirm-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
 .toast { position: fixed; z-index: var(--layer-toast); right: 20px; bottom: calc(96px + env(safe-area-inset-bottom)); left: 20px; display: flex; width: max-content; max-width: calc(100vw - 40px); align-items: center; gap: 8px; margin: 0 auto; padding: 12px 18px; border-radius: 12px; color: #fff; background: #21314a; font-size: .875rem; opacity: 0; pointer-events: none; transform: translateY(8px); transition: transform 180ms var(--ease), opacity 180ms ease; }
 .toast .icon { width: 18px; height: 18px; }
 .toast.show { opacity: 1; transform: translateY(0); }
@@ -588,3 +596,23 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 .company-financial-row .company-row-heading { align-items: flex-start; }
 .company-financial-row .company-total { flex: none; padding-top: 3px; }
 @media (max-width: 359px) { .company-financial-row { padding: 14px 12px; } .company-row-main { gap: 10px; } .company-month-revenue { gap: 8px 12px; } }
+
+/* Motion stays local to the control or content that changed. */
+.navigation-underlay-moving { will-change: transform; }
+[data-content-motion="running"] { will-change: transform, opacity; }
+.directory-results, .disclosure-body { min-width: 0; }
+.disclosure-body { display: flow-root; }
+.directory-modes { position: relative; isolation: isolate; }
+.directory-modes::before { content: ""; position: absolute; z-index: 0; inset: 4px auto 4px 4px; width: calc((100% - 12px) / 2); border-radius: 9px; background: var(--surface); box-shadow: 0 1px 4px #17233c0d; transform: translateX(calc(var(--directory-index, 0) * 100% + var(--directory-index, 0) * 4px)); transition: transform var(--motion-selection) var(--ease-out); pointer-events: none; }
+.directory-modes button { position: relative; z-index: 1; min-width: 0; transition: color var(--motion-feedback) ease-out, opacity var(--motion-feedback) ease-out; }
+.directory-modes button[aria-pressed="true"] { background: transparent; box-shadow: none; }
+.filter-selection { transition-timing-function: var(--ease-out); transition-duration: var(--motion-selection); }
+.own-company-settings .chevron, .own-anchor-totals .chevron, .company-billing > summary .chevron { transition: transform var(--motion-content) var(--ease-out); }
+:is(.own-company-settings, .own-anchor-totals, .company-billing)[data-disclosure-state="closing"] > summary .chevron { transform: rotate(0deg); }
+.primary-button { transition: transform var(--motion-feedback) var(--ease-out), background-color var(--motion-feedback) ease-out, opacity var(--motion-feedback) ease-out; }
+.primary-button:active:not(:disabled) { transform: scale(.985); opacity: .88; }
+.toast { transition: transform 220ms var(--ease-out), opacity 160ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .primary-button:active:not(:disabled) { transform: none; }
+  .navigation-underlay-moving, [data-content-motion="running"] { will-change: auto; }
+}

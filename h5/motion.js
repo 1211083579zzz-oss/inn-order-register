@@ -5,7 +5,10 @@
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
     const session = `inn-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const views = new Map(overlays.map(view => [view.id, view]));
-    const ease = 'cubic-bezier(.32,.72,0,1)';
+    const ease = 'cubic-bezier(.22,1,.36,1)';
+    const frames = new WeakMap();
+    const movingLayers = new Set();
+    let dragFrame = 0;
     let active = null;
     let savedFocus;
     let savedScroll = 0;
@@ -44,17 +47,25 @@
       // WeChat chrome can reduce the usable viewport without opening a keyboard.
       // Keep the existing layout during pinch zoom so zooming does not reflow the form.
       if (viewport && Math.abs(viewport.scale - 1) > .01) return;
-      active.style.setProperty('--visual-height', `${Math.max(1, viewport?.height || innerHeight)}px`);
-      active.style.setProperty('--visual-top', `${viewport?.offsetTop || 0}px`);
+      const height = `${Math.max(1, viewport?.height || innerHeight)}px`;
+      const top = `${viewport?.offsetTop || 0}px`;
+      if (active.style.getPropertyValue('--visual-height') !== height) active.style.setProperty('--visual-height', height);
+      if (active.style.getPropertyValue('--visual-top') !== top) active.style.setProperty('--visual-top', top);
+    }
+
+    function measure(view) {
+      const sheet = view.dataset.presentation === 'sheet';
+      const panel = view.querySelector('.page-panel');
+      const frame = { sheet, distance: sheet ? panel.offsetHeight + 24 : panel.offsetWidth, parallax: innerWidth < 700 ? Math.min(innerWidth, 640) * .22 : 0 };
+      frames.set(view, frame);
+      return frame;
     }
 
     function geometry(view, progress) {
-      const sheet = view.dataset.presentation === 'sheet';
-      const mobile = innerWidth < 700;
-      const distance = sheet ? view.querySelector('.page-panel').offsetHeight + 24 : view.querySelector('.page-panel').offsetWidth;
+      const { sheet, distance, parallax } = frames.get(view) || measure(view);
       return {
         panel: sheet ? `translate3d(0,${distance * progress}px,0)` : `translate3d(${distance * progress}px,0,0)`,
-        home: sheet ? `translate3d(0,${8 * (1 - progress)}px,0) scale(${1 - .035 * (1 - progress)})` : `translate3d(${-Math.min(innerWidth, 960) * (mobile ? .27 : 0) * (1 - progress)}px,0,0)`,
+        home: sheet ? `translate3d(0,${8 * (1 - progress)}px,0) scale(${1 - .025 * (1 - progress)})` : `translate3d(${-parallax * (1 - progress)}px,0,0)`,
         shade: (sheet ? .24 : .12) * (1 - progress)
       };
     }
@@ -71,14 +82,31 @@
       generation += 1;
       animations.forEach(animation => animation.cancel());
       animations = [];
+      movingLayers.forEach(layer => layer.classList.remove('navigation-underlay-moving'));
+      movingLayers.clear();
+    }
+
+    function markMoving(view) {
+      const layer = underlay(view);
+      layer.classList.add('navigation-underlay-moving');
+      movingLayers.add(layer);
+    }
+
+    function clearGesture() {
+      cancelAnimationFrame(dragFrame);
+      dragFrame = 0;
+      if (gesture && active?.hasPointerCapture(gesture.id)) active.releasePointerCapture(gesture.id);
+      gesture = null;
     }
 
     function animate(view, from, to, duration, state, done) {
       stopAnimations();
+      measure(view);
       const token = generation;
       view.dataset.state = state;
       setProgress(view, to);
-      if (reducedMotion.matches) { done(); return; }
+      if (reducedMotion.matches || document.hidden) { done(); return; }
+      markMoving(view);
       const first = geometry(view, from);
       const last = geometry(view, to);
       const options = { duration, easing: ease, fill: 'none' };
@@ -90,6 +118,8 @@
       Promise.all(animations.map(animation => animation.finished)).then(() => {
         if (token !== generation) return;
         animations = [];
+        movingLayers.forEach(layer => layer.classList.remove('navigation-underlay-moving'));
+        movingLayers.clear();
         done();
       }).catch(() => { /* A new drag, resize, or reduced-motion preference owns the next frame. */ });
     }
@@ -106,6 +136,7 @@
     }
 
     function finishClose(view) {
+      clearGesture();
       stopAnimations();
       const entry = stack.pop();
       view.hidden = true;
@@ -152,14 +183,14 @@
       if (!fromHistory) history.pushState({ ...history.state, innSession: session, innView: id, innStack: stack.map(entry => ({ id: entry.id, context: entry.context })), innConfirm: null }, '');
       announce();
       view.querySelector('h2').focus({ preventScroll: true });
-      animate(view, 1, 0, view.dataset.presentation === 'sheet' ? 380 : 360, 'opening', () => { view.dataset.state = 'open'; reconcileHistory(); });
+      animate(view, 1, 0, view.dataset.presentation === 'sheet' ? 340 : 320, 'opening', () => { view.dataset.state = 'open'; reconcileHistory(); });
     }
 
     function visibleProgress(view) {
       const panel = view.querySelector('.page-panel');
       const matrix = new DOMMatrixReadOnly(getComputedStyle(panel).transform);
-      const sheet = view.dataset.presentation === 'sheet';
-      return Math.max(0, Math.min(1, (sheet ? matrix.m42 : matrix.m41) / (sheet ? panel.offsetHeight + 24 : panel.offsetWidth)));
+      const { sheet, distance } = frames.get(view) || measure(view);
+      return Math.max(0, Math.min(1, (sheet ? matrix.m42 : matrix.m41) / distance));
     }
 
     function close(id, fromHistory = false, fromProgress = null) {
@@ -172,8 +203,8 @@
       }
       document.activeElement?.blur();
       view.inert = true;
-      gesture = null;
-      animate(view, progress, 1, Math.max(160, 300 * (1 - progress)), 'closing', () => finishClose(view));
+      clearGesture();
+      animate(view, progress, 1, Math.max(120, (view.dataset.presentation === 'sheet' ? 240 : 260) * (1 - progress)), 'closing', () => finishClose(view));
     }
 
     function startGesture(event) {
@@ -181,7 +212,8 @@
       const sheet = active.dataset.presentation === 'sheet';
       const target = event.target;
       if (sheet ? !target.closest('.sheet-grabber, .view-nav') || target.closest('button') : event.clientX > 28 || target.closest('input, textarea, select, button, a')) return;
-      gesture = { id: event.pointerId, x: event.clientX, y: event.clientY, previous: sheet ? event.clientY : event.clientX, time: performance.now(), velocity: 0, progress: 0, dragging: false, sheet };
+      const frame = measure(active);
+      gesture = { id: event.pointerId, x: event.clientX, y: event.clientY, previous: sheet ? event.clientY : event.clientX, time: performance.now(), velocity: 0, progress: 0, dragging: false, sheet, distance: frame.distance };
     }
 
     function moveGesture(event) {
@@ -194,6 +226,7 @@
         gesture.dragging = true;
         active.setPointerCapture(event.pointerId);
         active.dataset.state = 'dragging';
+        markMoving(active);
       }
       if (event.cancelable) event.preventDefault();
       const position = gesture.sheet ? event.clientY : event.clientX;
@@ -202,17 +235,19 @@
       if (elapsed > 0) gesture.velocity = (position - gesture.previous) / elapsed;
       gesture.previous = position;
       gesture.time = now;
-      const distance = gesture.sheet ? active.querySelector('.page-panel').offsetHeight + 24 : active.querySelector('.page-panel').offsetWidth;
-      gesture.progress = Math.max(0, Math.min(1, main / distance));
-      setProgress(active, gesture.progress);
+      gesture.progress = Math.max(0, Math.min(1, main / gesture.distance));
+      if (!dragFrame) dragFrame = requestAnimationFrame(() => {
+        dragFrame = 0;
+        if (gesture?.dragging && active) setProgress(active, gesture.progress);
+      });
     }
 
     function endGesture(event, canceled = false) {
       if (!gesture || event.pointerId !== gesture.id || !active) return;
       const drag = gesture;
-      gesture = null;
+      clearGesture();
       if (!drag.dragging) return;
-      if (active.hasPointerCapture(event.pointerId)) active.releasePointerCapture(event.pointerId);
+      setProgress(active, drag.progress);
       skipClick = true;
       setTimeout(() => { skipClick = false; }, 0);
       const recentVelocity = performance.now() - drag.time < 100 ? drag.velocity : 0;
@@ -220,7 +255,7 @@
         close(active.id, false, drag.progress);
       } else {
         const view = active;
-        animate(view, drag.progress, 0, 260, 'settling', () => { view.dataset.state = 'open'; });
+        animate(view, drag.progress, 0, Math.max(140, 220 * Math.sqrt(drag.progress)), 'settling', () => { view.dataset.state = 'open'; reconcileHistory(); });
       }
     }
 
@@ -242,20 +277,31 @@
     });
     window.addEventListener('resize', () => {
       if (!active) return;
+      const view = active;
+      const state = view.dataset.state;
+      const progress = visibleProgress(view);
       syncViewport();
-      if (active.dataset.state === 'closing') { finishClose(active); return; }
-      stopAnimations();
-      gesture = null;
-      setProgress(active, 0);
-      active.dataset.state = 'open';
+      clearGesture();
+      if (state === 'closing') animate(view, progress, 1, Math.max(100, 240 * (1 - progress)), 'closing', () => finishClose(view));
+      else if (state !== 'open') animate(view, progress, 0, Math.max(100, 260 * progress), 'settling', () => { view.dataset.state = 'open'; reconcileHistory(); });
+      else { stopAnimations(); measure(view); setProgress(view, 0); }
     });
     window.visualViewport?.addEventListener('resize', syncViewport);
     window.visualViewport?.addEventListener('scroll', syncViewport);
     reducedMotion.addEventListener('change', () => {
       if (!active || !reducedMotion.matches) return;
       if (active.dataset.state === 'closing') finishClose(active);
-      else { stopAnimations(); gesture = null; setProgress(active, 0); active.dataset.state = 'open'; }
+      else { clearGesture(); stopAnimations(); setProgress(active, 0); active.dataset.state = 'open'; reconcileHistory(); }
     });
+
+    function settleBackground() {
+      if (!active) return;
+      if (active.dataset.state === 'closing') finishClose(active);
+      else { clearGesture(); stopAnimations(); setProgress(active, 0); active.dataset.state = 'open'; reconcileHistory(); }
+    }
+    window.addEventListener('pagehide', settleBackground);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) settleBackground(); });
+    window.addEventListener('pageshow', syncViewport);
 
     return { open, close };
   };
