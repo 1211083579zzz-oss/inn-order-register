@@ -197,7 +197,7 @@
   }
 
   function periodCaption() {
-    return fundsPeriod.key === 'all' ? '全部日期 · 按登记日期统计' : `${fundsPeriod.start.replace(/-/g, '.')} — ${fundsPeriod.end.replace(/-/g, '.')} · 按登记日期`;
+    return fundsPeriod.key === 'all' ? '全部日期' : `${fundsPeriod.start.replace(/-/g, '.')} — ${fundsPeriod.end.replace(/-/g, '.')}`;
   }
 
   function periodAnchorGroups() {

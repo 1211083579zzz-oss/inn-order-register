@@ -1,20 +1,27 @@
 (function () {
   'use strict';
   const element = id => document.getElementById(id);
+  const updateText = (id, value) => { const node = element(id); if (node.textContent !== value) node.textContent = value; };
   const message = value => { element('sync-error').textContent = value; element('sync-error').hidden = !value; };
   const labels = { unconfigured: '同步服务尚未连接，本机记录正常保存', local: '当前仅保存在本机', syncing: '正在汇总各设备登记…', pending: '已保存在本机，等待汇总同步', synced: '已汇总同步', conflict: '有同时修改的内容需要确认', error: '修改已保存在本机，同步暂未完成' };
-  let busy = false, lastConflictView = '';
+  let busy = false, lastConflictView = '', homeSyncIssue = '';
   const client = window.InnCloudSync.createClient({
     storage: localStorage, endpoint: window.InnCloudConfig.endpoint,
     onChange() { window.dispatchEvent(new CustomEvent('innsyncdata')); },
     onStatus(status) {
       const time = status.lastSync && new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit' }).format(new Date(status.lastSync));
       element('sync-status').textContent = (status.message || labels[status.state]) + (status.state === 'synced' && time ? ' · ' + time : '');
-      element('device-storage-label').textContent = !status.connected ? '本机保存' : status.state === 'synced' ? '已同步' : status.state === 'conflict' ? '待确认' : '本机已存';
+      const conflicts = status.conflicts || [];
+      // Keep attention states visible until a successful sync, including during retries.
+      if (!status.connected) homeSyncIssue = '';
+      else if (conflicts.length || status.state === 'conflict') homeSyncIssue = 'conflict';
+      else if (status.state === 'error') homeSyncIssue = 'error';
+      else if (status.state === 'synced') homeSyncIssue = '';
+      updateText('device-storage-label', !status.connected ? '本机保存' : homeSyncIssue === 'conflict' ? '待确认' : homeSyncIssue === 'error' ? '同步异常' : '自动同步');
       const totals = `${status.companyCount || 0} 家公司 · ${status.recordCount || 0} 条登记`;
       const shared = element('shared-data-summary');
-      shared.hidden = !status.connected;
-      shared.textContent = status.state === 'synced' ? `共享汇总 · ${totals}` : status.state === 'conflict' ? `共享汇总 · ${totals} · 有修改待确认` : `${totals} · ${status.state === 'syncing' ? '正在汇总' : '等待汇总同步'}`;
+      if (shared.hidden !== !status.connected) shared.hidden = !status.connected;
+      updateText('shared-data-summary', `共享汇总 · ${totals}${homeSyncIssue === 'conflict' ? ' · 有修改待确认' : homeSyncIssue === 'error' ? ' · 同步暂未完成' : ''}`);
       element('sync-space-name').textContent = status.spaceId ? `共享空间 ${status.spaceId}` : '共享空间';
       element('sync-data-summary').textContent = `当前共 ${totals}。公司分类、主播统计和订单明细均显示合并后的记录。`;
       element('sync-space-name').hidden = !status.connected;
@@ -22,7 +29,6 @@
       element('sync-connected').hidden = !status.connected;
       element('sync-description').hidden = Boolean(status.connected);
       if (status.connected) element('sync-join-form').hidden = true;
-      const conflicts = status.conflicts || [];
       element('sync-conflicts').hidden = !conflicts.length;
       const signature = JSON.stringify(conflicts);
       if (signature !== lastConflictView) {
