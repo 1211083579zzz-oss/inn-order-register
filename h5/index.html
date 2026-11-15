@@ -9,7 +9,7 @@
   <meta name="description" content="按旅居公司分类查看住客与入住安排，直接登记、本机保存与加密同步。">
   <title>住宿登记</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=nav-actions-32">
+  <link rel="stylesheet" href="./styles.css?v=home-funds-34">
   <script src="./arrivals.js?v=month-20" defer></script>
   <script src="./money.js?v=general-polish-30" defer></script>
   <link rel="stylesheet" href="./bills.css?v=general-polish-30">
@@ -20,11 +20,11 @@
   <script src="./sync-client.js?v=shared-19" defer></script>
   <script src="./motion.js?v=motion-polish-31" defer></script>
   <script src="./feedback.js?v=motion-polish-31" defer></script>
-  <script src="./app.js?v=anchor-workflow-33" defer></script>
+  <script src="./app.js?v=home-funds-34" defer></script>
   <script src="./sync-ui.js?v=general-polish-30" defer></script>
   <script src="./bills-owner.js?v=general-polish-30" defer></script>
 </head>
-<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22" data-commission="23" data-anchor-commission="24" data-company-bills="25" data-own-anchors="26" data-compact-bills="27" data-guest-status="28" data-own-company="29" data-general-polish="30" data-motion-polish="31" data-nav-actions="32" data-anchor-workflow="33">
+<body data-experience="13" data-home-design="14" data-save-fix="15" data-save-reliability="16" data-guest-orders="17" data-anchor-choice="18" data-shared-summary="19" data-anchor-month="20" data-revenue="21" data-date-entry="22" data-commission="23" data-anchor-commission="24" data-company-bills="25" data-own-anchors="26" data-compact-bills="27" data-guest-status="28" data-own-company="29" data-general-polish="30" data-motion-polish="31" data-nav-actions="32" data-anchor-workflow="33" data-home-funds="34">
   <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-7m18 7v-7M3 14h18M5 10V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 14v-3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3M8 7.5h2m4 0h2"/></symbol>
     <symbol id="i-backup" viewBox="0 0 24 24"><path d="M5 8H3V3m0 5a9 9 0 1 1-1 7M12 7v5l3 2"/></symbol>
@@ -63,9 +63,13 @@
             <form id="own-company-form" novalidate><label class="visually-hidden" for="own-company-name">我司名称</label><div class="own-company-input-row"><input id="own-company-name" type="text" maxlength="80" autocomplete="organization" placeholder="填写我司完整名称" aria-describedby="own-company-help own-company-error"><button id="save-own-company" type="submit">保存名称</button></div><p id="own-company-help">订单公司名称与此一致，自动计入我司主播；其他公司分别计入各自账单。</p><p id="own-company-error" role="alert" hidden></p></form>
           </details>
           <p id="own-anchor-note" class="own-anchor-note" hidden>订单从“旅居公司”统一登记，这里按我司主播自动汇总订单和提点。</p>
-          <div id="anchor-period" class="anchor-period" hidden><label for="anchor-month">登记月份</label><input id="anchor-month" type="month" aria-label="我司主播订单登记月份" aria-describedby="anchor-period-note"><button id="anchor-current-month" type="button" aria-pressed="true">本月</button><button id="anchor-all-months" type="button" aria-pressed="false">全部月份</button><p id="anchor-period-note" class="visually-hidden">按登记时间统计，仅统计公司名称与我司名称一致的订单，按登记时间和主播姓名汇总。</p></div>
+          <section id="home-funds" class="home-funds" aria-labelledby="funds-title" aria-describedby="funds-scope funds-note" hidden>
+            <div class="funds-heading"><h2 id="funds-title">资金统计</h2><span data-funds-order-count></span></div>
+            <div id="anchor-period" class="anchor-period"><label for="anchor-month" class="visually-hidden">登记月份</label><input id="anchor-month" type="month" aria-label="资金统计登记月份" aria-describedby="anchor-period-note"><button id="anchor-current-month" type="button" aria-pressed="true">本月</button><button id="anchor-all-months" type="button" aria-pressed="false">累计</button><p id="anchor-period-note" class="visually-hidden">按订单登记日期选择月份，不按入住日期。累计包括全部登记月份；搜索只查找分类，不改变资金总计。</p></div>
+            <dl id="funds-amounts" class="funds-amounts" aria-label="收款、提点及净收益" aria-live="polite"></dl>
+            <p id="funds-scope" class="funds-scope"></p><p id="funds-note" class="funds-note" hidden></p>
+          </section>
           <div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="company-query" type="search" aria-label="搜索旅居公司或住客" placeholder="搜索公司或住客" autocomplete="off" enterkeyhint="search"><button id="clear-company-query" class="clear-search" type="button" aria-label="清空公司搜索" hidden><svg class="icon"><use href="#i-close"/></svg></button></div>
-          <div class="filters" role="group" aria-label="按住客入住状态筛选"><span id="directory-filter-selection" class="filter-selection" aria-hidden="true"></span><button class="filter active" type="button" data-home-filter="all" aria-pressed="true">全部</button><button class="filter" type="button" data-home-filter="upcoming" aria-pressed="false">待入住</button><button class="filter" type="button" data-home-filter="staying" aria-pressed="false">入住中</button><button class="filter" type="button" data-home-filter="finished" aria-pressed="false">已离店</button></div>
         </div>
         <div id="home-onboarding" class="home-onboarding" hidden>
           <section class="first-order" aria-labelledby="first-order-title">
@@ -82,11 +86,10 @@
           </section>
         </div>
         <div id="directory-results" class="directory-results">
+        <details id="own-anchor-totals" class="own-anchor-totals funds-duration" hidden><summary><span>按入住时长查看</span><span id="own-anchor-totals-copy">7天 · 14天 · 满月</span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></summary><section id="anchor-month-summary" class="funds-duration-body" aria-label="所选登记月份的入住时长分类" aria-live="polite"></section></details>
         <div id="home-directory-heading" class="list-heading" hidden><h2 id="company-statistics-title">公司分类</h2><span id="company-count" role="status"></span></div>
         <div id="company-list" class="company-list" aria-label="旅居公司分类" aria-live="polite"></div>
-        <section id="home-guest-list" class="home-guest-list" aria-labelledby="company-statistics-title" aria-live="polite" hidden></section>
         <section id="unassigned-anchor" class="unassigned-anchor" aria-label="未填写我司主播的订单" hidden><button id="unassigned-anchor-open" type="button"><span><strong>待归属订单</strong><span>补填我司主播后自动归类</span></span><span id="unassigned-anchor-count"></span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></button></section>
-        <details id="own-anchor-totals" class="own-anchor-totals" hidden><summary><span>我司主播汇总</span><span id="own-anchor-totals-copy"></span><svg class="icon chevron" aria-hidden="true"><use href="#i-chevron"/></svg></summary><section id="anchor-month-summary" class="anchor-month-summary" aria-label="我司主播月度订单汇总" aria-live="polite"></section></details>
         </div>
       </section>
       <section id="arrival-reminders" class="arrival-reminders" data-design="9" aria-labelledby="arrival-title" hidden>

@@ -514,6 +514,7 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 #own-anchor-totals-copy { color: var(--secondary); font-weight: 400; overflow-wrap: anywhere; }
 .own-anchor-totals > summary .chevron { flex: none; width: 16px; height: 16px; color: var(--secondary); }
 .own-anchor-totals[open] > summary .chevron { transform: rotate(90deg); }
+
 .own-anchor-totals > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: var(--radius-group); }
 .own-anchor-totals .anchor-month-summary { margin: 0; padding-top: 4px; }
 .unassigned-anchor { margin-top: 16px; }
@@ -615,4 +616,63 @@ legend { display: flex; align-items: center; gap: 8px; width: 100%; margin-botto
 @media (prefers-reduced-motion: reduce) {
   .primary-button:active:not(:disabled) { transform: none; }
   .navigation-underlay-moving, [data-content-motion="running"] { will-change: auto; }
+}
+
+/* Both directories share a small monthly ledger; detailed breakdowns stay closed. */
+.home-funds { margin: 0 0 16px; padding: 14px 16px; border-radius: var(--radius-group); background: var(--surface); }
+.funds-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.funds-heading h2 { font-size: 1rem; font-weight: 650; }
+.funds-heading > span { color: var(--secondary); font-size: var(--caption); font-variant-numeric: tabular-nums; }
+.home-funds .anchor-period { flex-wrap: nowrap; gap: 4px; margin: 6px 0 10px; }
+.home-funds .anchor-period input { min-width: 110px; width: 130px; padding: 6px 0; background: transparent; }
+.home-funds .anchor-period button { flex: none; padding: 6px 10px; }
+.funds-amounts, .directory-money { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; margin: 0; }
+.funds-amounts > div, .directory-money > span { min-width: 0; }
+.funds-amounts dt, .directory-money > span > span { display: block; color: var(--secondary); font-size: var(--caption); line-height: 1.6; }
+.funds-amounts dd { margin: 4px 0 0; font-size: 1rem; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1.5; overflow-wrap: anywhere; }
+.funds-amounts > div:last-child dd, .directory-money [data-directory-net] { color: var(--blue); }
+.funds-amounts dd.amount-negative, .directory-money .amount-negative { color: var(--danger); }
+.funds-scope, .funds-note { margin-top: 10px; color: var(--secondary); font-size: var(--caption); line-height: 1.6; overflow-wrap: anywhere; }
+.funds-note { margin-top: 6px; }
+.directory-funds-row { display: flex; min-height: 0; flex-direction: column; align-items: stretch; gap: 0; padding: 14px 16px; }
+.directory-funds-row .company-row-main { display: flex; align-items: center; gap: 10px; }
+.directory-funds-row .company-symbol { width: 36px; height: 36px; border-radius: 10px; font-size: 1rem; }
+.directory-funds-row .company-row-heading { align-items: center; }
+.directory-funds-row .company-row-heading > strong { font-size: 1.0625rem; }
+.directory-funds-row .company-total { font-size: var(--caption); font-weight: 400; }
+.directory-funds-row .directory-money { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.directory-money b { display: block; margin-top: 3px; color: var(--ink); font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.5; overflow-wrap: anywhere; }
+.directory-funds-row + .directory-funds-row::before { left: 16px; right: 16px; }
+.funds-duration { margin: 0 0 16px; }
+.funds-duration > summary { min-height: 48px; padding: 10px 14px; font-weight: 500; }
+.funds-duration-body { padding: 0 14px 14px; }
+.funds-duration .package-counts { display: block; margin: 0; padding: 0; border-top: 0; }
+.funds-duration .package-counts > div { display: grid; grid-template-columns: 1fr auto; align-items: baseline; column-gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
+.funds-duration .package-counts dd { margin: 0; font-size: 1rem; }
+.funds-duration .package-counts .package-money { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px 10px; margin-top: 8px; }
+.funds-duration .package-money > span { grid-row: 1; }
+.funds-duration .package-money > strong { grid-row: 2; }
+.funds-duration .package-money > strong + span { margin: 0; }
+.funds-duration-note { margin-top: 6px; color: var(--secondary); font-size: var(--caption); line-height: 1.6; }
+body[data-home-funds] .directory-empty { min-height: 180px; padding: 28px 12px; }
+@media (max-width: 359px) {
+  .home-funds { padding: 12px; }
+  .funds-amounts, .directory-money { gap: 6px; }
+  .funds-amounts dd { font-size: .9375rem; }
+  .directory-funds-row { padding: 12px; }
+  .directory-funds-row .company-row-heading { flex-wrap: wrap; gap: 2px 8px; }
+  .directory-funds-row .company-row-heading > strong { flex-basis: 100%; }
+  .directory-money b { font-size: .9375rem; }
+}
+
+.funds-large-amounts { grid-template-columns: 1fr; gap: 8px; }
+.funds-amounts.funds-large-amounts > div, .directory-money.funds-large-amounts > span { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.funds-large-amounts dd, .funds-large-amounts b { margin: 0; text-align: right; }
+@supports (container-type: inline-size) {
+  .home-funds, .directory-funds-row { container-type: inline-size; }
+  @container (max-width: 17rem) {
+    .funds-amounts, .directory-money { grid-template-columns: 1fr; gap: 8px; }
+    .funds-amounts > div, .directory-money > span { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .funds-amounts dd, .directory-money b { margin: 0; text-align: right; }
+  }
 }

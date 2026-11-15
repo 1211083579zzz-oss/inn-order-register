@@ -25,7 +25,6 @@
   const feedback = window.InnFeedback;
   let selectedCompanyId = null;
   let companyFilter = 'all';
-  let homeFilter = 'all';
   const confirmation = document.querySelector('#confirm-dialog');
   let pendingConfirmation;
   let confirmationOpener;
@@ -202,10 +201,38 @@
     return `<span class="anchor-commission-total"><span>提点合计</span><b data-anchor-commission data-cents="${commissions.amount}">${escapeHtml(money.commissionDisplay(commissions))}</b></span><span class="anchor-revenue-line"><span>收款 <b data-anchor-income data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</b></span><span>净收益 <b data-anchor-net data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</b></span></span>${commissions.pendingCount ? `<span class="anchor-custom-line">${commissions.pendingCount} 单待补提点</span>` : ''}${commissions.legacyCount ? `<span class="anchor-custom-line">${commissions.legacyCount} 单历史支出未计入提点</span>` : ''}`;
   }
 
-  function companyMonthlyRevenue(orders) {
-    const monthOrders = orders.filter(order => window.InnStorage.registrationMonth(order) === today.slice(0, 7));
-    const summary = money.summarize(monthOrders);
-    return `<span class="company-month-revenue"><span><span class="company-money-label">本月收入</span><b data-company-month-income data-cents="${summary.income}">${escapeHtml(money.display(summary, 'income'))}</b></span><span><span class="company-money-label">净收益</span><b data-company-month-net data-cents="${summary.net}" class="${summary.net < 0 ? 'amount-negative' : ''}">${escapeHtml(money.display(summary, 'net'))}</b></span></span>${summary.pendingCount ? `<span class="company-money-pending">${summary.pendingCount} 单金额待补</span>` : ''}`;
+  function periodOrders(orders) {
+    return anchorMonth ? orders.filter(order => window.InnStorage.registrationMonth(order) === anchorMonth) : orders;
+  }
+
+  function directoryRevenue(orders, anchors) {
+    const summary = money.summarize(orders), commissions = money.summarizeCommission(orders);
+    const names = anchors ? ['data-anchor-income', 'data-anchor-commission', 'data-anchor-net'] : ['data-company-month-income', 'data-company-month-commission', 'data-company-month-net'];
+    const amounts = [['income', '收款', summary.income, money.display(summary, 'income')], ['commission', '提点', commissions.amount, money.commissionDisplay(commissions)], ['net', '净收益', summary.net, money.display(summary, 'net')]];
+    return `<span class="directory-money${amounts.some(item => item[3].length > 10) ? ' funds-large-amounts' : ''}">${amounts.map(([key, label, cents, value], index) => `<span><span>${label}</span><b data-directory-${key} ${names[index]} data-cents="${cents}" class="${key === 'net' && cents < 0 ? 'amount-negative' : ''}">${escapeHtml(value)}</b></span>`).join('')}</span>${summary.pendingCount ? `<span class="company-money-pending">${summary.pendingCount} 单金额待补</span>` : ''}`;
+  }
+
+  function renderHomeFunds(data) {
+    const anchors = directoryMode === 'anchors';
+    const ownOrders = anchors ? periodOrders(window.InnStorage.ownOrders(data)) : [];
+    const pending = ownOrders.filter(order => !window.InnStorage.nameKey(order.anchorName));
+    const orders = anchors ? ownOrders.filter(order => window.InnStorage.nameKey(order.anchorName)) : periodOrders(data.orders);
+    const visible = data.orders.length > 0 || anchors && Boolean(store.ownCompanyName());
+    document.querySelector('#home-funds').hidden = !visible;
+    const summary = money.summarize(orders), commissions = money.summarizeCommission(orders);
+    const amounts = [['income', '收款', summary.income, money.display(summary, 'income')], ['commission', '提点', commissions.amount, money.commissionDisplay(commissions)], ['net', '净收益', summary.net, money.display(summary, 'net')]];
+    document.querySelector('[data-funds-order-count]').textContent = `${orders.length} 单`;
+    document.querySelector('#funds-amounts').innerHTML = amounts.map(([key, label, cents, value]) => `<div><dt>${label}</dt><dd data-funds-total="${key}" data-cents="${cents}" class="${key === 'net' && cents < 0 ? 'amount-negative' : ''}">${escapeHtml(value)}</dd></div>`).join('');
+    document.querySelector('#funds-amounts').classList.toggle('funds-large-amounts', amounts.some(item => item[3].length > 10));
+    document.querySelector('#funds-scope').textContent = `${anchorMonth ? '按登记月份统计' : '全部登记月份合计'}${anchors ? ' · 仅我司主播' + (pending.length ? ` · ${pending.length} 单待归属另列` : '') : ' · 所有公司'}`;
+    const notes = [];
+    if (summary.pendingCount) notes.push(`${summary.pendingCount} 单金额待补，合计暂不完整`);
+    if (commissions.legacyCount) notes.push(`历史支出 ${money.format(commissions.legacyCost)} 已扣除，不计入提点`);
+    document.querySelector('#funds-note').hidden = !notes.length;
+    document.querySelector('#funds-note').textContent = notes.join('；');
+    document.querySelector('#own-anchor-totals').hidden = !visible || !orders.length;
+    document.querySelector('#own-anchor-totals-copy').textContent = '7天 · 14天 · 满月';
+    document.querySelector('#anchor-month-summary').innerHTML = `${packageBreakdown(orders)}<p class="funds-duration-note">满月按入住日至下月对应日计算，月末取下月最后一天。净收益为收款扣除提点及历史支出。</p>`;
   }
 
   function updateRevenuePreview() {
@@ -228,7 +255,7 @@
   function renderArrivalReminders() {
     const data = store.read();
     const section = document.querySelector('#arrival-reminders');
-    section.hidden = !data.orders.length || homeFilter !== 'all';
+    section.hidden = !data.orders.length || directoryMode === 'anchors';
     if (section.hidden) return;
     const summary = window.InnArrivals.summarize(data, today);
     if (!summary[arrivalView].length && (summary.arrivals.length || summary.staying.length)) arrivalView = summary.arrivals.length ? 'arrivals' : 'staying';
@@ -303,33 +330,6 @@
         <div class="record-footer">${order.phone ? `<a class="phone-link" data-call href="tel:${encodeURIComponent(order.phone.replace(/[\s-]/g, ''))}" aria-label="拨打 ${escapeHtml(order.customerName)} 的电话 ${escapeHtml(order.phone)}">${icon('phone')}${escapeHtml(order.phone)}</a>` : '<span class="fee-empty">未填写电话</span>'}<button class="record-open" type="button" aria-label="编辑 ${escapeHtml(order.customerName)} 的登记">编辑${icon('chevron')}</button></div>
       </article>`;
     }).join('');
-  }
-
-  function renderHomeGuests(orders, companies, query) {
-    const heading = { upcoming: '待入住的住客', staying: '入住中的住客', finished: '已离店的住客' }[homeFilter];
-    const ownIds = new Set(store.ownOrders().map(order => order.id));
-    const companyName = order => companies.find(company => company.id === order.companyId)?.name || '未分类';
-    const visible = orders.filter(order => stayState(order).key === homeFilter && (!query || [order.customerName, order.phone, order.anchorName, companyName(order), order.hotelOrder, order.base, order.roomType, order.guestCount, order.arrivalDate, window.InnArrivals.departureDate(order)].join(' ').toLocaleLowerCase().includes(query))).sort((a, b) => {
-      const date = order => homeFilter === 'upcoming' ? order.arrivalDate : window.InnArrivals.departureDate(order);
-      const result = date(a).localeCompare(date(b));
-      return (homeFilter === 'finished' ? -result : result) || a.customerName.localeCompare(b.customerName, 'zh-CN');
-    });
-    document.querySelector('#company-statistics-title').textContent = heading;
-    document.querySelector('#company-count').textContent = `${visible.length} 条登记`;
-    const target = document.querySelector('#home-guest-list');
-    target.setAttribute('aria-label', heading);
-    target.innerHTML = visible.map(order => {
-      const departure = window.InnArrivals.departureDate(order);
-      return `<article class="home-guest-card" data-home-guest-id="${escapeHtml(order.id)}">
-        <div class="home-guest-heading"><h3>${escapeHtml(order.customerName || '未填写姓名')}</h3><span class="status status-${homeFilter}">${filterLabels[homeFilter]}</span></div>
-        <p class="home-guest-company">${icon('company')}<span>${escapeHtml(companyName(order))}</span></p>
-        <dl class="home-guest-dates"><div><dt>入住日期</dt><dd><time datetime="${escapeHtml(order.arrivalDate)}">${escapeHtml(order.arrivalDate.replace(/-/g, '.'))}</time></dd></div><div><dt>离店日期</dt><dd><time datetime="${escapeHtml(departure)}">${escapeHtml(departure.replace(/-/g, '.'))}</time></dd></div></dl>
-        <p class="home-guest-meta"><span>${escapeHtml(order.roomType || '房型待填')}</span><span>入住人数 ${escapeHtml(order.guestCount || '待填')}</span><span>${normalizeOrder(order).nights} 晚</span></p>
-        <p class="home-guest-anchor">${ownIds.has(order.id) ? '我司主播' : '登记主播'} · ${escapeHtml(order.anchorName || '未填写')}</p>
-        <p class="home-guest-location">${escapeHtml([order.base, order.hotelOrder].filter(Boolean).join(' · ') || '入住地点待填')}</p>
-        <div class="home-guest-footer">${order.phone ? `<a class="phone-link" href="tel:${encodeURIComponent(order.phone.replace(/[\s-]/g, ''))}" aria-label="拨打${escapeHtml(order.customerName)}的电话">${icon('phone')}${escapeHtml(order.phone)}</a>` : '<span class="home-guest-no-phone">电话待填</span>'}<button type="button" data-home-guest-open="${escapeHtml(order.id)}" aria-label="查看${escapeHtml(order.customerName)}的登记">查看登记${icon('chevron')}</button></div>
-      </article>`;
-    }).join('') || `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>没有符合条件的住客</h3><p>可切换入住状态，或调整搜索条件。</p><button type="button" class="empty-reset" data-home-guest-all>查看全部登记</button></div>`;
   }
 
   function counts(orders) {
@@ -427,93 +427,57 @@
   }
 
   function renderOverview() {
-    const data = store.read(), { companies, orders } = data;
-    const ownOrders = window.InnStorage.ownOrders(data);
+    const data = store.read(), anchors = directoryMode === 'anchors';
     renderOwnCompanySetting();
-    const activeCompanies = companies.filter(company => orders.some(order => order.companyId === company.id));
-    const summary = document.querySelector('#home-summary');
-    summary.hidden = !orders.length || directoryMode === 'anchors' || homeFilter !== 'all';
-    document.querySelector('#home-heading-detail').hidden = summary.hidden;
-    const homeRevenue = document.querySelector('#home-revenue');
-    homeRevenue.hidden = true;
-    const currentRevenue = money.summarize(ownOrders.filter(order => window.InnStorage.registrationMonth(order) === today.slice(0, 7)));
-    document.querySelector('#home-revenue-copy').textContent = `我司本月收入 ${money.display(currentRevenue, 'income')} · 净收益 ${money.display(currentRevenue, 'net')}`;
-    const anchorGroups = directoryMode === 'anchors' ? window.InnStorage.groupByAnchor(store.ownOrders(), anchorMonth).filter(group => group.id && group.orders.length) : [];
-    summary.textContent = directoryMode === 'anchors' ? `${anchorGroups.length} 个主播分类 · ${anchorMonth ? '所选月份' : '累计'} ${anchorGroups.reduce((sum, group) => sum + group.orders.length, 0)} 单` : `${activeCompanies.length} 家公司 · ${orders.length} 条入住登记`;
-    document.querySelector('#home-title').textContent = directoryMode === 'anchors' ? '我司主播' : homeFilter === 'all' ? '旅居公司' : '住客入住';
+    document.querySelector('#home-summary').hidden = true;
+    document.querySelector('#home-heading-detail').hidden = true;
+    document.querySelector('#home-revenue').hidden = true;
+    document.querySelector('#home-title').textContent = anchors ? '我司主播' : '旅居公司';
     document.querySelector('#directory-modes').hidden = false;
-    document.querySelector('#directory-modes').style.setProperty('--directory-index', directoryMode === 'anchors' ? 1 : 0);
+    document.querySelector('#directory-modes').style.setProperty('--directory-index', anchors ? 1 : 0);
     document.querySelectorAll('[data-directory-mode]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.directoryMode === directoryMode)));
-    document.querySelector('#anchor-period').hidden = directoryMode !== 'anchors' || !store.ownCompanyName();
-    document.querySelector('#own-anchor-note').hidden = directoryMode !== 'anchors';
-    document.querySelector('#own-anchor-totals').hidden = directoryMode !== 'anchors' || !store.ownCompanyName() || !anchorGroups.length || homeFilter !== 'all';
-    if (directoryMode === 'anchors') {
-      const ownOrders = anchorGroups.flatMap(group => group.orders);
-      renderMonthlySummary(document.querySelector('#anchor-month-summary'), ownOrders, `${anchorGroups.length} 位我司主播 · 按登记时间统计`);
-      document.querySelector('#own-anchor-totals-copy').textContent = `${anchorGroups.length} 位 · 提点 ${money.commissionDisplay(money.summarizeCommission(ownOrders))}`;
-    }
+    document.querySelector('#own-anchor-note').hidden = !anchors || Boolean(store.ownCompanyName());
     document.querySelector('#anchor-month').value = anchorMonth;
     document.querySelector('#anchor-all-months').setAttribute('aria-pressed', String(!anchorMonth));
     document.querySelector('#anchor-current-month').setAttribute('aria-pressed', String(anchorMonth === today.slice(0, 7)));
     const search = document.querySelector('#company-query');
-    search.placeholder = homeFilter !== 'all' ? '搜索住客、公司、主播或电话' : directoryMode === 'anchors' ? '搜索主播、住客或电话' : '搜索公司或住客';
-    search.setAttribute('aria-label', homeFilter !== 'all' ? '搜索住客及关联信息' : directoryMode === 'anchors' ? '搜索主播或住客' : '搜索旅居公司或住客');
-    document.querySelectorAll('[data-home-filter]').forEach(button => {
-      const selected = button.dataset.homeFilter === homeFilter;
-      button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected));
-    });
-    document.querySelector('#directory-filter-selection').style.setProperty('--selected-index', Object.keys(filterLabels).indexOf(homeFilter));
+    search.placeholder = anchors ? '搜索主播或住客' : '搜索公司或住客';
+    search.setAttribute('aria-label', anchors ? '搜索我司主播或住客' : '搜索旅居公司或住客');
+    renderHomeFunds(data);
   }
 
   function renderCompanies() {
-    const { companies, orders } = store.read();
-    const anchors = directoryMode === 'anchors';
+    const data = store.read(), { companies, orders } = data, anchors = directoryMode === 'anchors';
     const anchorGroups = anchors ? window.InnStorage.groupByAnchor(store.ownOrders(), anchorMonth) : [];
-    const groups = anchors ? anchorGroups.filter(group => group.id) : companies.map(company => ({ ...company, orders: orders.filter(order => order.companyId === company.id) })).filter(company => company.orders.length).sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
-    const unassigned = orders.filter(order => !companies.some(company => company.id === order.companyId));
+    const groups = anchors ? anchorGroups.filter(group => group.id && group.orders.length) : companies.map(company => ({ ...company, orders: periodOrders(orders.filter(order => order.companyId === company.id)) })).filter(company => company.orders.length).sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+    const unassigned = periodOrders(orders.filter(order => !companies.some(company => company.id === order.companyId)));
     if (!anchors && unassigned.length) groups.push({ id: '', name: '未分类', orders: unassigned });
-    const search = document.querySelector('#company-query');
-    const query = search.value.trim().toLocaleLowerCase();
-    const matchesGroup = company => {
-      const candidates = company.orders.filter(order => homeFilter === 'all' || stayState(order).key === homeFilter);
-      return candidates.length && (!query || company.name.toLocaleLowerCase().includes(query) || candidates.some(order => [order.customerName, order.phone, order.anchorName, order.hotelOrder, order.base, order.roomType, order.arrivalDate].join(' ').toLocaleLowerCase().includes(query)));
-    };
-    const visible = groups.filter(matchesGroup);
-    const pending = anchorGroups.find(group => !group.id);
+    const search = document.querySelector('#company-query'), query = search.value.trim().toLocaleLowerCase();
+    const matchesGroup = group => group.orders.length && (!query || group.name.toLocaleLowerCase().includes(query) || group.orders.some(order => [order.customerName, order.phone, order.anchorName, order.hotelOrder, order.base, order.roomType, order.arrivalDate].join(' ').toLocaleLowerCase().includes(query)));
+    const visible = groups.filter(matchesGroup), pending = anchorGroups.find(group => !group.id);
     document.querySelector('#unassigned-anchor').hidden = !anchors || !pending || !matchesGroup({ ...pending, name: '待归属订单' });
     document.querySelector('#unassigned-anchor-count').textContent = `${pending?.orders.length || 0} 单`;
     const empty = !orders.length && !anchors;
-    const guestView = homeFilter !== 'all';
     document.querySelector('#home-view').dataset.empty = String(empty);
     document.querySelector('#home-onboarding').hidden = !empty;
     document.querySelector('.home-toolbar').hidden = empty || anchors;
-    document.querySelector('#company-list').hidden = empty || guestView;
-    document.querySelector('#home-guest-list').hidden = empty || !guestView;
-    document.querySelector('#home-directory-heading').hidden = empty || (!anchors && homeFilter === 'all' && !query);
+    document.querySelector('#company-list').hidden = empty;
+    document.querySelector('#home-directory-heading').hidden = empty;
     document.querySelector('#company-directory-tools').hidden = empty;
     document.querySelector('#clear-company-query').hidden = !search.value;
     renderArrivalReminders();
-    if (guestView) {
-      document.querySelector('#company-list').innerHTML = '';
-      renderHomeGuests(anchors ? anchorGroups.flatMap(group => group.orders) : orders, companies, query);
-      return;
-    }
-    document.querySelector('#home-guest-list').innerHTML = '';
-    document.querySelector('#company-count').textContent = anchors ? `${visible.length} 位主播` : `${visible.length} 个分类`;
-    document.querySelector('#company-statistics-title').textContent = query ? '搜索结果' : anchors ? '主播名单' : '公司分类';
-    document.querySelector('#company-list').setAttribute('aria-label', anchors ? '我司主播分类' : '旅居公司分类');
-    document.querySelector('#company-list').classList.toggle('directory-is-empty', !visible.length);
-    document.querySelector('#company-list').innerHTML = visible.map(company => {
-      const summary = counts(company.orders);
-      const total = anchors ? `${anchorMonth === today.slice(0, 7) ? '本月' : anchorMonth ? Number(anchorMonth.slice(5)) + '月' : '累计'} ${summary.all} 单` : `${summary.all} 条登记`;
-      const financial = money.summarize(company.orders.filter(order => window.InnStorage.registrationMonth(order) === today.slice(0, 7)));
-      const financialLabel = `，本月收入 ${money.display(financial, 'income')}，净收益 ${money.display(financial, 'net')}${financial.pendingCount ? `，${financial.pendingCount} 单金额待补` : ''}`;
-      const identity = `<span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(company.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(company.name)}</strong><span class="company-total">${total}</span></span>${anchors ? anchorRevenue(company.orders) : `<span class="company-statistics">${companyStates(summary)}</span>${nextArrival(company.orders)}`}</span>${icon('chevron', 'chevron')}`;
-      return `<button class="company-row${anchors ? ' anchor-order-row' : ' company-financial-row'}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(company.id)}" aria-label="${escapeHtml(company.name)}，${anchors ? escapeHtml(monthLabel(anchorMonth)) + " " : ""}${total}${anchors ? "，提点合计 " + escapeHtml(money.commissionDisplay(money.summarizeCommission(company.orders))) + "，收入 " + escapeHtml(money.display(money.summarize(company.orders), "income")) + "，净收益 " + escapeHtml(money.display(money.summarize(company.orders), "net")) : escapeHtml(financialLabel)}，待入住 ${summary.upcoming}，入住中 ${summary.staying}，已离店 ${summary.finished}，查看订单">${anchors ? identity : `<span class="company-row-main">${identity}</span>${companyMonthlyRevenue(company.orders)}`}</button>`;
-    }).join('') || (anchors && !store.ownCompanyName() ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('company')}</span><h3>先设置我司名称</h3><p>填写上方我司名称后，已有订单会自动按公司识别并归入旗下主播。</p><button class="empty-reset" type="button" data-own-company-setup>设置我司名称</button></div>` : anchors && !store.ownOrders().length
-      ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('book')}</span><h3>暂无我司主播订单</h3><p>在“旅居公司”选择我司名称并登记主播，订单和提点会自动汇总到这里。</p><button class="empty-reset" type="button" data-directory-companies>查看旅居公司</button></div>` : orders.length
-      ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>${anchors ? '暂无符合条件的我司主播订单' : '没有符合条件的公司'}</h3><p>${anchors ? '仅展示公司名称与我司一致的订单，可更换月份或补填主播。' : '换个关键词，或查看全部公司。'}</p><button class="empty-reset" type="button" data-company-reset>${anchors ? '查看全部月份' : '查看全部公司'}</button></div>`
-      : '');
+    document.querySelector('#company-count').textContent = anchors ? `${visible.length} 位` : `${visible.length} 家`;
+    document.querySelector('#company-statistics-title').textContent = query ? '搜索结果' : anchors ? '主播提点' : '各公司账目';
+    const target = document.querySelector('#company-list');
+    target.setAttribute('aria-label', anchors ? '我司主播分类' : '旅居公司分类');
+    target.classList.toggle('directory-is-empty', !visible.length);
+    target.innerHTML = visible.map(group => {
+      const summary = money.summarize(group.orders), commissions = money.summarizeCommission(group.orders);
+      const total = `${anchorMonth === today.slice(0, 7) ? '本月' : anchorMonth ? Number(anchorMonth.slice(5)) + '月' : '累计'} ${group.orders.length} 单`;
+      return `<button class="company-row directory-funds-row${anchors ? ' anchor-order-row' : ' company-financial-row'}" type="button" ${anchors ? 'data-anchor-key' : 'data-company-id'}="${escapeHtml(group.id)}" aria-label="${escapeHtml(group.name)}，${escapeHtml(monthLabel(anchorMonth))} ${total}，收款 ${escapeHtml(money.display(summary, 'income'))}，提点 ${escapeHtml(money.commissionDisplay(commissions))}，净收益 ${escapeHtml(money.display(summary, 'net'))}，查看订单"><span class="company-row-main"><span class="company-symbol" aria-hidden="true">${escapeHtml(Array.from(group.name)[0])}</span><span class="company-row-copy"><span class="company-row-heading"><strong>${escapeHtml(group.name)}</strong><span class="company-total">${total}</span></span></span>${icon('chevron', 'chevron')}</span>${directoryRevenue(group.orders, anchors)}</button>`;
+    }).join('') || (anchors && !store.ownCompanyName() ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('company')}</span><h3>先设置我司名称</h3><p>保存上方名称后，我司订单会自动按主播汇总提点。</p><button class="empty-reset" type="button" data-own-company-setup>设置我司名称</button></div>` : anchors && !store.ownOrders().length
+      ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('book')}</span><h3>暂无我司主播订单</h3><p>从“旅居公司”选择我司名称并登记主播，这里会自动统计。</p><button class="empty-reset" type="button" data-directory-companies>查看旅居公司</button></div>` : !empty
+      ? `<div class="empty-state directory-empty"><span class="empty-icon">${icon('search')}</span><h3>${query ? '没有匹配的记录' : '这个月份暂无' + (anchors ? '主播订单' : '登记')}</h3><p>${query ? '试试其他关键词，资金合计仍按所选月份显示。' : anchors ? '其他公司不计入我司主播，未填主播的订单在下方单独列出。' : '可以切换月份，或查看累计登记。'}</p><button class="empty-reset" type="button" data-company-reset>${query ? '清空搜索' : '查看累计'}</button></div>` : '');
   }
 
   function renderCompanyDetail() {
@@ -718,26 +682,20 @@
     orderForm.elements.anchorName.dispatchEvent(new Event('input', { bubbles: true }));
   });
   document.querySelectorAll('[data-directory-mode]').forEach(button => button.addEventListener('click', () => {
-    if (directoryMode === button.dataset.directoryMode && homeFilter === 'all' && !document.querySelector('#company-query').value) return;
+    if (directoryMode === button.dataset.directoryMode && !document.querySelector('#company-query').value) return;
     const direction = button.dataset.directoryMode === 'anchors' ? 1 : -1;
     directoryMode = button.dataset.directoryMode;
-    homeFilter = 'all';
     document.querySelector('#company-query').value = '';
     feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); }, direction);
   }));
   document.querySelector('#anchor-month').addEventListener('input', event => {
-    anchorMonth = /^\d{4}-\d{2}$/.test(event.target.value) ? event.target.value : '';
+    anchorMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(event.target.value) ? event.target.value : '';
     feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); });
   });
   document.querySelector('#anchor-all-months').addEventListener('click', () => { if (!anchorMonth) return; anchorMonth = ''; feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); }); });
   document.querySelector('#anchor-current-month').addEventListener('click', () => { if (anchorMonth === today.slice(0, 7)) return; anchorMonth = today.slice(0, 7); feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); }); });
-  document.querySelector('#home-revenue').addEventListener('click', () => {
-    directoryMode = 'anchors'; anchorMonth = today.slice(0, 7); homeFilter = 'all';
-    document.querySelector('#company-query').value = ''; renderOverview(); renderCompanies();
-  });
   document.querySelector('#company-query').addEventListener('input', renderCompanies);
   document.querySelector('#clear-company-query').addEventListener('click', () => { document.querySelector('#company-query').value = ''; renderCompanies(); document.querySelector('#company-query').focus(); });
-  document.querySelectorAll('[data-home-filter]').forEach(button => button.addEventListener('click', () => { if (homeFilter === button.dataset.homeFilter) return; const direction = Object.keys(filterLabels).indexOf(button.dataset.homeFilter) > Object.keys(filterLabels).indexOf(homeFilter) ? 1 : -1; homeFilter = button.dataset.homeFilter; feedback.change('#directory-results', () => { renderOverview(); renderCompanies(); }, direction); }));
   document.querySelector('#home-onboarding').addEventListener('click', event => {
     const button = event.target.closest('[data-home-action]');
     if (!button) return;
@@ -748,7 +706,7 @@
   });
   document.querySelector('#company-list').addEventListener('click', event => {
     if (event.target.closest('[data-directory-companies]')) { document.querySelector('[data-directory-mode="companies"]').click(); return; }
-    if (event.target.closest('[data-company-reset]')) { homeFilter = 'all'; if (directoryMode === 'anchors') anchorMonth = ''; document.querySelector('#company-query').value = ''; renderOverview(); renderCompanies(); return; }
+    if (event.target.closest('[data-company-reset]')) { if (!document.querySelector('#company-query').value) anchorMonth = ''; document.querySelector('#company-query').value = ''; renderOverview(); renderCompanies(); return; }
     if (event.target.closest('[data-own-company-setup]')) { document.querySelector('#own-company-settings').open = true; document.querySelector('#own-company-name').focus(); return; }
     const anchor = event.target.closest('[data-anchor-key]');
     if (anchor) { openAnchor(anchor.dataset.anchorKey); return; }
@@ -756,14 +714,6 @@
     if (company) openCompany(company.dataset.companyId);
   });
   document.querySelector('#unassigned-anchor-open').addEventListener('click', () => openAnchor(''));
-  document.querySelector('#home-guest-list').addEventListener('click', event => {
-    if (event.target.closest('[data-home-guest-all]')) {
-      homeFilter = 'all'; document.querySelector('#company-query').value = ''; renderOverview(); renderCompanies(); return;
-    }
-    const button = event.target.closest('[data-home-guest-open]');
-    const order = button && readOrders().find(order => order.id === button.dataset.homeGuestOpen);
-    if (order) openCompany(order.companyId, order.id, homeFilter);
-  });
   document.querySelector('#company-shortcuts').addEventListener('click', event => {
     const button = event.target.closest('[data-company-shortcut]');
     if (!button) return;
@@ -864,7 +814,7 @@
         catch { remembered = false; }
       }
       if (isNew) {
-        homeFilter = 'all';
+        if (anchorMonth) anchorMonth = today.slice(0, 7);
         document.querySelector('#company-query').value = '';
         companyFilter = 'all';
         document.querySelector('#company-guest-search').value = '';
